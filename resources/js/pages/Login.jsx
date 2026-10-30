@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import Icon from '../components/Icon';
+import Logo from '../components/Logo';
 
 export default function Login() {
     const [identifier, setIdentifier] = useState('');
@@ -36,12 +37,9 @@ export default function Login() {
         <div className="bg-background dark:bg-[#182620] font-sans text-on-surface dark:text-[#ecf3ef] antialiased min-h-screen flex items-center justify-center p-4 sm:p-5 transition-colors duration-200">
             <main className="w-full max-w-[440px] flex flex-col items-center justify-center">
                 <div className="flex flex-col w-full items-center justify-center py-6 sm:py-10">
-                    {/* Wireframe Logo Placeholder */}
-                    <div className="flex flex-col items-center justify-center mb-6 w-full">
-                        <div className="w-full h-14 sm:h-16 rounded-xl bg-surface-container-high/40 flex items-center justify-center gap-2 px-4 shadow-sm">
-                            <Icon name="image" className="text-primary text-[22px]" />
-                            <span className="text-[16px] sm:text-[18px] text-primary uppercase tracking-widest font-bold">LOGO GOES HERE</span>
-                        </div>
+                    {/* Brand Logo */}
+                    <div className="flex items-center justify-center mb-6 w-full">
+                        <Logo className="h-12 sm:h-14" />
                     </div>
                     {/* Login Card Container */}
                     <div className="w-full bg-surface-container-lowest dark:bg-[#202f29] rounded-xl shadow-md p-6 sm:p-10 flex flex-col transition-colors duration-200">

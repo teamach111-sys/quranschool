@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from './Icon';
+import Logo from './Logo';
 
 export const NAV_ITEMS = [
     { key: 'dashboard', label: 'Tableau de bord', icon: 'grid_view', href: '/dashboard' },
@@ -92,17 +93,7 @@ export function SidebarNav({ activeKey = 'dashboard', onLogout }) {
     return (
         <div className="flex flex-col flex-1">
             <div className="h-16 px-4 flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#202f29] transition-colors duration-200">
-                <div className="flex items-center gap-2 w-full">
-                    <div className="w-8 h-8 rounded border border-dashed border-outline dark:border-[#475b52] flex items-center justify-center bg-surface-container dark:bg-[#182620]">
-                        <Icon
-                            name="category"
-                            className="text-[18px] text-outline dark:text-[#9bb2a8]"
-                        />
-                    </div>
-                    <span className="font-semibold text-[18px] uppercase tracking-wider text-on-surface dark:text-[#ecf3ef] leading-none">
-                        Quran Memo
-                    </span>
-                </div>
+                <Logo className="h-9" />
             </div>
 
             <div className="px-3 py-2 border-b border-outline-variant dark:border-[#2f4239] bg-surface-container dark:bg-[#182620]/60 transition-colors duration-200">

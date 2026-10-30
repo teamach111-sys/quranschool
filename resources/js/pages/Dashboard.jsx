@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Icon from '../components/Icon';
+import Logo from '../components/Logo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import ThemeToggle from '../components/ThemeToggle';
 import YearSelector from '../components/YearSelector';
@@ -42,12 +43,7 @@ export default function Dashboard({ user }) {
                     <div className="flex flex-col flex-1">
                         {/* Logo */}
                         <div className="h-16 px-4 flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#202f29] transition-colors duration-200">
-                            <div className="flex items-center gap-2 w-full">
-                                <div className="w-8 h-8 rounded border border-dashed border-outline dark:border-[#475b52] flex items-center justify-center bg-surface-container dark:bg-[#182620]">
-                                    <Icon name="category" className="text-[18px] text-outline dark:text-[#9bb2a8]" />
-                                </div>
-                                <span className="text-[18px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider text-on-surface dark:text-[#ecf3ef] leading-none">{t.logo}</span>
-                            </div>
+                            <Logo className="h-9" />
                         </div>
                         {/* Nav label */}
                         <div className="px-3 py-2 border-b border-outline-variant dark:border-[#2f4239] bg-surface-container dark:bg-[#182620]/60 transition-colors duration-200">
@@ -147,10 +143,7 @@ export default function Dashboard({ user }) {
                     {/* Primary Mobile App Bar */}
                     <div className="h-14 px-[10px] flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] transition-colors duration-200">
                         <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded border border-dashed border-outline dark:border-[#475b52] flex items-center justify-center bg-surface-container dark:bg-[#182620]">
-                                <Icon name="category" className="text-[16px] text-outline dark:text-[#9bb2a8]" />
-                            </div>
-                            <span className="text-[14px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider text-on-surface dark:text-[#ecf3ef] leading-none">{t.logoMobile || t.logo}</span>
+                            <Logo className="h-7" />
                         </div>
                         <div className="flex items-center gap-1.5">
                             <LanguageSwitcher compact />
