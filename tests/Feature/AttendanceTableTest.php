@@ -1,0 +1,227 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Auth\GenericUser;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
+
+class AttendanceTableTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Schema::create('academic_years', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->string('year_label');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->boolean('is_current');
+            $table->boolean('is_active');
+        });
+
+        Schema::create('roles', function (Blueprint $table) {
+            $table->unsignedInteger('id')->primary();
+            $table->string('role_key');
+        });
+
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedInteger('role_id');
+            $table->string('full_name');
+            $table->boolean('is_active')->default(true);
+        });
+
+        Schema::create('rooms', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id');
+            $table->string('name');
+            $table->boolean('is_active')->default(true);
+        });
+
+        Schema::create('room_teachers', function (Blueprint $table) {
+            $table->unsignedBigInteger('room_id');
+            $table->unsignedBigInteger('teacher_id');
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id');
+            $table->date('assigned_from');
+            $table->date('assigned_until')->nullable();
+            $table->primary(['room_id', 'teacher_id', 'assigned_from']);
+        });
+
+        Schema::create('students', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id');
+            $table->unsignedBigInteger('room_id')->nullable();
+            $table->string('student_number')->nullable();
+            $table->string('full_name');
+            $table->string('status')->default('active');
+        });
+
+        Schema::create('attendance', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('room_id')->nullable();
+            $table->unsignedBigInteger('year_id');
+            $table->unsignedBigInteger('recorded_by')->nullable();
+            $table->date('attendance_date');
+            $table->string('status');
+            $table->string('note', 500)->nullable();
+            $table->timestamp('created_at')->nullable();
+            $table->unique(['student_id', 'year_id', 'attendance_date']);
+        });
+    }
+
+    public function test_attendance_table_requires_authentication(): void
+    {
+        $this->getJson('/attendance/table')->assertUnauthorized();
+    }
+
+    public function test_admin_sees_only_school_records_for_the_selected_year(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/attendance/table?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('can_correct', true)
+            ->assertJsonPath('can_mark', false)
+            ->assertJsonPath('can_follow_up', false)
+            ->assertJsonCount(3, 'attendance')
+            ->assertJsonPath('attendance.0.student_name', 'Zayd Ali')
+            ->assertJsonPath('attendance.2.teacher_name', 'Teacher One')
+            ->assertJsonCount(2, 'rooms')
+            ->assertJsonCount(2, 'students')
+            ->assertJsonCount(2, 'teachers');
+    }
+
+    public function test_teacher_only_sees_records_from_rooms_assigned_on_the_attendance_date(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/attendance/table?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('can_mark', true)
+            ->assertJsonPath('can_correct', false)
+            ->assertJsonCount(1, 'attendance')
+            ->assertJsonPath('attendance.0.student_name', 'Zayd Ali')
+            ->assertJsonPath('attendance.0.room_name', 'Alpha')
+            ->assertJsonCount(1, 'rooms')
+            ->assertJsonCount(1, 'students');
+    }
+
+    public function test_secretary_can_view_school_attendance_and_is_marked_for_follow_up(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->getJson('/attendance/table?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('can_correct', false)
+            ->assertJsonPath('can_mark', false)
+            ->assertJsonPath('can_follow_up', true)
+            ->assertJsonCount(3, 'attendance');
+    }
+
+    public function test_attendance_table_filters_by_room_teacher_student_date_and_status(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/attendance/table?year_id=1&room_id=2&teacher_id=21&student_id=2&attendance_date=2026-10-10&status=absent')
+            ->assertOk()
+            ->assertJsonCount(1, 'attendance')
+            ->assertJsonPath('attendance.0.id', 2)
+            ->assertJsonPath('attendance.0.note', 'Family informed');
+    }
+
+    public function test_attendance_table_rejects_an_invalid_status_filter(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/attendance/table?year_id=1&status=unknown')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+    }
+
+    public function test_attendance_table_rejects_a_student_filter_from_another_school(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/attendance/table?year_id=1&student_id=3')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('student_id');
+    }
+
+    public function test_attendance_table_does_not_resolve_another_schools_year(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/attendance/table?year_id=2')->assertNotFound();
+    }
+
+    private function seedAttendance(): void
+    {
+        DB::table('academic_years')->insert([
+            ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
+            ['id' => 2, 'school_id' => 2, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
+            ['id' => 3, 'school_id' => 1, 'year_label' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-06-30', 'is_current' => false, 'is_active' => false],
+        ]);
+        DB::table('roles')->insert([
+            ['id' => 1, 'role_key' => 'admin'],
+            ['id' => 2, 'role_key' => 'teacher'],
+            ['id' => 3, 'role_key' => 'secretary'],
+        ]);
+        DB::table('users')->insert([
+            ['id' => 10, 'school_id' => 1, 'role_id' => 1, 'full_name' => 'Admin One'],
+            ['id' => 12, 'school_id' => 1, 'role_id' => 3, 'full_name' => 'Secretary One'],
+            ['id' => 20, 'school_id' => 1, 'role_id' => 2, 'full_name' => 'Teacher One'],
+            ['id' => 21, 'school_id' => 1, 'role_id' => 2, 'full_name' => 'Teacher Two'],
+            ['id' => 30, 'school_id' => 2, 'role_id' => 2, 'full_name' => 'Teacher Other'],
+        ]);
+        DB::table('rooms')->insert([
+            ['id' => 1, 'school_id' => 1, 'year_id' => 1, 'name' => 'Alpha', 'is_active' => true],
+            ['id' => 2, 'school_id' => 1, 'year_id' => 1, 'name' => 'Beta', 'is_active' => true],
+            ['id' => 3, 'school_id' => 2, 'year_id' => 2, 'name' => 'Other', 'is_active' => true],
+            ['id' => 4, 'school_id' => 1, 'year_id' => 3, 'name' => 'Previous Year', 'is_active' => false],
+        ]);
+        DB::table('room_teachers')->insert([
+            ['room_id' => 1, 'teacher_id' => 20, 'school_id' => 1, 'year_id' => 1, 'assigned_from' => '2026-09-01', 'assigned_until' => '2026-10-31'],
+            ['room_id' => 2, 'teacher_id' => 21, 'school_id' => 1, 'year_id' => 1, 'assigned_from' => '2026-09-01', 'assigned_until' => null],
+        ]);
+        DB::table('students')->insert([
+            ['id' => 1, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-100', 'full_name' => 'Zayd Ali'],
+            ['id' => 2, 'school_id' => 1, 'year_id' => 1, 'room_id' => 2, 'student_number' => 'S-101', 'full_name' => 'Amina Benali'],
+            ['id' => 3, 'school_id' => 2, 'year_id' => 2, 'room_id' => 3, 'student_number' => 'S-200', 'full_name' => 'Other Student'],
+            ['id' => 4, 'school_id' => 1, 'year_id' => 3, 'room_id' => 4, 'student_number' => 'S-099', 'full_name' => 'Previous Year Student'],
+        ]);
+        DB::table('attendance')->insert([
+            ['id' => 1, 'student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'recorded_by' => 20, 'attendance_date' => '2026-10-10', 'status' => 'present', 'note' => null],
+            ['id' => 2, 'student_id' => 2, 'school_id' => 1, 'room_id' => 2, 'year_id' => 1, 'recorded_by' => 21, 'attendance_date' => '2026-10-10', 'status' => 'absent', 'note' => 'Family informed'],
+            ['id' => 3, 'student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'recorded_by' => 20, 'attendance_date' => '2026-11-02', 'status' => 'late', 'note' => null],
+            ['id' => 4, 'student_id' => 3, 'school_id' => 2, 'room_id' => 3, 'year_id' => 2, 'recorded_by' => 30, 'attendance_date' => '2026-10-10', 'status' => 'present', 'note' => null],
+            ['id' => 5, 'student_id' => 4, 'school_id' => 1, 'room_id' => 4, 'year_id' => 3, 'recorded_by' => null, 'attendance_date' => '2026-01-10', 'status' => 'present', 'note' => null],
+        ]);
+    }
+
+    private function user(int $id, int $schoolId, string $role): GenericUser
+    {
+        return new GenericUser([
+            'id' => $id,
+            'school_id' => $schoolId,
+            'role' => $role,
+        ]);
+    }
+}

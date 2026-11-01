@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RoomsController;
 use App\Http\Controllers\SchedulesController;
@@ -110,6 +111,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/schedules/table', [SchedulesController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('schedules.table');
+
+    Route::get('/attendance/table', [AttendanceController::class, 'table'])
+        ->middleware('can:access-dashboard')
+        ->name('attendance.table');
 
     Route::post('/schedules', [SchedulesController::class, 'store'])
         ->middleware('can:access-dashboard')

@@ -1,0 +1,252 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { useLanguage } from '../../../hooks/useLanguage';
+import { apiFetch } from '../../../lib/api';
+import {
+    ACADEMIC_YEAR_CHANGED_EVENT,
+    getSelectedAcademicYearId,
+} from '../../../persisters/yearselector';
+import DesktopTable from '../../../tables/desktoptable';
+import MobileTable from '../../../tables/mobiletable';
+
+function emptyFilters() {
+    return {
+        room_id: '',
+        teacher_id: '',
+        student_id: '',
+        attendance_date: '',
+        status: '',
+    };
+}
+
+export default function AttendanceTable() {
+    const { isRTL, t } = useLanguage();
+    const [yearId, setYearId] = useState(getSelectedAcademicYearId);
+    const [attendance, setAttendance] = useState([]);
+    const [rooms, setRooms] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [filters, setFilters] = useState(emptyFilters);
+    const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
+
+    useEffect(() => {
+        const syncYear = (event) => {
+            const nextYearId = event?.detail?.id ?? getSelectedAcademicYearId();
+            setYearId(nextYearId ? Number(nextYearId) : null);
+            setFilters(emptyFilters());
+            setAppliedFilters(emptyFilters());
+        };
+
+        window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
+        return () => window.removeEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
+    }, []);
+
+    const loadAttendance = useCallback(async (signal) => {
+        setLoading(true);
+        setLoadError(false);
+
+        try {
+            const query = new URLSearchParams();
+            if (yearId) query.set('year_id', String(yearId));
+            Object.entries(appliedFilters).forEach(([key, value]) => {
+                if (value) query.set(key, value);
+            });
+
+            const response = await apiFetch(`/attendance/table?${query.toString()}`, { signal });
+            if (!response.ok) throw new Error('Failed to load attendance');
+            const data = await response.json();
+
+            if (signal?.aborted) return;
+            setYearId((currentYearId) => currentYearId ?? Number(data.year_id));
+            setAttendance(Array.isArray(data.attendance) ? data.attendance : []);
+            setRooms(Array.isArray(data.rooms) ? data.rooms : []);
+            setTeachers(Array.isArray(data.teachers) ? data.teachers : []);
+            setStudents(Array.isArray(data.students) ? data.students : []);
+        } catch (requestError) {
+            if (requestError.name !== 'AbortError') setLoadError(true);
+        } finally {
+            if (!signal?.aborted) setLoading(false);
+        }
+    }, [appliedFilters, yearId]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        loadAttendance(controller.signal);
+        return () => controller.abort();
+    }, [loadAttendance]);
+
+    const handleFilterChange = (event) => {
+        const { name, value } = event.target;
+        setFilters((current) => ({ ...current, [name]: value }));
+    };
+
+    const handleFilterSubmit = (event) => {
+        event.preventDefault();
+        setAppliedFilters({ ...filters });
+    };
+
+    const clearFilters = () => {
+        const clearedFilters = emptyFilters();
+        setFilters(clearedFilters);
+        setAppliedFilters(clearedFilters);
+    };
+
+    const columns = [
+        {
+            key: 'attendance_date',
+            label: t.attendance.columns.date,
+            sortable: true,
+            mobile: 'subtitle',
+        },
+        {
+            key: 'student_name',
+            label: t.attendance.columns.student,
+            sortable: true,
+            mobile: 'title',
+        },
+        {
+            key: 'room_name',
+            label: t.attendance.columns.room,
+            sortable: true,
+            mobile: 'detail',
+            value: (record) => record.room_name ?? '—',
+        },
+        {
+            key: 'teacher_name',
+            label: t.attendance.columns.teacher,
+            sortable: true,
+            mobile: 'detail',
+            value: (record) => record.teacher_name ?? '—',
+        },
+        {
+            key: 'status',
+            label: t.attendance.columns.status,
+            sortable: true,
+            mobile: 'badge',
+            value: (record) => record.status,
+            render: (status) => (
+                <span className="inline-flex rounded-full bg-primary-fixed px-2.5 py-1 text-[11px] font-semibold text-primary dark:bg-[#2e5e4e] dark:text-[#d4f5e4]">
+                    {t.attendance.statuses[status] ?? status}
+                </span>
+            ),
+        },
+        {
+            key: 'note',
+            label: t.attendance.columns.note,
+            mobile: 'detail',
+            value: (record) => record.note || '—',
+        },
+    ];
+    const labels = {
+        actions: t.attendance.table.actions,
+        pagination: t.attendance.table.pagination,
+        previous: t.attendance.table.previous,
+        next: t.attendance.table.next,
+        page: (page) => t.attendance.table.page(page),
+        selectPage: t.attendance.table.selectPage,
+        selectRow: (record) => t.attendance.table.selectRow(record.student_name),
+        sortBy: (label) => t.attendance.table.sortBy(label),
+        range: (first, last, total) => t.attendance.table.range(first, last, total),
+    };
+    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
+    const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
+    const toolbar = (
+        <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            <label className={labelClass}>
+                {t.attendance.filters.room}
+                <select name="room_id" value={filters.room_id} onChange={handleFilterChange} className={inputClass}>
+                    <option value="">{t.attendance.filters.allRooms}</option>
+                    {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
+                </select>
+            </label>
+            <label className={labelClass}>
+                {t.attendance.filters.teacher}
+                <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} className={inputClass}>
+                    <option value="">{t.attendance.filters.allTeachers}</option>
+                    {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+                </select>
+            </label>
+            <label className={labelClass}>
+                {t.attendance.filters.student}
+                <select name="student_id" value={filters.student_id} onChange={handleFilterChange} className={inputClass}>
+                    <option value="">{t.attendance.filters.allStudents}</option>
+                    {students.map((student) => (
+                        <option key={student.id} value={student.id}>
+                            {student.name}{student.student_number ? ` (${student.student_number})` : ''}
+                        </option>
+                    ))}
+                </select>
+            </label>
+            <label className={labelClass}>
+                {t.attendance.filters.date}
+                <input
+                    type="date"
+                    name="attendance_date"
+                    value={filters.attendance_date}
+                    onChange={handleFilterChange}
+                    className={inputClass}
+                />
+            </label>
+            <label className={labelClass}>
+                {t.attendance.filters.status}
+                <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClass}>
+                    <option value="">{t.attendance.filters.allStatuses}</option>
+                    {Object.entries(t.attendance.statuses).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                    ))}
+                </select>
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row lg:col-span-1">
+                <button
+                    type="submit"
+                    className="min-h-10 flex-1 rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                >
+                    {t.attendance.filters.apply}
+                </button>
+                <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="min-h-10 flex-1 rounded-lg bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef]"
+                >
+                    {t.attendance.filters.clear}
+                </button>
+            </div>
+        </form>
+    );
+
+    if (loadError) {
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.attendance.loadError}</p>;
+    }
+
+    if (loading) {
+        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.attendance.loading}</p>;
+    }
+
+    return (
+        <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className="hidden md:block">
+                <DesktopTable
+                    ariaLabel={t.attendance.listLabel}
+                    columns={columns}
+                    emptyState={t.attendance.empty}
+                    isRTL={isRTL}
+                    labels={labels}
+                    rows={attendance}
+                    toolbar={toolbar}
+                />
+            </div>
+            <div className="md:hidden">
+                <MobileTable
+                    ariaLabel={t.attendance.listLabel}
+                    columns={columns}
+                    emptyState={t.attendance.empty}
+                    isRTL={isRTL}
+                    labels={labels}
+                    rows={attendance}
+                    toolbar={toolbar}
+                />
+            </div>
+        </section>
+    );
+}
