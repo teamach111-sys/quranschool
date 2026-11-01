@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemorizationSessionsController;
+use App\Http\Controllers\RoleChangeHistoryController;
 use App\Http\Controllers\RoomsController;
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\SchoolSettingsController;
@@ -163,6 +164,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/users/table', [AdminUsersController::class, 'table'])
         ->middleware('can:access-admin')
         ->name('admin.users.table');
+
+    Route::get('/admin/role-change-history/table', [RoleChangeHistoryController::class, 'table'])
+        ->middleware('can:access-admin')
+        ->name('admin.role-change-history.table');
 
     Route::post('/admin/users', [AdminUsersController::class, 'store'])
         ->middleware('can:access-admin')

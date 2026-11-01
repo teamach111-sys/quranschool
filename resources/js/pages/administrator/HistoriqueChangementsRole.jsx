@@ -1,3 +1,5 @@
+import RoleChangeHistoryTable from './components/RoleChangeHistoryTable';
+
 export default function HistoriqueChangementsRole() {
-    return null;
+    return <RoleChangeHistoryTable />;
 }
