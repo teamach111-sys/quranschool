@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
 import { apiFetch } from '../../lib/api';
+import { ACADEMIC_YEARS_UPDATED_EVENT } from '../../persisters/yearselector';
 import { useLanguage } from '../../hooks/useLanguage';
 
 export default function AnneesScolaires() {
@@ -48,6 +49,7 @@ export default function AnneesScolaires() {
 
             setYears(Array.isArray(data.years) ? data.years : []);
             setCanManage(Boolean(data.can_manage));
+            window.dispatchEvent(new Event(ACADEMIC_YEARS_UPDATED_EVENT));
         } catch {
             setUpdateError(true);
         } finally {
@@ -85,6 +87,7 @@ export default function AnneesScolaires() {
                                     <span className={`rounded-sm px-2 py-1 text-[11px] leading-4 font-medium ${year.is_active ? 'bg-surface-container text-on-surface-variant dark:bg-tertiary-container dark:text-on-tertiary-container' : 'bg-secondary-container text-on-secondary-container dark:bg-secondary dark:text-on-secondary'}`}>
                                         {year.is_active ? t.academicYears.openState : t.academicYears.closedState}
                                     </span>
+                                    {year.is_read_only && <span className="rounded-sm bg-surface-container-high px-2 py-1 text-[11px] leading-4 font-medium text-on-surface-variant dark:bg-tertiary-container dark:text-on-tertiary-container">{t.academicYears.readOnly}</span>}
                                 </div>
                                 <p className="mt-1 text-[12px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim">
                                     {formatDate(year.start_date)} – {formatDate(year.end_date)}

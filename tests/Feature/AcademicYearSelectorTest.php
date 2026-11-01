@@ -31,11 +31,27 @@ class AcademicYearSelectorTest extends TestCase
                 'start_date' => '2025-09-01',
                 'end_date' => '2026-06-30',
                 'is_current' => false,
+                'is_active' => true,
+            ],
+            [
+                'school_id' => 1,
+                'year_label' => '2024-2025',
+                'start_date' => '2024-09-01',
+                'end_date' => '2025-06-30',
+                'is_current' => false,
                 'is_active' => false,
             ],
             [
                 'school_id' => 1,
                 'year_label' => '2026-2027',
+                'start_date' => '2026-09-01',
+                'end_date' => '2027-06-30',
+                'is_current' => true,
+                'is_active' => true,
+            ],
+            [
+                'school_id' => 2,
+                'year_label' => '2026-2027-other-school',
                 'start_date' => '2026-09-01',
                 'end_date' => '2027-06-30',
                 'is_current' => true,
@@ -62,10 +78,11 @@ class AcademicYearSelectorTest extends TestCase
 
         $this->getJson('/academic-years')
             ->assertOk()
-            ->assertJsonCount(2, 'years')
-            ->assertJsonPath('current_id', 2)
+            ->assertJsonCount(3, 'years')
+            ->assertJsonPath('current_id', 3)
             ->assertJsonPath('years.0.is_read_only', false)
-            ->assertJsonPath('years.1.is_read_only', true);
+            ->assertJsonPath('years.1.is_read_only', false)
+            ->assertJsonPath('years.2.is_read_only', true);
     }
 
     public function test_teachers_and_secretaries_only_see_the_current_active_year(): void
@@ -80,7 +97,7 @@ class AcademicYearSelectorTest extends TestCase
             $this->getJson('/academic-years')
                 ->assertOk()
                 ->assertJsonCount(1, 'years')
-                ->assertJsonPath('years.0.id', 2)
+                ->assertJsonPath('years.0.id', 3)
                 ->assertJsonPath('years.0.is_read_only', false);
         }
     }

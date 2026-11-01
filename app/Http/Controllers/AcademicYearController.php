@@ -39,7 +39,8 @@ class AcademicYearController extends Controller
             'start_date' => $row->start_date,
             'end_date' => $row->end_date,
             'is_current' => (bool) $row->is_current,
-            'is_read_only' => $user->role === 'admin' && ! $row->is_current,
+            'is_active' => (bool) $row->is_active,
+            'is_read_only' => $user->role === 'admin' && ! $row->is_active,
         ]);
 
         $current = $years->firstWhere('is_current', true);
@@ -69,14 +70,14 @@ class AcademicYearController extends Controller
             ->get(['id', 'year_label', 'start_date', 'end_date', 'is_current', 'is_active']);
 
         return response()->json([
-            'years' => $rows->map(fn ($row) => [
+            'years' => $rows->map(fn($row) => [
                 'id' => $row->id,
                 'label' => $row->year_label,
                 'start_date' => $row->start_date,
                 'end_date' => $row->end_date,
                 'is_current' => (bool) $row->is_current,
                 'is_active' => (bool) $row->is_active,
-                'is_read_only' => $user->role !== 'admin' || ! $row->is_current,
+                'is_read_only' => $user->role !== 'admin' || ! $row->is_active,
             ]),
             'can_manage' => $user->role === 'admin',
         ]);

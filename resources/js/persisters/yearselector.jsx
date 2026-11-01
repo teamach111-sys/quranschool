@@ -6,6 +6,7 @@ import { apiFetch } from '../lib/api';
 const STORAGE_KEY = 'tahfiz-academic-year';
 const READ_ONLY_STORAGE_KEY = `${STORAGE_KEY}:read-only`;
 const CHANGE_EVENT = 'tahfiz:academic-year-changed';
+export const ACADEMIC_YEARS_UPDATED_EVENT = 'tahfiz:academic-years-updated';
 
 function readStoredId() {
     try {
@@ -78,9 +79,15 @@ export default function YearSelector({ compact = false }) {
     useEffect(() => {
         let cancelled = false;
 
-        apiFetch('/academic-years')
-            .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to load academic years'))))
-            .then((data) => {
+        const loadYears = async () => {
+            setLoading(true);
+            setLoadError(false);
+
+            try {
+                const response = await apiFetch('/academic-years');
+                if (!response.ok) throw new Error('Failed to load academic years');
+
+                const data = await response.json();
                 if (cancelled) return;
 
                 const list = Array.isArray(data?.years) ? data.years : [];
@@ -99,13 +106,20 @@ export default function YearSelector({ compact = false }) {
                 if (next !== null && (next !== stored || nextIsReadOnly !== readStoredReadOnly())) {
                     writeStoredYear(selectedYear);
                 }
-            })
-            .catch(() => {
-                setLoadError(true);
-            })
-            .finally(() => { if (!cancelled) setLoading(false); });
+            } catch {
+                if (!cancelled) setLoadError(true);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
 
-        return () => { cancelled = true; };
+        loadYears();
+        window.addEventListener(ACADEMIC_YEARS_UPDATED_EVENT, loadYears);
+
+        return () => {
+            cancelled = true;
+            window.removeEventListener(ACADEMIC_YEARS_UPDATED_EVENT, loadYears);
+        };
     }, []);
 
     // Keep every selector instance in the layout (desktop + mobile) in sync.
@@ -139,16 +153,18 @@ export default function YearSelector({ compact = false }) {
     const selected = years.find((year) => year.id === yearId) ?? null;
     const label = selected?.label ?? (loading ? '…' : '—');
     const range = selected?.start_date && selected?.end_date ? `${selected.start_date} → ${selected.end_date}` : undefined;
+    const status = selected?.is_current ? t.yearSelector.current : isReadOnly ? t.yearSelector.readOnly : '';
     const buttonLabel = selected
-        ? `${t.yearSelector.label}: ${label}${isReadOnly ? `, ${t.yearSelector.readOnly}` : ''}`
+        ? `${t.yearSelector.label}: ${label}${status ? `, ${status}` : ''}`
         : t.yearSelector.label;
+    const buttonTitle = [range, status].filter(Boolean).join(' · ');
 
     const dropdownSide = isRTL ? 'right-0 origin-top-right' : 'left-0 origin-top-left';
     const textAlign = isRTL ? 'text-right' : 'text-left';
 
     return (
         <div ref={ref} className="relative shrink-0">
-            <button type="button" aria-label={buttonLabel} aria-controls={listboxId} aria-expanded={open} aria-haspopup="listbox" title={isReadOnly ? t.yearSelector.readOnly : range} onClick={() => setOpen(o => !o)}
+            <button type="button" aria-label={buttonLabel} aria-controls={listboxId} aria-expanded={open} aria-haspopup="listbox" title={buttonTitle} onClick={() => setOpen(o => !o)}
                 className={`flex items-center border border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#182620] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] rounded gap-1 h-6 sm:h-8 transition-colors cursor-pointer select-none ${compact ? 'px-1.5 py-0.5' : 'px-3'}`}
             >
                 <Icon name="date_range" className="text-[13px] sm:text-[16px] text-on-surface-variant dark:text-[#9bb2a8]" />
@@ -156,7 +172,7 @@ export default function YearSelector({ compact = false }) {
                 {isReadOnly && <Icon name="lock" className="text-[11px] text-secondary dark:text-secondary-fixed-dim" />}
                 <Icon name="arrow_drop_down" className={`text-[12px] sm:text-[14px] text-outline dark:text-[#9bb2a8] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
-            <div id={listboxId} role="listbox" aria-label={t.yearSelector.label} aria-hidden={!open} className={`absolute ${dropdownSide} top-full mt-1 w-52 bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#2f4239] rounded shadow-lg z-50 py-1 flex flex-col transition-all duration-200 ease-out ${open ? 'opacity-100 pointer-events-auto scale-100 translate-y-0' : 'opacity-0 pointer-events-none scale-95 -translate-y-1'}`}>
+            <div id={listboxId} role="listbox" aria-label={t.yearSelector.label} aria-hidden={!open} className={`absolute ${dropdownSide} top-full mt-1 w-64 bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#2f4239] rounded shadow-lg z-50 py-1 flex flex-col transition-all duration-200 ease-out ${open ? 'opacity-100 pointer-events-auto scale-100 translate-y-0' : 'opacity-0 pointer-events-none scale-95 -translate-y-1'}`}>
                 {years.length === 0 && (
                     <div role={loadError ? 'alert' : 'status'} className={`px-3 py-2 ${textAlign} text-[11px] leading-4 text-on-surface-variant dark:text-[#9bb2a8]`}>
                         {loading ? t.yearSelector.loading : loadError ? t.yearSelector.unavailable : t.yearSelector.empty}
