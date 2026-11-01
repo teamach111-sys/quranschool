@@ -128,6 +128,15 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('payments.table');
 
+    Route::post('/payments', [PaymentsController::class, 'store'])
+        ->middleware('can:access-dashboard')
+        ->name('payments.store');
+
+    Route::put('/payments/{paymentId}', [PaymentsController::class, 'update'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('paymentId')
+        ->name('payments.update');
+
     Route::post('/memorization-sessions', [MemorizationSessionsController::class, 'store'])
         ->middleware('can:access-dashboard')
         ->name('memorization-sessions.store');

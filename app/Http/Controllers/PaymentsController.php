@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use stdClass;
 
 class PaymentsController extends Controller
@@ -122,6 +123,112 @@ class PaymentsController extends Controller
         ]);
     }
 
+    public function store(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        abort_unless($user->role === 'admin', 403);
+        $year = $this->resolveWritableYear($request, $schoolId);
+        $validated = $this->validatedPayment($request, $schoolId, (int) $year->id);
+
+        $paymentId = DB::transaction(function () use ($validated, $user, $schoolId, $year) {
+            $this->lockStudentsForPayment([(int) $validated['student_id']], $schoolId, (int) $year->id);
+            $this->ensureNoOverlappingPeriod(
+                (int) $validated['student_id'],
+                $schoolId,
+                (int) $year->id,
+                $validated['period_start'],
+                $validated['period_end'],
+            );
+
+            return DB::table('payments')->insertGetId([
+                ...$this->paymentAttributes($validated),
+                'school_id' => $schoolId,
+                'year_id' => (int) $year->id,
+                'recorded_by' => (int) $user->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return response()->json(['payment_id' => $paymentId], 201);
+    }
+
+    public function update(Request $request, int $paymentId): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        $year = $this->resolveWritableYear($request, $schoolId);
+        $yearId = (int) $year->id;
+        $existingPayment = DB::table('payments')
+            ->where('id', $paymentId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->first();
+        abort_unless($existingPayment, 404);
+
+        if ($user->role === 'secretary') {
+            $validated = $this->validatedSecretaryPaymentUpdate($request, $existingPayment->status);
+
+            DB::transaction(function () use ($paymentId, $schoolId, $yearId, $validated, $user) {
+                $payment = DB::table('payments')
+                    ->where('id', $paymentId)
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId)
+                    ->lockForUpdate()
+                    ->first(['status', 'payment_method', 'reference', 'notes']);
+                abort_unless($payment && $payment->status === 'due', 404);
+
+                DB::table('payments')
+                    ->where('id', $paymentId)
+                    ->update([
+                        'status' => $validated['status'],
+                        'paid_at' => $validated['status'] === 'paid' ? $validated['paid_at'] : null,
+                        'payment_method' => $validated['status'] === 'paid'
+                            ? $validated['payment_method']
+                            : $payment->payment_method,
+                        'reference' => $validated['status'] === 'paid'
+                            ? $validated['reference']
+                            : $payment->reference,
+                        'notes' => $validated['notes'] ?? $payment->notes,
+                        'recorded_by' => (int) $user->id,
+                        'updated_at' => now(),
+                    ]);
+            });
+
+            return response()->json(['updated' => true]);
+        }
+
+        abort_unless($user->role === 'admin', 403);
+        $validated = $this->validatedPayment($request, $schoolId, $yearId);
+
+        DB::transaction(function () use ($validated, $user, $schoolId, $yearId, $paymentId, $existingPayment) {
+            $this->lockStudentsForPayment(
+                [(int) $existingPayment->student_id, (int) $validated['student_id']],
+                $schoolId,
+                $yearId,
+            );
+            $this->ensureNoOverlappingPeriod(
+                (int) $validated['student_id'],
+                $schoolId,
+                $yearId,
+                $validated['period_start'],
+                $validated['period_end'],
+                $paymentId,
+            );
+
+            DB::table('payments')
+                ->where('id', $paymentId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->update([
+                    ...$this->paymentAttributes($validated),
+                    'recorded_by' => (int) $user->id,
+                    'updated_at' => now(),
+                ]);
+        });
+
+        return response()->json(['updated' => true]);
+    }
+
     /**
      * @return array{0: object, 1: int}
      */
@@ -165,6 +272,168 @@ class PaymentsController extends Controller
         abort_unless($year, 404);
 
         return $year;
+    }
+
+    private function resolveWritableYear(Request $request, int $schoolId): stdClass
+    {
+        $yearId = $request->validate([
+            'year_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_years', 'id')->where('school_id', $schoolId),
+            ],
+        ])['year_id'];
+        $year = DB::table('academic_years')
+            ->where('id', $yearId)
+            ->where('school_id', $schoolId)
+            ->first(['id', 'is_active', 'is_current']);
+        abort_unless($year, 404);
+
+        if (! $year->is_active || ! $year->is_current) {
+            throw ValidationException::withMessages([
+                'year_id' => 'Payments in a closed academic year cannot be changed.',
+            ]);
+        }
+
+        return $year;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatedPayment(Request $request, int $schoolId, int $yearId): array
+    {
+        return $request->validate([
+            'student_id' => [
+                'required',
+                'integer',
+                Rule::exists('students', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'period_start' => ['required', 'date_format:Y-m-d'],
+            'period_end' => ['required', 'date_format:Y-m-d', 'after_or_equal:period_start'],
+            'amount' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
+            'currency' => ['required', 'string', 'regex:/^[A-Z]{3}$/'],
+            'status' => ['required', Rule::in(['paid', 'due', 'late', 'waived'])],
+            'paid_at' => [
+                Rule::requiredIf($request->input('status') === 'paid'),
+                Rule::prohibitedIf($request->input('status') !== 'paid'),
+                'nullable',
+                'date',
+            ],
+            'payment_method' => ['nullable', 'string', 'max:40'],
+            'reference' => ['nullable', 'string', 'max:100'],
+            'notes' => [
+                Rule::requiredIf($request->input('status') === 'waived'),
+                'nullable',
+                'string',
+                'max:500',
+            ],
+        ]);
+    }
+
+    /**
+     * @return array{status: string, paid_at: ?string, payment_method: ?string, reference: ?string, notes: ?string}
+     */
+    private function validatedSecretaryPaymentUpdate(Request $request, string $currentStatus): array
+    {
+        abort_unless($currentStatus === 'due', 404);
+
+        return $request->validate([
+            'status' => ['required', Rule::in(['paid', 'late', 'waived'])],
+            'paid_at' => [
+                Rule::requiredIf($request->input('status') === 'paid'),
+                Rule::prohibitedIf($request->input('status') !== 'paid'),
+                'nullable',
+                'date',
+            ],
+            'payment_method' => [
+                Rule::requiredIf($request->input('status') === 'paid'),
+                'nullable',
+                'string',
+                'max:40',
+            ],
+            'reference' => [
+                Rule::requiredIf($request->input('status') === 'paid'),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'notes' => [
+                Rule::requiredIf($request->input('status') === 'waived'),
+                'nullable',
+                'string',
+                'max:500',
+            ],
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function paymentAttributes(array $validated): array
+    {
+        return [
+            'student_id' => (int) $validated['student_id'],
+            'period_start' => $validated['period_start'],
+            'period_end' => $validated['period_end'],
+            'amount' => $validated['amount'],
+            'currency' => $validated['currency'],
+            'status' => $validated['status'],
+            'paid_at' => $validated['status'] === 'paid' ? $validated['paid_at'] : null,
+            'payment_method' => $validated['payment_method'] ?? null,
+            'reference' => $validated['reference'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ];
+    }
+
+    /**
+     * @param  array<int>  $studentIds
+     */
+    private function lockStudentsForPayment(array $studentIds, int $schoolId, int $yearId): void
+    {
+        sort($studentIds);
+        $lockedStudentIds = DB::table('students')
+            ->whereIn('id', array_unique($studentIds))
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (count($lockedStudentIds) !== count(array_unique($studentIds))) {
+            abort(404);
+        }
+    }
+
+    private function ensureNoOverlappingPeriod(
+        int $studentId,
+        int $schoolId,
+        int $yearId,
+        string $periodStart,
+        string $periodEnd,
+        ?int $exceptPaymentId = null,
+    ): void {
+        $overlapQuery = DB::table('payments')
+            ->where('student_id', $studentId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->where('period_start', '<=', $periodEnd)
+            ->where('period_end', '>=', $periodStart);
+
+        if ($exceptPaymentId !== null) {
+            $overlapQuery->where('id', '!=', $exceptPaymentId);
+        }
+
+        if ($overlapQuery->exists()) {
+            throw ValidationException::withMessages([
+                'period_start' => 'The billing period overlaps another payment for this student.',
+            ]);
+        }
     }
 
     private function decimalAmount(string $amount): string

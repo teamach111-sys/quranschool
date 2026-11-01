@@ -1,0 +1,442 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Auth\GenericUser;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
+
+class PaymentFormTest extends TestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Schema::create('academic_years', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->string('year_label');
+            $table->date('start_date');
+            $table->boolean('is_current');
+            $table->boolean('is_active');
+        });
+
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->string('full_name');
+        });
+
+        Schema::create('students', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id');
+            $table->string('full_name');
+        });
+
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id');
+            $table->unsignedBigInteger('recorded_by')->nullable();
+            $table->date('period_start');
+            $table->date('period_end');
+            $table->decimal('amount', 10, 2);
+            $table->char('currency', 3);
+            $table->string('status');
+            $table->dateTime('paid_at')->nullable();
+            $table->string('payment_method', 40)->nullable();
+            $table->string('reference', 100)->nullable();
+            $table->string('notes', 500)->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function test_admin_creates_a_payment_period_and_records_the_actor(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'period_start' => '2026-12-01',
+            'period_end' => '2026-12-31',
+            'status' => 'paid',
+            'paid_at' => '2026-10-10 12:00:00',
+            'payment_method' => 'cash',
+            'reference' => 'REC-NEW',
+        ]);
+
+        $response->assertCreated()->assertJsonStructure(['payment_id']);
+        $this->assertDatabaseHas('payments', [
+            'id' => $response->json('payment_id'),
+            'student_id' => 1,
+            'school_id' => 1,
+            'year_id' => 1,
+            'recorded_by' => 10,
+            'period_start' => '2026-12-01',
+            'period_end' => '2026-12-31',
+            'amount' => '125.50',
+            'currency' => 'MAD',
+            'status' => 'paid',
+            'paid_at' => '2026-10-10 12:00:00',
+            'payment_method' => 'cash',
+            'reference' => 'REC-NEW',
+        ]);
+    }
+
+    public function test_admin_updates_a_payment_without_triggering_an_overlap_with_itself(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->putJson('/payments/2', [
+            ...$this->validAdminPayment(),
+            'amount' => '130.00',
+            'period_start' => '2026-11-01',
+            'period_end' => '2026-11-30',
+            'status' => 'paid',
+            'paid_at' => '2026-11-05 09:00:00',
+            'payment_method' => 'bank_transfer',
+            'reference' => 'REC-UPDATED',
+        ])->assertOk()->assertJsonPath('updated', true);
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'status' => 'paid',
+            'recorded_by' => 10,
+            'amount' => '130.00',
+            'reference' => 'REC-UPDATED',
+        ]);
+    }
+
+    public function test_admin_cannot_create_an_overlapping_billing_period_for_a_student(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'period_start' => '2026-10-31',
+            'period_end' => '2026-11-30',
+        ])->assertUnprocessable()->assertJsonValidationErrors('period_start');
+
+        $this->assertDatabaseCount('payments', 3);
+    }
+
+    public function test_admin_cannot_move_a_billing_period_into_another_period(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->putJson('/payments/2', [
+            ...$this->validAdminPayment(),
+            'period_start' => '2026-10-15',
+            'period_end' => '2026-11-15',
+        ])->assertUnprocessable()->assertJsonValidationErrors('period_start');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'period_start' => '2026-11-01',
+            'period_end' => '2026-11-30',
+            'status' => 'due',
+        ]);
+    }
+
+    public function test_admin_can_create_a_due_period_without_a_paid_date(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'period_start' => '2026-12-01',
+            'period_end' => '2026-12-31',
+        ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('payments', [
+            'id' => $response->json('payment_id'),
+            'status' => 'due',
+            'paid_at' => null,
+        ]);
+    }
+
+    public function test_admin_must_provide_valid_period_amount_status_and_paid_date(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'period_start' => '2026-12-01',
+            'period_end' => '2026-11-30',
+            'amount' => '-1.00',
+            'status' => 'refunded',
+            'paid_at' => '2026-11-01 09:00:00',
+        ])->assertUnprocessable()->assertJsonValidationErrors([
+            'period_end',
+            'amount',
+            'status',
+            'paid_at',
+        ]);
+    }
+
+    public function test_admin_cannot_create_a_waived_payment_without_a_note(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'status' => 'waived',
+        ])->assertUnprocessable()->assertJsonValidationErrors('notes');
+    }
+
+    public function test_secretary_records_a_due_payment_without_changing_its_billing_period(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->putJson('/payments/2', [
+            'year_id' => 1,
+            'student_id' => 2,
+            'period_start' => '2026-08-01',
+            'period_end' => '2026-08-31',
+            'amount' => '1.00',
+            'status' => 'paid',
+            'paid_at' => '2026-11-02 10:30:00',
+            'payment_method' => 'cash',
+            'reference' => 'REC-SECRETARY',
+        ])->assertOk()->assertJsonPath('updated', true);
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'student_id' => 1,
+            'period_start' => '2026-11-01',
+            'period_end' => '2026-11-30',
+            'amount' => '125.50',
+            'status' => 'paid',
+            'paid_at' => '2026-11-02 10:30:00',
+            'payment_method' => 'cash',
+            'reference' => 'REC-SECRETARY',
+            'recorded_by' => 12,
+        ]);
+    }
+
+    public function test_secretary_can_waive_a_due_payment_with_a_note(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->putJson('/payments/2', [
+            'year_id' => 1,
+            'status' => 'waived',
+            'notes' => 'Scholarship approved.',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'status' => 'waived',
+            'notes' => 'Scholarship approved.',
+            'paid_at' => null,
+            'recorded_by' => 12,
+        ]);
+    }
+
+    public function test_secretary_can_mark_a_due_payment_late_without_payment_details(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->putJson('/payments/2', [
+            'year_id' => 1,
+            'status' => 'late',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'status' => 'late',
+            'paid_at' => null,
+            'payment_method' => null,
+            'reference' => null,
+            'recorded_by' => 12,
+        ]);
+    }
+
+    public function test_secretary_cannot_waive_a_due_payment_without_a_note(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->putJson('/payments/2', [
+            'year_id' => 1,
+            'status' => 'waived',
+        ])->assertUnprocessable()->assertJsonValidationErrors('notes');
+
+        $this->assertDatabaseHas('payments', ['id' => 2, 'status' => 'due']);
+    }
+
+    public function test_secretary_cannot_create_a_billing_period(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->postJson('/payments', $this->validAdminPayment())
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('payments', 3);
+    }
+
+    public function test_secretary_cannot_update_a_payment_that_is_not_due(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->putJson('/payments/1', [
+            'year_id' => 1,
+            'status' => 'late',
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('payments', ['id' => 1, 'status' => 'paid']);
+    }
+
+    public function test_payment_writes_return_404_for_another_school_payment(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->putJson('/payments/3', [
+            'year_id' => 1,
+            ...$this->validAdminPayment(),
+        ])->assertNotFound();
+    }
+
+    public function test_unauthenticated_user_receives_401_when_creating_a_payment(): void
+    {
+        $this->seedPaymentData();
+
+        $this->postJson('/payments', $this->validAdminPayment())->assertUnauthorized();
+    }
+
+    public function test_teacher_receives_403_when_creating_a_payment(): void
+    {
+        $this->seedPaymentData();
+
+        $this->actingAs($this->user(20, 1, 'teacher'));
+        $this->postJson('/payments', $this->validAdminPayment())->assertForbidden();
+    }
+
+    public function test_payment_writes_reject_a_closed_year(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'year_id' => 2,
+        ])->assertUnprocessable()->assertJsonValidationErrors('year_id');
+    }
+
+    /**
+     * @return array<string, int|string>
+     */
+    private function validAdminPayment(): array
+    {
+        return [
+            'year_id' => 1,
+            'student_id' => 1,
+            'period_start' => '2026-11-01',
+            'period_end' => '2026-11-30',
+            'amount' => '125.50',
+            'currency' => 'MAD',
+            'status' => 'due',
+        ];
+    }
+
+    private function seedPaymentData(): void
+    {
+        DB::table('academic_years')->insert([
+            ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'is_current' => true, 'is_active' => true],
+            ['id' => 2, 'school_id' => 1, 'year_label' => '2025-2026', 'start_date' => '2025-09-01', 'is_current' => false, 'is_active' => false],
+            ['id' => 3, 'school_id' => 2, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'is_current' => true, 'is_active' => true],
+        ]);
+        DB::table('users')->insert([
+            ['id' => 10, 'school_id' => 1, 'full_name' => 'Admin User'],
+            ['id' => 12, 'school_id' => 1, 'full_name' => 'Secretary User'],
+            ['id' => 20, 'school_id' => 1, 'full_name' => 'Teacher User'],
+            ['id' => 30, 'school_id' => 2, 'full_name' => 'Other School Admin'],
+        ]);
+        DB::table('students')->insert([
+            ['id' => 1, 'school_id' => 1, 'year_id' => 1, 'full_name' => 'Mariam Ali'],
+            ['id' => 2, 'school_id' => 1, 'year_id' => 1, 'full_name' => 'Zayd Ali'],
+            ['id' => 3, 'school_id' => 2, 'year_id' => 3, 'full_name' => 'Other School Student'],
+        ]);
+        $paymentDefaults = [
+            'recorded_by' => null,
+            'paid_at' => null,
+            'payment_method' => null,
+            'reference' => null,
+            'notes' => null,
+            'created_at' => null,
+            'updated_at' => null,
+        ];
+        $payments = [
+            [
+                'id' => 1,
+                'student_id' => 1,
+                'school_id' => 1,
+                'year_id' => 1,
+                'recorded_by' => 12,
+                'period_start' => '2026-10-01',
+                'period_end' => '2026-10-31',
+                'amount' => '100.00',
+                'currency' => 'MAD',
+                'status' => 'paid',
+                'paid_at' => '2026-10-05 10:30:00',
+                'payment_method' => 'cash',
+                'reference' => 'REC-001',
+            ],
+            [
+                'id' => 2,
+                'student_id' => 1,
+                'school_id' => 1,
+                'year_id' => 1,
+                'recorded_by' => 10,
+                'period_start' => '2026-11-01',
+                'period_end' => '2026-11-30',
+                'amount' => '125.50',
+                'currency' => 'MAD',
+                'status' => 'due',
+            ],
+            [
+                'id' => 3,
+                'student_id' => 3,
+                'school_id' => 2,
+                'year_id' => 3,
+                'recorded_by' => 30,
+                'period_start' => '2026-10-01',
+                'period_end' => '2026-10-31',
+                'amount' => '90.00',
+                'currency' => 'EUR',
+                'status' => 'due',
+            ],
+        ];
+        DB::table('payments')->insert(array_map(
+            fn (array $payment) => array_merge($paymentDefaults, $payment),
+            $payments,
+        ));
+    }
+
+    private function user(int $id, int $schoolId, string $role): GenericUser
+    {
+        return new GenericUser([
+            'id' => $id,
+            'school_id' => $schoolId,
+            'role' => $role,
+        ]);
+    }
+}

@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Icon from '../../../components/Icon';
+import PaymentFormModal from './PaymentFormModal';
 import {
     ACADEMIC_YEAR_CHANGED_EVENT,
     getSelectedAcademicYearId,
@@ -32,7 +34,10 @@ export default function PaymentsTable() {
     const [filters, setFilters] = useState(emptyFilters);
     const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
     const [search, setSearch] = useState('');
+    const [currency, setCurrency] = useState('MAD');
+    const [canManage, setCanManage] = useState(false);
     const [canRecord, setCanRecord] = useState(false);
+    const [entry, setEntry] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
@@ -42,6 +47,7 @@ export default function PaymentsTable() {
             setYearId(nextYearId ? Number(nextYearId) : null);
             setFilters(emptyFilters());
             setAppliedFilters(emptyFilters());
+            setEntry(null);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -66,6 +72,8 @@ export default function PaymentsTable() {
             setYearId((currentYearId) => currentYearId ?? Number(data.year_id));
             setPayments(Array.isArray(data.payments) ? data.payments : []);
             setStudents(Array.isArray(data.students) ? data.students : []);
+            setCurrency(data.currency ?? 'MAD');
+            setCanManage(Boolean(data.can_manage));
             setCanRecord(Boolean(data.can_record));
         } catch (error) {
             if (error.name !== 'AbortError') setLoadError(true);
@@ -109,6 +117,11 @@ export default function PaymentsTable() {
         setFilters(clearedFilters);
         setAppliedFilters(clearedFilters);
         setSearch('');
+    };
+
+    const handlePaymentSaved = async () => {
+        setEntry(null);
+        await loadPayments();
     };
 
     const locale = lang === 'ar' ? 'ar' : 'fr';
@@ -199,10 +212,38 @@ export default function PaymentsTable() {
         sortBy: (label) => t.payments.table.sortBy(label),
         range: (first, last, total) => t.payments.table.range(first, last, total),
     };
+    const actions = canManage
+        ? [{
+            key: 'edit',
+            icon: 'edit',
+            label: t.payments.edit,
+            onClick: (payment) => setEntry({ payment }),
+        }]
+        : canRecord
+            ? [{
+                key: 'record',
+                icon: 'payments',
+                label: t.payments.record,
+                hidden: (payment) => payment.status !== 'due',
+                onClick: (payment) => setEntry({ payment }),
+            }]
+            : [];
     const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
         <form onSubmit={applyFilters} className="flex flex-col gap-3">
+            {canManage && (
+                <div className="flex justify-end">
+                    <button
+                        type="button"
+                        onClick={() => setEntry({ payment: null })}
+                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                    >
+                        <Icon name="add" className="text-[17px]" />
+                        {t.payments.create}
+                    </button>
+                </div>
+            )}
             <label className={labelClass}>
                 {t.payments.search}
                 <input
@@ -286,6 +327,7 @@ export default function PaymentsTable() {
                     labels={labels}
                     rows={filteredPayments}
                     toolbar={toolbar}
+                    actions={actions}
                 />
             </div>
             <div className="md:hidden">
@@ -297,8 +339,20 @@ export default function PaymentsTable() {
                     labels={labels}
                     rows={filteredPayments}
                     toolbar={toolbar}
+                    actions={actions}
                 />
             </div>
+            {entry && (
+                <PaymentFormModal
+                    payment={entry.payment}
+                    yearId={yearId}
+                    currency={currency}
+                    students={students}
+                    canManage={canManage}
+                    onClose={() => setEntry(null)}
+                    onSaved={handlePaymentSaved}
+                />
+            )}
         </section>
     );
 }
