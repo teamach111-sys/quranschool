@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import Icon from '../../../components/Icon';
+import MemorizationSessionFormModal from './MemorizationSessionFormModal';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
 import {
@@ -37,9 +39,16 @@ export default function MemorizationSessionsTable() {
     const [rooms, setRooms] = useState([]);
     const [teachers, setTeachers] = useState([]);
     const [students, setStudents] = useState([]);
+    const [formOptions, setFormOptions] = useState({ rooms: [], students: [], teachers: [] });
     const [canFilterTeacher, setCanFilterTeacher] = useState(false);
+    const [canManage, setCanManage] = useState(false);
+    const [canCreate, setCanCreate] = useState(false);
+    const [yearStart, setYearStart] = useState('');
+    const [yearEnd, setYearEnd] = useState('');
+    const [todayDate, setTodayDate] = useState('');
     const [filters, setFilters] = useState(emptyFilters);
     const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
+    const [entry, setEntry] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
@@ -49,6 +58,7 @@ export default function MemorizationSessionsTable() {
             setYearId(nextYearId ? Number(nextYearId) : null);
             setFilters(emptyFilters());
             setAppliedFilters(emptyFilters());
+            setEntry(null);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -76,7 +86,13 @@ export default function MemorizationSessionsTable() {
             setRooms(Array.isArray(data.rooms) ? data.rooms : []);
             setTeachers(Array.isArray(data.teachers) ? data.teachers : []);
             setStudents(Array.isArray(data.students) ? data.students : []);
+            setFormOptions(data.form_options ?? { rooms: [], students: [], teachers: [] });
             setCanFilterTeacher(Boolean(data.can_filter_teacher));
+            setCanManage(Boolean(data.can_manage));
+            setCanCreate(Boolean(data.can_create));
+            setYearStart(data.year_start ?? '');
+            setYearEnd(data.year_end ?? '');
+            setTodayDate(data.today ?? '');
         } catch (requestError) {
             if (requestError.name !== 'AbortError') setLoadError(true);
         } finally {
@@ -105,6 +121,23 @@ export default function MemorizationSessionsTable() {
         setFilters(clearedFilters);
         setAppliedFilters(clearedFilters);
     };
+
+    const openEntry = (session = null) => {
+        setEntry({ session });
+    };
+
+    const handleSessionSaved = async () => {
+        setEntry(null);
+        await loadSessions();
+    };
+
+    const defaultDate = todayDate && yearStart && yearEnd
+        ? todayDate < yearStart
+            ? yearStart
+            : todayDate > yearEnd
+                ? yearEnd
+                : todayDate
+        : '';
 
     const columns = [
         {
@@ -174,10 +207,30 @@ export default function MemorizationSessionsTable() {
         sortBy: (label) => t.memorization.table.sortBy(label),
         range: (first, last, total) => t.memorization.table.range(first, last, total),
     };
+    const actions = canCreate ? [{
+        key: 'edit',
+        icon: 'edit',
+        label: t.memorization.edit,
+        hidden: (session) => !session.can_edit,
+        onClick: openEntry,
+    }] : [];
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
-        <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="flex flex-col gap-3">
+            {canCreate && (
+                <div className="flex justify-end">
+                    <button
+                        type="button"
+                        onClick={() => openEntry()}
+                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                    >
+                        <Icon name="add" className="text-[17px]" />
+                        {t.memorization.create}
+                    </button>
+                </div>
+            )}
+            <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <label className={labelClass}>
                 {t.memorization.filters.room}
                 <select name="room_id" value={filters.room_id} onChange={handleFilterChange} className={inputClass}>
@@ -230,7 +283,8 @@ export default function MemorizationSessionsTable() {
                     {t.memorization.filters.clear}
                 </button>
             </div>
-        </form>
+            </form>
+        </div>
     );
 
     if (loadError) {
@@ -252,6 +306,7 @@ export default function MemorizationSessionsTable() {
                     labels={labels}
                     rows={sessions}
                     toolbar={toolbar}
+                    actions={actions}
                 />
             </div>
             <div className="md:hidden">
@@ -263,8 +318,23 @@ export default function MemorizationSessionsTable() {
                     labels={labels}
                     rows={sessions}
                     toolbar={toolbar}
+                    actions={actions}
                 />
             </div>
+            {entry && (
+                <MemorizationSessionFormModal
+                    open
+                    session={entry.session}
+                    yearId={yearId}
+                    defaultDate={defaultDate}
+                    canManage={canManage}
+                    rooms={formOptions.rooms}
+                    students={formOptions.students}
+                    teachers={formOptions.teachers}
+                    onClose={() => setEntry(null)}
+                    onSaved={handleSessionSaved}
+                />
+            )}
         </section>
     );
 }

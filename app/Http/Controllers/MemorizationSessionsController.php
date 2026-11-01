@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use stdClass;
 
 class MemorizationSessionsController extends Controller
@@ -118,11 +119,19 @@ class MemorizationSessionsController extends Controller
                 'portion_label' => $session->portion_label,
                 'evaluation' => $session->evaluation,
                 'notes' => $session->notes,
+                'can_edit' => (bool) $year->is_active
+                    && (bool) $year->is_current
+                    && ($user->role === 'admin' || (int) $session->teacher_id === (int) $user->id),
             ])
             ->values();
 
         return response()->json([
             'year_id' => $yearId,
+            'year_start' => $year->start_date,
+            'year_end' => $year->end_date,
+            'today' => now()->toDateString(),
+            'year_is_active' => (bool) $year->is_active,
+            'year_is_current' => (bool) $year->is_current,
             'sessions' => $sessions,
             'rooms' => $this->roomsForYear($schoolId, $yearId, $user->role, (int) $user->id, $year),
             'teachers' => $user->role === 'teacher'
@@ -130,7 +139,321 @@ class MemorizationSessionsController extends Controller
                 : $this->teachersForSchool($schoolId),
             'students' => $this->studentsForYear($schoolId, $yearId, $user->role, (int) $user->id),
             'can_filter_teacher' => $user->role !== 'teacher',
+            'can_manage' => $user->role === 'admin',
+            'can_create' => (bool) $year->is_active
+                && (bool) $year->is_current
+                && in_array($user->role, ['admin', 'teacher'], true),
+            'form_options' => $this->formOptionsForYear($schoolId, $yearId, $user->role, (int) $user->id, $year),
         ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->writerContext();
+        $year = $this->resolveWritableYear($request, $schoolId);
+        $validated = $this->validatedSession($request, $user->role, $schoolId, (int) $year->id, $year);
+        $teacherId = $user->role === 'teacher' ? (int) $user->id : $validated['teacher_id'];
+
+        $sessionId = DB::transaction(function () use ($validated, $user, $schoolId, $year, $teacherId) {
+            $this->ensureSessionRoomAndStudent($validated, $user->role, $schoolId, (int) $year->id);
+            $this->ensureTeacherAssignment(
+                $user->role,
+                (int) $user->id,
+                (int) $validated['room_id'],
+                $schoolId,
+                (int) $year->id,
+                $validated['session_date'],
+            );
+
+            return DB::table('memorization_sessions')->insertGetId([
+                ...$validated,
+                'school_id' => $schoolId,
+                'year_id' => (int) $year->id,
+                'teacher_id' => $teacherId,
+                'created_at' => now(),
+            ]);
+        });
+
+        return response()->json(['session_id' => $sessionId], 201);
+    }
+
+    public function update(Request $request, int $sessionId): JsonResponse
+    {
+        [$user, $schoolId] = $this->writerContext();
+        $year = $this->resolveWritableYear($request, $schoolId);
+        $validated = $this->validatedSession($request, $user->role, $schoolId, (int) $year->id, $year);
+        $teacherId = $user->role === 'teacher' ? (int) $user->id : $validated['teacher_id'];
+
+        DB::transaction(function () use ($validated, $user, $schoolId, $year, $sessionId, $teacherId) {
+            $session = DB::table('memorization_sessions')
+                ->where('id', $sessionId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $year->id)
+                ->lockForUpdate()
+                ->first(['id', 'teacher_id']);
+            abort_unless($session, 404);
+            abort_unless(
+                $user->role === 'admin' || (int) $session->teacher_id === (int) $user->id,
+                403,
+            );
+
+            $this->ensureSessionRoomAndStudent($validated, $user->role, $schoolId, (int) $year->id);
+            $this->ensureTeacherAssignment(
+                $user->role,
+                (int) $user->id,
+                (int) $validated['room_id'],
+                $schoolId,
+                (int) $year->id,
+                $validated['session_date'],
+            );
+
+            DB::table('memorization_sessions')
+                ->where('id', $sessionId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $year->id)
+                ->update([
+                    ...$validated,
+                    'teacher_id' => $teacherId,
+                ]);
+        });
+
+        return response()->json(['session_id' => $sessionId]);
+    }
+
+    /**
+     * @return array{student_id: int, room_id: int, session_date: string, surah_start: ?int, ayah_start: ?int, surah_end: ?int, ayah_end: ?int, portion_label: string, evaluation: string, notes: ?string, teacher_id?: int}
+     */
+    private function validatedSession(
+        Request $request,
+        string $role,
+        int $schoolId,
+        int $yearId,
+        stdClass $year,
+    ): array {
+        $validated = $request->validate([
+            'student_id' => [
+                'required',
+                'integer',
+                Rule::exists('students', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'room_id' => [
+                'required',
+                'integer',
+                Rule::exists('rooms', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'teacher_id' => $role === 'admin'
+                ? [
+                    'required',
+                    'integer',
+                    Rule::exists('users', 'id')
+                        ->where('school_id', $schoolId)
+                        ->where('role_id', DB::table('roles')->where('role_key', 'teacher')->value('id')),
+                ]
+                : ['prohibited'],
+            'session_date' => ['required', 'date_format:Y-m-d'],
+            'surah_start' => ['nullable', 'integer', 'between:1,114'],
+            'ayah_start' => ['nullable', 'integer', 'between:1,286'],
+            'surah_end' => ['nullable', 'integer', 'between:1,114'],
+            'ayah_end' => ['nullable', 'integer', 'between:1,286'],
+            'portion_label' => ['required', 'string', 'max:160'],
+            'evaluation' => ['required', Rule::in(['excellent', 'good', 'needs_review'])],
+            'notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        if ($validated['session_date'] < $year->start_date || $validated['session_date'] > $year->end_date) {
+            throw ValidationException::withMessages([
+                'session_date' => 'The session date must belong to the selected academic year.',
+            ]);
+        }
+
+        $surahStart = isset($validated['surah_start']) ? (int) $validated['surah_start'] : null;
+        $ayahStart = isset($validated['ayah_start']) ? (int) $validated['ayah_start'] : null;
+        $surahEnd = isset($validated['surah_end']) ? (int) $validated['surah_end'] : null;
+        $ayahEnd = isset($validated['ayah_end']) ? (int) $validated['ayah_end'] : null;
+        $rangeHasStart = $surahStart !== null || $ayahStart !== null;
+        $rangeHasEnd = $surahEnd !== null || $ayahEnd !== null;
+
+        if (
+            ($rangeHasStart && ($surahStart === null || $ayahStart === null))
+            || ($rangeHasEnd && ($surahEnd === null || $ayahEnd === null))
+            || ($rangeHasStart !== $rangeHasEnd)
+        ) {
+            throw ValidationException::withMessages([
+                'surah_start' => 'Provide both complete surah and ayah endpoints, or leave the range empty.',
+            ]);
+        }
+
+        if (
+            $rangeHasStart
+            && (
+                $surahStart > $surahEnd
+                || (
+                    $surahStart === $surahEnd
+                    && $ayahStart > $ayahEnd
+                )
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'surah_end' => 'The memorization range must end at or after its starting point.',
+            ]);
+        }
+
+        return [
+            'student_id' => (int) $validated['student_id'],
+            'room_id' => (int) $validated['room_id'],
+            'session_date' => $validated['session_date'],
+            'surah_start' => $surahStart === null ? null : (int) $surahStart,
+            'ayah_start' => $ayahStart === null ? null : (int) $ayahStart,
+            'surah_end' => $surahEnd === null ? null : (int) $surahEnd,
+            'ayah_end' => $ayahEnd === null ? null : (int) $ayahEnd,
+            'portion_label' => $validated['portion_label'],
+            'evaluation' => $validated['evaluation'],
+            'notes' => $validated['notes'] ?? null,
+            ...($role === 'admin' ? ['teacher_id' => (int) $validated['teacher_id']] : []),
+        ];
+    }
+
+    /**
+     * @param  array{student_id: int, room_id: int}  $validated
+     */
+    private function ensureSessionRoomAndStudent(
+        array $validated,
+        string $role,
+        int $schoolId,
+        int $yearId,
+    ): void {
+        $roomQuery = DB::table('rooms')
+            ->where('id', $validated['room_id'])
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId);
+
+        if ($role === 'teacher') {
+            $roomQuery->where('is_active', true);
+        }
+
+        abort_unless($roomQuery->exists(), 404);
+
+        $studentQuery = DB::table('students')
+            ->where('id', $validated['student_id'])
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->where('room_id', $validated['room_id']);
+
+        if ($role === 'teacher') {
+            $studentQuery->whereIn('status', ['active', 'paused']);
+        }
+
+        abort_unless($studentQuery->exists(), 404);
+    }
+
+    private function ensureTeacherAssignment(
+        string $role,
+        int $userId,
+        int $roomId,
+        int $schoolId,
+        int $yearId,
+        string $sessionDate,
+    ): void {
+        if ($role !== 'teacher') {
+            return;
+        }
+
+        $assigned = DB::table('room_teachers')
+            ->join('rooms', function (JoinClause $join) {
+                $join->on('rooms.id', '=', 'room_teachers.room_id')
+                    ->on('rooms.school_id', '=', 'room_teachers.school_id')
+                    ->on('rooms.year_id', '=', 'room_teachers.year_id');
+            })
+            ->where('room_teachers.teacher_id', $userId)
+            ->where('room_teachers.room_id', $roomId)
+            ->where('room_teachers.school_id', $schoolId)
+            ->where('room_teachers.year_id', $yearId)
+            ->where('room_teachers.assigned_from', '<=', $sessionDate)
+            ->where(function (Builder $dates) use ($sessionDate) {
+                $dates->whereNull('room_teachers.assigned_until')
+                    ->orWhere('room_teachers.assigned_until', '>=', $sessionDate);
+            })
+            ->where('rooms.is_active', true)
+            ->exists();
+
+        abort_unless($assigned, 403);
+    }
+
+    private function formOptionsForYear(
+        int $schoolId,
+        int $yearId,
+        string $role,
+        int $userId,
+        stdClass $year,
+    ): array {
+        $rooms = DB::table('rooms')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->when($role === 'teacher', function (Builder $query) use ($schoolId, $yearId, $userId, $year) {
+                $query->where('is_active', true)
+                    ->whereExists(function (Builder $assignments) use ($schoolId, $yearId, $userId, $year) {
+                        $assignments->selectRaw('1')
+                            ->from('room_teachers')
+                            ->whereColumn('room_teachers.room_id', 'rooms.id')
+                            ->where('room_teachers.school_id', $schoolId)
+                            ->where('room_teachers.year_id', $yearId)
+                            ->where('room_teachers.teacher_id', $userId)
+                            ->where('room_teachers.assigned_from', '<=', $year->end_date)
+                            ->where(function (Builder $dates) use ($year) {
+                                $dates->whereNull('room_teachers.assigned_until')
+                                    ->orWhere('room_teachers.assigned_until', '>=', $year->start_date);
+                            });
+                    });
+            })
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($room) => ['id' => (int) $room->id, 'name' => $room->name])
+            ->values();
+
+        $students = DB::table('students')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->when($role === 'teacher', function (Builder $query) use ($schoolId, $yearId, $userId, $year) {
+                $query->whereIn('status', ['active', 'paused'])
+                    ->whereExists(function (Builder $assignments) use ($schoolId, $yearId, $userId, $year) {
+                        $assignments->selectRaw('1')
+                            ->from('room_teachers')
+                            ->join('rooms', function (JoinClause $join) {
+                                $join->on('rooms.id', '=', 'room_teachers.room_id')
+                                    ->on('rooms.school_id', '=', 'room_teachers.school_id')
+                                    ->on('rooms.year_id', '=', 'room_teachers.year_id');
+                            })
+                            ->whereColumn('room_teachers.room_id', 'students.room_id')
+                            ->where('room_teachers.school_id', $schoolId)
+                            ->where('room_teachers.year_id', $yearId)
+                            ->where('room_teachers.teacher_id', $userId)
+                            ->where('room_teachers.assigned_from', '<=', $year->end_date)
+                            ->where(function (Builder $dates) use ($year) {
+                                $dates->whereNull('room_teachers.assigned_until')
+                                    ->orWhere('room_teachers.assigned_until', '>=', $year->start_date);
+                            })
+                            ->where('rooms.is_active', true);
+                    });
+            })
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'student_number', 'room_id'])
+            ->map(fn ($student) => [
+                'id' => (int) $student->id,
+                'name' => $student->full_name,
+                'student_number' => $student->student_number,
+                'room_id' => $student->room_id === null ? null : (int) $student->room_id,
+            ])
+            ->values();
+
+        return [
+            'rooms' => $rooms,
+            'students' => $students,
+            'teachers' => $role === 'admin' ? $this->teachersForSchool($schoolId) : collect(),
+        ];
     }
 
     private function applyTeacherRoomScope(Builder $query, int $teacherId): void
@@ -240,6 +563,38 @@ class MemorizationSessionsController extends Controller
         return [$user, (int) $schoolId];
     }
 
+    private function writerContext(): array
+    {
+        [$user, $schoolId] = $this->staffContext();
+        abort_unless(in_array($user->role, ['admin', 'teacher'], true), 403);
+
+        return [$user, $schoolId];
+    }
+
+    private function resolveWritableYear(Request $request, int $schoolId): stdClass
+    {
+        $yearId = $request->validate([
+            'year_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_years', 'id')->where('school_id', $schoolId),
+            ],
+        ])['year_id'];
+        $year = DB::table('academic_years')
+            ->where('id', $yearId)
+            ->where('school_id', $schoolId)
+            ->first(['id', 'start_date', 'end_date', 'is_active', 'is_current']);
+        abort_unless($year, 404);
+
+        if (! $year->is_active || ! $year->is_current) {
+            throw ValidationException::withMessages([
+                'year_id' => 'Memorization sessions in a closed academic year cannot be changed.',
+            ]);
+        }
+
+        return $year;
+    }
+
     private function resolveYear(Request $request, int $schoolId, string $role): stdClass
     {
         $query = DB::table('academic_years')->where('school_id', $schoolId);
@@ -259,7 +614,13 @@ class MemorizationSessionsController extends Controller
             $query->where('is_current', true)->where('is_active', true);
         }
 
-        $year = $query->orderByDesc('start_date')->first(['id', 'start_date', 'end_date']);
+        $year = $query->orderByDesc('start_date')->first([
+            'id',
+            'start_date',
+            'end_date',
+            'is_active',
+            'is_current',
+        ]);
         abort_unless($year, 404);
 
         return $year;

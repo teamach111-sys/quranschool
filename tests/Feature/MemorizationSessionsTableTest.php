@@ -41,6 +41,7 @@ class MemorizationSessionsTableTest extends TestCase
             $table->unsignedBigInteger('school_id');
             $table->unsignedBigInteger('year_id');
             $table->string('name');
+            $table->boolean('is_active')->default(true);
         });
 
         Schema::create('room_teachers', function (Blueprint $table) {
@@ -59,6 +60,7 @@ class MemorizationSessionsTableTest extends TestCase
             $table->unsignedBigInteger('room_id')->nullable();
             $table->string('student_number')->nullable();
             $table->string('full_name');
+            $table->string('status')->default('active');
         });
 
         Schema::create('memorization_sessions', function (Blueprint $table) {
@@ -96,7 +98,7 @@ class MemorizationSessionsTableTest extends TestCase
             ->assertJsonPath('sessions.0.evaluation', 'excellent')
             ->assertJsonCount(2, 'rooms')
             ->assertJsonCount(2, 'teachers')
-            ->assertJsonCount(2, 'students');
+            ->assertJsonCount(3, 'students');
     }
 
     public function test_admin_list_excludes_sessions_from_other_schools(): void
@@ -126,7 +128,9 @@ class MemorizationSessionsTableTest extends TestCase
             ->assertJsonPath('sessions.0.student_name', 'Zayd Ali')
             ->assertJsonCount(1, 'rooms')
             ->assertJsonCount(0, 'teachers')
-            ->assertJsonCount(1, 'students');
+            ->assertJsonCount(1, 'students')
+            ->assertJsonCount(2, 'form_options.students')
+            ->assertJsonCount(1, 'form_options.rooms');
     }
 
     public function test_session_table_returns_404_when_non_admin_selects_closed_year(): void
@@ -195,6 +199,7 @@ class MemorizationSessionsTableTest extends TestCase
             ['id' => 1, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-001', 'full_name' => 'Zayd Ali'],
             ['id' => 2, 'school_id' => 1, 'year_id' => 1, 'room_id' => 2, 'student_number' => 'S-002', 'full_name' => 'Mariam Ali'],
             ['id' => 3, 'school_id' => 2, 'year_id' => 2, 'room_id' => 3, 'student_number' => 'S-003', 'full_name' => 'Other Student'],
+            ['id' => 4, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-004', 'full_name' => 'New Student'],
         ]);
         DB::table('memorization_sessions')->insert([
             [

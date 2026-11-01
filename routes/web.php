@@ -121,6 +121,15 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('memorization-sessions.table');
 
+    Route::post('/memorization-sessions', [MemorizationSessionsController::class, 'store'])
+        ->middleware('can:access-dashboard')
+        ->name('memorization-sessions.store');
+
+    Route::put('/memorization-sessions/{sessionId}', [MemorizationSessionsController::class, 'update'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('sessionId')
+        ->name('memorization-sessions.update');
+
     Route::post('/attendance', [AttendanceController::class, 'store'])
         ->middleware('can:access-dashboard')
         ->name('attendance.store');
