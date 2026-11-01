@@ -415,6 +415,33 @@ class RoomsTableTest extends TestCase
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('teacher_id');
+
+        $this->postJson('/rooms/2/teachers', [
+            'year_id' => 1,
+            'teacher_id' => 21,
+            'assigned_from' => '2026-09-01',
+            'assigned_until' => '2026-08-31',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('assigned_until');
+
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $this->postJson('/rooms/2/teachers', [
+            'year_id' => 1,
+            'teacher_id' => 21,
+            'assigned_from' => '2026-09-01',
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('room_teachers', [
+            'room_id' => 2,
+            'teacher_id' => 21,
+            'assigned_from' => '2026-09-01',
+        ]);
     }
 
     public function test_admin_can_view_all_year_assignments_and_end_an_assignment_without_deleting_history(): void

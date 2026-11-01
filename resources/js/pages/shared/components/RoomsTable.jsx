@@ -3,6 +3,7 @@ import Icon from '../../../components/Icon';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
 import RoomFormModal from '../../administrator/components/RoomFormModal';
+import RoomTeacherAssignmentModal from '../../administrator/components/RoomTeacherAssignmentModal';
 import RoomTeacherAssignmentTable from '../../administrator/components/RoomTeacherAssignmentTable';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
@@ -12,12 +13,6 @@ import {
 } from '../../../persisters/yearselector';
 import DesktopTable from '../../../tables/desktoptable';
 import MobileTable from '../../../tables/mobiletable';
-
-function today() {
-    const date = new Date();
-    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-    return date.toISOString().slice(0, 10);
-}
 
 export default function RoomsTable() {
     const { isRTL, t } = useLanguage();
@@ -37,8 +32,6 @@ export default function RoomsTable() {
     const [archiveRoom, setArchiveRoom] = useState(null);
     const [savingArchive, setSavingArchive] = useState(false);
     const [assignmentRoom, setAssignmentRoom] = useState(null);
-    const [assignmentForm, setAssignmentForm] = useState({ teacher_id: '', assigned_from: today(), assigned_until: '' });
-    const [savingAssignment, setSavingAssignment] = useState(false);
     const [placementOpen, setPlacementOpen] = useState(false);
     const [placementForm, setPlacementForm] = useState({ student_id: '', room_id: '' });
     const [savingPlacement, setSavingPlacement] = useState(false);
@@ -140,34 +133,6 @@ export default function RoomsTable() {
             setError(t.rooms.archiveError);
         } finally {
             setSavingArchive(false);
-        }
-    };
-
-    const assignTeacher = async (event) => {
-        event.preventDefault();
-        if (!assignmentRoom) return;
-        setSavingAssignment(true);
-
-        try {
-            const assigned = await runRequest(
-                `/rooms/${assignmentRoom.id}/teachers`,
-                'POST',
-                {
-                    ...assignmentForm,
-                    teacher_id: Number(assignmentForm.teacher_id),
-                    assigned_until: assignmentForm.assigned_until || null,
-                    year_id: yearId,
-                },
-                t.rooms.assignmentError,
-            );
-            if (assigned) {
-                setAssignmentRoom(null);
-                await loadRooms();
-            }
-        } catch {
-            setError(t.rooms.assignmentError);
-        } finally {
-            setSavingAssignment(false);
         }
     };
 
@@ -274,7 +239,6 @@ export default function RoomsTable() {
                 hidden: (room) => !room.is_active,
                 onClick: (room) => {
                     setAssignmentRoom(room);
-                    setAssignmentForm({ teacher_id: '', assigned_from: today(), assigned_until: '' });
                     setError(null);
                 },
             },
@@ -319,6 +283,16 @@ export default function RoomsTable() {
 
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            {canManage && yearIsActive && (
+                <button
+                    type="button"
+                    onClick={() => setAssignmentRoom(true)}
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]"
+                >
+                    <Icon name="assignment_ind" className="text-[17px]" />
+                    {t.rooms.assignTeacher}
+                </button>
+            )}
             {canPlace && yearIsActive && (
                 <button
                     type="button"
@@ -348,38 +322,6 @@ export default function RoomsTable() {
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {error && !archiveRoom && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
-            {assignmentRoom && (
-                <form onSubmit={assignTeacher} className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#384d43] dark:bg-[#22302a] sm:grid-cols-2 lg:grid-cols-4">
-                    <h2 className="text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface sm:col-span-2 lg:col-span-4">
-                        {t.rooms.assignToRoom(assignmentRoom.name)}
-                    </h2>
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.teacher}
-                        <select required value={assignmentForm.teacher_id} onChange={(event) => setAssignmentForm((form) => ({ ...form, teacher_id: event.target.value }))} className={controlClass}>
-                            <option value="">{t.rooms.form.selectTeacher}</option>
-                            {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
-                        </select>
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.assignedFrom}
-                        <input type="date" required value={assignmentForm.assigned_from} onChange={(event) => setAssignmentForm((form) => ({ ...form, assigned_from: event.target.value }))} className={controlClass} />
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.assignedUntil}
-                        <input type="date" min={assignmentForm.assigned_from} value={assignmentForm.assigned_until} onChange={(event) => setAssignmentForm((form) => ({ ...form, assigned_until: event.target.value }))} className={controlClass} />
-                    </label>
-                    <div className="flex items-end gap-2">
-                        <button type="button" disabled={savingAssignment} onClick={() => setAssignmentRoom(null)} className="min-h-10 flex-1 rounded-lg bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef]">
-                            {t.rooms.cancel}
-                        </button>
-                        <button type="submit" disabled={savingAssignment || teachers.length === 0} className="min-h-10 flex-1 rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]">
-                            {savingAssignment ? t.rooms.saving : t.rooms.assignTeacher}
-                        </button>
-                    </div>
-                    {error && <p role="alert" className="text-[13px] text-error dark:text-error-container sm:col-span-2 lg:col-span-4">{error}</p>}
-                    {teachers.length === 0 && <p className="text-[12px] text-on-surface-variant dark:text-[#c2d1c8] sm:col-span-2 lg:col-span-4">{t.rooms.noAvailableTeachers}</p>}
-                </form>
-            )}
             <div className="hidden md:block">
                 <DesktopTable
                     ariaLabel={t.rooms.listLabel}
@@ -469,6 +411,20 @@ export default function RoomsTable() {
                     yearId={yearId}
                     onClose={closeRoomEditor}
                     onSaved={handleRoomSaved}
+                />
+            )}
+            {canManage && (
+                <RoomTeacherAssignmentModal
+                    open={Boolean(assignmentRoom)}
+                    rooms={rooms}
+                    teachers={teachers}
+                    yearId={yearId}
+                    room={typeof assignmentRoom === 'object' ? assignmentRoom : null}
+                    onClose={() => setAssignmentRoom(null)}
+                    onSaved={async () => {
+                        setAssignmentRoom(null);
+                        await loadRooms();
+                    }}
                 />
             )}
             <ConfirmDeleteModal
