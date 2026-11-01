@@ -5,7 +5,7 @@ import { apiFetch } from '../lib/api';
 
 const STORAGE_KEY = 'tahfiz-academic-year';
 const READ_ONLY_STORAGE_KEY = `${STORAGE_KEY}:read-only`;
-const CHANGE_EVENT = 'tahfiz:academic-year-changed';
+export const ACADEMIC_YEAR_CHANGED_EVENT = 'tahfiz:academic-year-changed';
 export const ACADEMIC_YEARS_UPDATED_EVENT = 'tahfiz:academic-years-updated';
 
 function readStoredId() {
@@ -35,7 +35,7 @@ function writeStoredYear(year) {
     } catch {
         // Storage may be unavailable (private mode); the in-memory state still works.
     }
-    window.dispatchEvent(new CustomEvent(CHANGE_EVENT, {
+    window.dispatchEvent(new CustomEvent(ACADEMIC_YEAR_CHANGED_EVENT, {
         detail: { id: year.id, isReadOnly },
     }));
 }
@@ -135,10 +135,10 @@ export default function YearSelector({ compact = false }) {
         };
         const onStorage = (event) => { if (event.key === STORAGE_KEY) sync(); };
 
-        window.addEventListener(CHANGE_EVENT, sync);
+        window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, sync);
         window.addEventListener('storage', onStorage);
         return () => {
-            window.removeEventListener(CHANGE_EVENT, sync);
+            window.removeEventListener(ACADEMIC_YEAR_CHANGED_EVENT, sync);
             window.removeEventListener('storage', onStorage);
         };
     }, []);

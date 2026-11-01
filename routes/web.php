@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\StudentsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,6 +39,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/academic-years/table', [AcademicYearController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('academic-years.table');
+
+    Route::get('/students', [StudentsController::class, 'index'])
+        ->middleware('can:access-dashboard')
+        ->name('students.index');
+
+    Route::get('/students/table', [StudentsController::class, 'table'])
+        ->middleware('can:access-dashboard')
+        ->name('students.table');
 
     Route::patch('/admin/academic-years/{yearId}/status', [AcademicYearController::class, 'changeStatus'])
         ->middleware('can:access-admin')
