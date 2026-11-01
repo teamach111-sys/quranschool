@@ -1,19 +1,25 @@
-import TableauDeBordAdmin from './components/TableauDeBordAdmin';
-import TableauDeBordEnseignant from './components/TableauDeBordEnseignant';
-import TableauDeBordSecretariat from './components/TableauDeBordSecretariat';
-import Ecole from './components/Ecole';
-import AnneesScolaires from './components/AnneesScolaires';
-import Eleves from './components/Eleves';
-import GroupesAttribution from './components/GroupesAttribution';
-import EmploiDuTemps from './components/EmploiDuTemps';
-import Presences from './components/Presences';
-import SeancesMemorisation from './components/SeancesMemorisation';
-import MesGroupesEleves from './components/MesGroupesEleves';
-import MonEmploiDuTemps from './components/MonEmploiDuTemps';
-import UtilisateursRoles from './components/UtilisateursRoles';
-import HistoriqueChangementsRole from './components/HistoriqueChangementsRole';
-import PaiementsFinances from './components/PaiementsFinances';
-import MonProfil from './components/MonProfil';
+// Pages are grouped by their exact role access. Folders named for role
+// combinations contain pages used by those roles. Each role folder also has a
+// `components/` folder for sub-components that only that role uses.
+import TableauDeBordAdmin from './administrator/TableauDeBordAdmin';
+import Ecole from './administrator/Ecole';
+import AnneesScolaires from './administrator/AnneesScolaires';
+import GroupesAttribution from './administrator/GroupesAttribution';
+import EmploiDuTemps from './administrator/EmploiDuTemps';
+import UtilisateursRoles from './administrator/UtilisateursRoles';
+import HistoriqueChangementsRole from './administrator/HistoriqueChangementsRole';
+
+import TableauDeBordEnseignant from './teacher/TableauDeBordEnseignant';
+import MesGroupesEleves from './teacher/MesGroupesEleves';
+import MonEmploiDuTemps from './teacher/MonEmploiDuTemps';
+
+import TableauDeBordSecretariat from './secretary/TableauDeBordSecretariat';
+
+import Eleves from './administrator-secretary/Eleves';
+import PaiementsFinances from './administrator-secretary/PaiementsFinances';
+import Presences from './administrator-teacher-secretary/Presences';
+import MonProfil from './administrator-teacher-secretary/MonProfil';
+import SeancesMemorisation from './administrator-teacher/SeancesMemorisation';
 
 /**
  * Single source of truth for the app pages.
