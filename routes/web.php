@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemorizationSessionsController;
@@ -158,6 +159,25 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard-summary', AdminDashboardController::class)
         ->middleware('can:access-admin')
         ->name('admin.dashboard-summary');
+
+    Route::get('/admin/users/table', [AdminUsersController::class, 'table'])
+        ->middleware('can:access-admin')
+        ->name('admin.users.table');
+
+    Route::patch('/admin/users/{userId}/status', [AdminUsersController::class, 'updateStatus'])
+        ->middleware('can:access-admin')
+        ->whereNumber('userId')
+        ->name('admin.users.status');
+
+    Route::patch('/admin/users/{userId}/role', [AdminUsersController::class, 'updateRole'])
+        ->middleware('can:access-admin')
+        ->whereNumber('userId')
+        ->name('admin.users.role');
+
+    Route::put('/admin/users/{userId}/access', [AdminUsersController::class, 'resetAccess'])
+        ->middleware('can:access-admin')
+        ->whereNumber('userId')
+        ->name('admin.users.access');
 
     Route::get('/admin/school-settings', [SchoolSettingsController::class, 'show'])
         ->middleware('can:access-admin')
