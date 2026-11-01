@@ -35,6 +35,14 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('academic-years.index');
 
+    Route::get('/academic-years/table', [AcademicYearController::class, 'table'])
+        ->middleware('can:access-dashboard')
+        ->name('academic-years.table');
+
+    Route::patch('/admin/academic-years/{yearId}/status', [AcademicYearController::class, 'changeStatus'])
+        ->middleware('can:access-admin')
+        ->name('admin.academic-years.status');
+
     Route::get('/admin/dashboard-summary', AdminDashboardController::class)
         ->middleware('can:access-admin')
         ->name('admin.dashboard-summary');

@@ -44,7 +44,7 @@ export const PAGE_GROUPS = [
         label: { fr: 'Scolarité', ar: 'الشؤون الدراسية' },
         pages: [
             { key: 'ecole', icon: 'account_balance', label: { fr: 'École', ar: 'المؤسسة' }, roles: ['admin'], component: Ecole },
-            { key: 'annees-scolaires', icon: 'calendar_month', label: { fr: 'Années scolaires', ar: 'السنوات الدراسية' }, roles: ['admin'], component: AnneesScolaires },
+            { key: 'annees-scolaires', icon: 'calendar_month', label: { fr: 'Années scolaires', ar: 'السنوات الدراسية' }, roles: ['admin', 'teacher', 'secretary'], component: AnneesScolaires },
             { key: 'eleves', icon: 'group', label: { fr: 'Élèves', ar: 'الطلبة' }, roles: ['admin', 'secretary'], component: Eleves },
             { key: 'groupes-attribution', icon: 'workspaces', label: { fr: 'Groupes & attribution', ar: 'الأفواج والتوزيع' }, roles: ['admin'], component: GroupesAttribution },
             { key: 'emploi-du-temps', icon: 'calendar_today', label: { fr: 'Emploi du temps', ar: 'الجدول الزمني' }, roles: ['admin'], component: EmploiDuTemps },
