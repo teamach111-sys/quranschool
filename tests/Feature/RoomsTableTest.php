@@ -116,7 +116,8 @@ class RoomsTableTest extends TestCase
             ->assertJsonPath('can_manage', false)
             ->assertJsonPath('can_place', true)
             ->assertJsonCount(3, 'students')
-            ->assertJsonMissingPath('teachers');
+            ->assertJsonMissingPath('teachers')
+            ->assertJsonMissingPath('assignments');
 
         $this->actingAs(new GenericUser([
             'id' => 20,
@@ -130,8 +131,10 @@ class RoomsTableTest extends TestCase
             ->assertJsonPath('can_place', false)
             ->assertJsonCount(1, 'rooms')
             ->assertJsonPath('rooms.0.name', 'Alpha')
+            ->assertJsonPath('rooms.0.assigned_teachers.0.assigned_from', '2020-01-01')
             ->assertJsonMissingPath('students')
-            ->assertJsonMissingPath('teachers');
+            ->assertJsonMissingPath('teachers')
+            ->assertJsonMissingPath('assignments');
     }
 
     public function test_admin_can_create_and_update_rooms_with_valid_age_range_and_capacity(): void
@@ -412,6 +415,119 @@ class RoomsTableTest extends TestCase
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('teacher_id');
+    }
+
+    public function test_admin_can_view_all_year_assignments_and_end_an_assignment_without_deleting_history(): void
+    {
+        $this->seedRooms();
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/rooms/table?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'assignments')
+            ->assertJsonPath('assignments.0.room_name', 'Alpha')
+            ->assertJsonPath('assignments.0.teacher_name', 'Teacher One')
+            ->assertJsonPath('assignments.0.assigned_from', '2020-01-01')
+            ->assertJsonPath('assignments.0.assigned_until', null);
+
+        $this->patchJson('/rooms/1/teachers/20/end', [
+            'year_id' => 1,
+            'assigned_from' => '2020-01-01',
+        ])
+            ->assertOk()
+            ->assertJsonPath('assigned_until', now()->toDateString());
+
+        $this->assertDatabaseHas('room_teachers', [
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 1,
+            'assigned_from' => '2020-01-01',
+            'assigned_until' => now()->toDateString(),
+        ]);
+
+        $this->getJson('/rooms/table?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'assignments')
+            ->assertJsonPath('assignments.0.assigned_until', now()->toDateString());
+    }
+
+    public function test_only_admins_can_end_year_scoped_teacher_assignments(): void
+    {
+        $this->seedRooms();
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $this->patchJson('/rooms/1/teachers/20/end', [
+            'year_id' => 1,
+            'assigned_from' => '2020-01-01',
+        ])->assertForbidden();
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2027-2028',
+            'start_date' => '2027-09-01',
+            'end_date' => '2028-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        $this->patchJson('/rooms/1/teachers/20/end', [
+            'year_id' => 3,
+            'assigned_from' => '2020-01-01',
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('room_teachers', [
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'assigned_until' => null,
+        ]);
+    }
+
+    public function test_future_assignments_cannot_be_ended_before_they_start(): void
+    {
+        $this->seedRooms();
+        DB::table('room_teachers')->insert([
+            'room_id' => 2,
+            'teacher_id' => 21,
+            'school_id' => 1,
+            'year_id' => 1,
+            'assigned_from' => '2999-01-01',
+            'assigned_until' => null,
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->patchJson('/rooms/2/teachers/21/end', [
+            'year_id' => 1,
+            'assigned_from' => '2999-01-01',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('assigned_from');
+
+        $this->assertDatabaseHas('room_teachers', [
+            'room_id' => 2,
+            'teacher_id' => 21,
+            'assigned_from' => '2999-01-01',
+            'assigned_until' => null,
+        ]);
     }
 
     private function seedRooms(): void

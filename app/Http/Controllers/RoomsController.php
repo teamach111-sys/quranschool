@@ -136,6 +136,42 @@ class RoomsController extends Controller
             'is_teacher_view' => $role === 'teacher',
         ];
 
+        if ($role === 'admin') {
+            $response['assignments'] = DB::table('room_teachers')
+                ->join('rooms', function ($join) {
+                    $join->on('rooms.id', '=', 'room_teachers.room_id')
+                        ->on('rooms.school_id', '=', 'room_teachers.school_id')
+                        ->on('rooms.year_id', '=', 'room_teachers.year_id');
+                })
+                ->join('users', function ($join) {
+                    $join->on('users.id', '=', 'room_teachers.teacher_id')
+                        ->on('users.school_id', '=', 'room_teachers.school_id');
+                })
+                ->where('room_teachers.school_id', $schoolId)
+                ->where('room_teachers.year_id', $yearId)
+                ->orderBy('rooms.name')
+                ->orderBy('users.full_name')
+                ->orderBy('room_teachers.assigned_from')
+                ->get([
+                    'room_teachers.room_id',
+                    'room_teachers.teacher_id',
+                    'room_teachers.assigned_from',
+                    'room_teachers.assigned_until',
+                    'rooms.name as room_name',
+                    'users.full_name as teacher_name',
+                ])
+                ->map(fn ($assignment) => [
+                    'key' => "{$assignment->room_id}:{$assignment->teacher_id}:{$assignment->assigned_from}",
+                    'room_id' => (int) $assignment->room_id,
+                    'room_name' => $assignment->room_name,
+                    'teacher_id' => (int) $assignment->teacher_id,
+                    'teacher_name' => $assignment->teacher_name,
+                    'assigned_from' => $assignment->assigned_from,
+                    'assigned_until' => $assignment->assigned_until,
+                ])
+                ->values();
+        }
+
         if (in_array($role, ['admin', 'secretary'], true)) {
             $response['students'] = DB::table('students')
                 ->where('school_id', $schoolId)
@@ -313,6 +349,52 @@ class RoomsController extends Controller
         });
 
         return response()->json(['room_id' => $roomId], 201);
+    }
+
+    public function endTeacherAssignment(Request $request, int $roomId, int $teacherId): JsonResponse
+    {
+        [, $schoolId] = $this->adminContext();
+        $yearId = $this->validateYearId($request, $schoolId);
+        $this->ensureYearIsEditable($schoolId, $yearId);
+        $validated = $request->validate([
+            'assigned_from' => ['required', 'date'],
+        ]);
+        $today = now()->toDateString();
+
+        DB::transaction(function () use ($validated, $roomId, $teacherId, $schoolId, $yearId, $today) {
+            $assignment = DB::table('room_teachers')
+                ->where('room_id', $roomId)
+                ->where('teacher_id', $teacherId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('assigned_from', $validated['assigned_from'])
+                ->whereNull('assigned_until')
+                ->lockForUpdate()
+                ->first(['assigned_from']);
+            abort_unless($assignment, 404);
+
+            if ($assignment->assigned_from > $today) {
+                throw ValidationException::withMessages([
+                    'assigned_from' => 'A future assignment cannot be ended before it starts.',
+                ]);
+            }
+
+            DB::table('room_teachers')
+                ->where('room_id', $roomId)
+                ->where('teacher_id', $teacherId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('assigned_from', $validated['assigned_from'])
+                ->whereNull('assigned_until')
+                ->update(['assigned_until' => $today]);
+        });
+
+        return response()->json([
+            'room_id' => $roomId,
+            'teacher_id' => $teacherId,
+            'assigned_from' => $validated['assigned_from'],
+            'assigned_until' => $today,
+        ]);
     }
 
     public function placeStudent(Request $request, int $studentId): JsonResponse

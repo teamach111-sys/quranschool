@@ -95,6 +95,12 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('roomId')
         ->name('rooms.teachers.store');
 
+    Route::patch('/rooms/{roomId}/teachers/{teacherId}/end', [RoomsController::class, 'endTeacherAssignment'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('roomId')
+        ->whereNumber('teacherId')
+        ->name('rooms.teachers.end');
+
     Route::patch('/students/{studentId}/room', [RoomsController::class, 'placeStudent'])
         ->middleware('can:access-dashboard')
         ->whereNumber('studentId')

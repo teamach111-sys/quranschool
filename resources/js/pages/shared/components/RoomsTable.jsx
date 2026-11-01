@@ -3,6 +3,7 @@ import Icon from '../../../components/Icon';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
 import RoomFormModal from '../../administrator/components/RoomFormModal';
+import RoomTeacherAssignmentTable from '../../administrator/components/RoomTeacherAssignmentTable';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
 import {
@@ -22,6 +23,7 @@ export default function RoomsTable() {
     const { isRTL, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [rooms, setRooms] = useState([]);
+    const [assignments, setAssignments] = useState([]);
     const [students, setStudents] = useState([]);
     const [teachers, setTeachers] = useState([]);
     const [canManage, setCanManage] = useState(false);
@@ -64,6 +66,7 @@ export default function RoomsTable() {
             if (signal?.aborted) return;
             setYearId((currentYearId) => currentYearId ?? Number(data.year_id));
             setRooms(Array.isArray(data.rooms) ? data.rooms : []);
+            setAssignments(Array.isArray(data.assignments) ? data.assignments : []);
             setStudents(Array.isArray(data.students) ? data.students : []);
             setTeachers(Array.isArray(data.teachers) ? data.teachers : []);
             setCanManage(Boolean(data.can_manage));
@@ -232,7 +235,9 @@ export default function RoomsTable() {
             key: 'assigned_teachers',
             label: t.rooms.columns.teachers,
             mobile: 'detail',
-            value: (room) => room.assigned_teachers.map((teacher) => teacher.name).join(', ') || t.rooms.noTeachers,
+            value: (room) => room.assigned_teachers
+                .map((teacher) => `${teacher.name} (${teacher.assigned_from} – ${teacher.assigned_until ?? t.rooms.assignmentOngoing})`)
+                .join(', ') || t.rooms.noTeachers,
         },
         {
             key: 'is_active',
@@ -399,6 +404,14 @@ export default function RoomsTable() {
                     toolbar={toolbar}
                 />
             </div>
+            {canManage && (
+                <RoomTeacherAssignmentTable
+                    assignments={assignments}
+                    yearId={yearId}
+                    yearIsActive={yearIsActive}
+                    onChanged={loadRooms}
+                />
+            )}
             <Modal
                 open={placementOpen}
                 title={t.rooms.placementTitle}
