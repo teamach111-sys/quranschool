@@ -119,6 +119,7 @@ export default function StudentFormModal({
                 const errors = data?.errors ?? {};
                 if (errors.year_id) setError(t.students.form.closedYearError);
                 else if (errors.student_number) setError(t.students.form.duplicateNumberError);
+                else if (errors.room_capacity) setError(t.students.form.roomFullError);
                 else if (errors.room_id) setError(t.students.form.roomError);
                 else setError(t.students.form.saveError);
                 return;

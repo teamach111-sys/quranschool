@@ -181,13 +181,19 @@ class StudentsController extends Controller
         $student = $this->validatedStudent($request, $schoolId, $yearId);
         $now = now();
 
-        $studentId = DB::table('students')->insertGetId([
-            ...$student,
-            'school_id' => $schoolId,
-            'year_id' => $yearId,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
+        $studentId = DB::transaction(function () use ($student, $schoolId, $yearId, $now) {
+            if ($student['room_id'] !== null && $student['status'] !== 'withdrawn') {
+                $this->ensureRoomHasCapacity($schoolId, $yearId, $student['room_id']);
+            }
+
+            return DB::table('students')->insertGetId([
+                ...$student,
+                'school_id' => $schoolId,
+                'year_id' => $yearId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        });
 
         return response()->json([
             'student' => $this->findStudentPayload($studentId, $schoolId, $yearId),
@@ -208,11 +214,24 @@ class StudentsController extends Controller
         $this->ensureYearIsEditable($schoolId, $yearId);
         $student = $this->validatedStudent($request, $schoolId, $yearId, $studentId);
 
-        DB::table('students')
-            ->where('id', $studentId)
-            ->where('school_id', $schoolId)
-            ->where('year_id', $yearId)
-            ->update([...$student, 'updated_at' => now()]);
+        DB::transaction(function () use ($student, $studentId, $schoolId, $yearId) {
+            DB::table('students')
+                ->where('id', $studentId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->lockForUpdate()
+                ->first(['id']);
+
+            if ($student['room_id'] !== null && $student['status'] !== 'withdrawn') {
+                $this->ensureRoomHasCapacity($schoolId, $yearId, $student['room_id'], $studentId);
+            }
+
+            DB::table('students')
+                ->where('id', $studentId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->update([...$student, 'updated_at' => now()]);
+        });
 
         return response()->json([
             'student' => $this->findStudentPayload($studentId, $schoolId, $yearId),
@@ -339,6 +358,36 @@ class StudentsController extends Controller
             'status' => $validated['status'],
             'notes' => $validated['notes'] ?? null,
         ];
+    }
+
+    private function ensureRoomHasCapacity(
+        int $schoolId,
+        int $yearId,
+        int $roomId,
+        ?int $studentId = null,
+    ): void {
+        $room = DB::table('rooms')
+            ->where('id', $roomId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->where('is_active', true)
+            ->lockForUpdate()
+            ->first(['id', 'capacity']);
+        abort_unless($room, 404);
+
+        $studentsInRoom = DB::table('students')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->where('room_id', $roomId)
+            ->whereIn('status', ['active', 'paused'])
+            ->when($studentId !== null, fn ($query) => $query->where('id', '!=', $studentId))
+            ->count();
+
+        if ($studentsInRoom >= (int) $room->capacity) {
+            throw ValidationException::withMessages([
+                'room_capacity' => 'The selected room has reached its capacity.',
+            ]);
+        }
     }
 
     private function findStudentPayload(int $studentId, int $schoolId, int $yearId): array

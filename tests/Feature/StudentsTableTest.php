@@ -36,6 +36,7 @@ class StudentsTableTest extends TestCase
             $table->unsignedBigInteger('school_id');
             $table->unsignedBigInteger('year_id');
             $table->string('name');
+            $table->unsignedSmallInteger('capacity')->default(12);
             $table->boolean('is_active')->default(true);
         });
 
@@ -344,6 +345,54 @@ class StudentsTableTest extends TestCase
         $this->postJson('/students', [...$payload, 'student_number' => 'S-NEW', 'room_id' => 3])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('room_id');
+    }
+
+    public function test_student_forms_enforce_room_capacity_without_blocking_existing_placements(): void
+    {
+        DB::table('rooms')->where('id', 1)->update(['capacity' => 1]);
+        DB::table('rooms')->where('id', 2)->update(['capacity' => 1]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/students/1', [
+            'year_id' => 1,
+            'full_name' => 'Zayd Ali',
+            'student_number' => 'S-100',
+            'birth_date' => '2015-01-01',
+            'guardian_name' => 'Ali',
+            'guardian_phone' => '0600000001',
+            'guardian_email' => 'ali@example.com',
+            'room_id' => 1,
+            'enrollment_date' => '2026-09-01',
+            'status' => 'active',
+        ])->assertOk();
+
+        $payload = [
+            'year_id' => 1,
+            'full_name' => 'New Student',
+            'student_number' => 'S-NEW',
+            'room_id' => 2,
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+        ];
+
+        $this->postJson('/students', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('room_capacity');
+
+        $this->putJson('/students/1', [...$payload, 'student_number' => 'S-100'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('room_capacity');
+
+        $this->assertDatabaseMissing('students', ['student_number' => 'S-NEW']);
+        $this->assertDatabaseHas('students', [
+            'id' => 1,
+            'full_name' => 'Zayd Ali',
+            'room_id' => 1,
+        ]);
     }
 
     public function test_closed_years_cannot_be_changed_and_teachers_cannot_submit_student_forms(): void

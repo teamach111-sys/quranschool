@@ -46,7 +46,7 @@ export const PAGE_GROUPS = [
             { key: 'ecole', icon: 'account_balance', label: { fr: 'École', ar: 'المؤسسة' }, roles: ['admin'], component: Ecole },
             { key: 'annees-scolaires', icon: 'calendar_month', label: { fr: 'Années scolaires', ar: 'السنوات الدراسية' }, roles: ['admin', 'teacher', 'secretary'], component: AnneesScolaires },
             { key: 'eleves', icon: 'group', label: { fr: 'Élèves', ar: 'الطلبة' }, roles: ['admin', 'secretary'], component: Eleves },
-            { key: 'groupes-attribution', icon: 'workspaces', label: { fr: 'Groupes & attribution', ar: 'الأفواج والتوزيع' }, roles: ['admin'], component: GroupesAttribution },
+            { key: 'groupes-attribution', icon: 'workspaces', label: { fr: 'Groupes & attribution', ar: 'الأفواج والتوزيع' }, roles: ['admin', 'secretary'], component: GroupesAttribution },
             { key: 'emploi-du-temps', icon: 'calendar_today', label: { fr: 'Emploi du temps', ar: 'الجدول الزمني' }, roles: ['admin'], component: EmploiDuTemps },
             { key: 'presences', icon: 'fact_check', label: { fr: 'Présences', ar: 'الحضور' }, roles: ['admin', 'teacher', 'secretary'], component: Presences },
             { key: 'seances-memorisation', icon: 'menu_book', label: { fr: 'Séances de mémorisation', ar: 'حصص الحفظ' }, roles: ['admin', 'teacher'], component: SeancesMemorisation },

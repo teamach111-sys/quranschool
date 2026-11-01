@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RoomsController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\StudentsController;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +71,34 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->whereNumber('studentId')
         ->name('students.status');
+
+    Route::get('/rooms/table', [RoomsController::class, 'table'])
+        ->middleware('can:access-dashboard')
+        ->name('rooms.table');
+
+    Route::post('/rooms', [RoomsController::class, 'store'])
+        ->middleware('can:access-dashboard')
+        ->name('rooms.store');
+
+    Route::put('/rooms/{roomId}', [RoomsController::class, 'update'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('roomId')
+        ->name('rooms.update');
+
+    Route::patch('/rooms/{roomId}/archive', [RoomsController::class, 'archive'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('roomId')
+        ->name('rooms.archive');
+
+    Route::post('/rooms/{roomId}/teachers', [RoomsController::class, 'assignTeacher'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('roomId')
+        ->name('rooms.teachers.store');
+
+    Route::patch('/students/{studentId}/room', [RoomsController::class, 'placeStudent'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('studentId')
+        ->name('students.room');
 
     Route::patch('/admin/academic-years/{yearId}/status', [AcademicYearController::class, 'changeStatus'])
         ->middleware('can:access-admin')
