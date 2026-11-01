@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,4 +33,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/academic-years', [AcademicYearController::class, 'index'])
         ->middleware('can:access-dashboard')
         ->name('academic-years.index');
+
+    Route::get('/admin/dashboard-summary', AdminDashboardController::class)
+        ->middleware('can:access-admin')
+        ->name('admin.dashboard-summary');
 });
