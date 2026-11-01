@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SchoolSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,4 +38,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard-summary', AdminDashboardController::class)
         ->middleware('can:access-admin')
         ->name('admin.dashboard-summary');
+
+    Route::get('/admin/school-settings', [SchoolSettingsController::class, 'show'])
+        ->middleware('can:access-admin')
+        ->name('admin.school-settings.show');
+
+    Route::put('/admin/school-settings', [SchoolSettingsController::class, 'update'])
+        ->middleware('can:access-admin')
+        ->name('admin.school-settings.update');
 });
