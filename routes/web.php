@@ -48,6 +48,24 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('students.table');
 
+    Route::get('/students/options', [StudentsController::class, 'options'])
+        ->middleware('can:access-dashboard')
+        ->name('students.options');
+
+    Route::get('/students/{studentId}', [StudentsController::class, 'show'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('studentId')
+        ->name('students.show');
+
+    Route::post('/students', [StudentsController::class, 'store'])
+        ->middleware('can:access-dashboard')
+        ->name('students.store');
+
+    Route::put('/students/{studentId}', [StudentsController::class, 'update'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('studentId')
+        ->name('students.update');
+
     Route::patch('/admin/academic-years/{yearId}/status', [AcademicYearController::class, 'changeStatus'])
         ->middleware('can:access-admin')
         ->name('admin.academic-years.status');

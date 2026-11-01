@@ -62,6 +62,7 @@ class StudentsTableTest extends TestCase
             $table->string('guardian_phone')->nullable();
             $table->string('guardian_email')->nullable();
             $table->text('notes')->nullable();
+            $table->timestamps();
         });
 
         DB::table('schools')->insert([
@@ -121,5 +122,238 @@ class StudentsTableTest extends TestCase
             ->assertJsonCount(2, 'students')
             ->assertJsonPath('students.0.full_name', 'Amina Benali')
             ->assertJsonPath('students.1.full_name', 'Zayd Ali');
+    }
+
+    public function test_admin_can_create_a_student_in_an_active_year(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => '  New Student  ',
+            'student_number' => 'S-103',
+            'birth_date' => '2016-04-12',
+            'guardian_name' => 'Parent',
+            'guardian_phone' => '0600000103',
+            'guardian_email' => 'parent@example.com',
+            'room_id' => 1,
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+            'notes' => 'First enrollment',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('student.full_name', 'New Student')
+            ->assertJsonPath('student.room_name', 'Alpha');
+
+        $this->assertDatabaseHas('students', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'student_number' => 'S-103',
+            'full_name' => 'New Student',
+        ]);
+    }
+
+    public function test_secretary_can_update_student_details_and_room_in_the_same_year(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $this->putJson('/students/1', [
+            'year_id' => 1,
+            'full_name' => 'Zayd Ali Updated',
+            'student_number' => 'S-100',
+            'birth_date' => '2015-01-01',
+            'guardian_name' => 'Updated Parent',
+            'guardian_phone' => '0600000999',
+            'guardian_email' => 'updated@example.com',
+            'room_id' => 2,
+            'enrollment_date' => '2026-09-01',
+            'status' => 'paused',
+            'notes' => 'Updated notes',
+        ])
+            ->assertOk()
+            ->assertJsonPath('student.full_name', 'Zayd Ali Updated')
+            ->assertJsonPath('student.room_name', 'Beta')
+            ->assertJsonPath('student.status', 'paused');
+
+        $this->assertDatabaseHas('students', [
+            'id' => 1,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 2,
+            'status' => 'paused',
+        ]);
+    }
+
+    public function test_student_number_must_be_unique_per_year_and_room_must_match_school_and_year(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $payload = [
+            'year_id' => 1,
+            'full_name' => 'Another Student',
+            'student_number' => 'S-100',
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+        ];
+
+        $this->postJson('/students', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('student_number');
+
+        $this->postJson('/students', [...$payload, 'student_number' => 'S-NEW', 'room_id' => 3])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('room_id');
+    }
+
+    public function test_closed_years_cannot_be_changed_and_teachers_cannot_submit_student_forms(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2024-2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-06-30',
+            'is_current' => false,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->postJson('/students', [
+            'year_id' => 3,
+            'full_name' => 'Closed Year Student',
+            'enrollment_date' => '2024-09-10',
+            'status' => 'active',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => 'Unauthorized Student',
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+        ])->assertForbidden();
+    }
+
+    public function test_teacher_student_detail_is_limited_to_assigned_students_and_teaching_fields(): void
+    {
+        DB::table('rooms')->insert([
+            'id' => 4,
+            'school_id' => 1,
+            'year_id' => 1,
+            'name' => 'Unassigned',
+            'is_active' => true,
+        ]);
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 4,
+            'student_number' => 'S-104',
+            'full_name' => 'Unassigned Student',
+            'status' => 'active',
+            'enrollment_date' => '2026-09-04',
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->getJson('/students/1?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('student.full_name', 'Zayd Ali')
+            ->assertJsonPath('student.room_name', 'Alpha')
+            ->assertJsonPath('student.is_read_only', true)
+            ->assertJsonMissingPath('student.student_number')
+            ->assertJsonMissingPath('student.status')
+            ->assertJsonMissingPath('student.enrollment_date')
+            ->assertJsonMissingPath('student.guardian_phone');
+
+        $this->getJson('/students/5?year_id=1')->assertNotFound();
+    }
+
+    public function test_student_options_are_limited_to_active_rooms_in_the_selected_school_and_year(): void
+    {
+        DB::table('rooms')->insert([
+            'id' => 4,
+            'school_id' => 1,
+            'year_id' => 1,
+            'name' => 'Archived',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/students/options?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('is_editable', true)
+            ->assertJsonCount(2, 'rooms')
+            ->assertJsonPath('rooms.0.name', 'Alpha')
+            ->assertJsonPath('rooms.1.name', 'Beta');
+
+        $this->getJson('/students/4?year_id=1')->assertNotFound();
+    }
+
+    public function test_update_cannot_move_a_student_to_another_academic_year(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2025-2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/students/1', [
+            'year_id' => 2,
+            'full_name' => 'Cross-year Student',
+            'enrollment_date' => '2026-09-01',
+            'status' => 'active',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+
+        $this->putJson('/students/1', [
+            'year_id' => 3,
+            'full_name' => 'Cross-year Student',
+            'enrollment_date' => '2026-09-01',
+            'status' => 'active',
+        ])->assertNotFound();
     }
 }
