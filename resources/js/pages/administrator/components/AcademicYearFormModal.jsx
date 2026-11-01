@@ -97,7 +97,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
 
     if (!open) return null;
 
-    const inputClassName = 'w-full rounded-lg bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:bg-inverse-surface dark:text-inverse-on-surface dark:focus:bg-surface-container';
+    const inputClassName = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:focus:border-primary-fixed-dim dark:focus:bg-[#202f29] dark:focus:ring-primary-fixed-dim';
     const title = isEditing ? t.academicYears.formEditTitle : t.academicYears.formCreateTitle;
 
     return (
@@ -115,7 +115,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                 aria-labelledby={`${dialogId}-title`}
                 tabIndex={-1}
                 dir={isRTL ? 'rtl' : 'ltr'}
-                className="max-h-[calc(100vh-1.5rem)] w-full max-w-[500px] overflow-y-auto rounded-xl bg-surface-container-lowest p-5 shadow-ambient outline-none dark:bg-inverse-surface sm:p-7"
+                className="max-h-[calc(100vh-1.5rem)] w-full max-w-[500px] overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-ambient outline-none dark:border-[#384d43] dark:bg-[#202f29] dark:shadow-2xl sm:p-7"
             >
                 <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                     <header className="flex items-start justify-between gap-4">
@@ -132,7 +132,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                             aria-label={t.academicYears.cancel}
                             disabled={saving}
                             onClick={onClose}
-                            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container dark:bg-tertiary-container dark:text-on-tertiary-container dark:hover:bg-tertiary"
+                            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container dark:bg-[#182620] dark:text-[#9bb2a8] dark:hover:bg-[#2c3d36]"
                         >
                             <Icon name="close" className="text-[18px]" />
                         </button>
@@ -186,7 +186,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 rounded-lg bg-surface-container-low p-3.5 dark:bg-tertiary-container">
+                        <div className="flex flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-3.5 dark:border-[#384d43] dark:bg-[#182620]">
                             <label className="flex min-h-11 items-center gap-3 text-[13px] leading-5 text-on-surface dark:text-inverse-on-surface">
                                 <input
                                     name="is_active"
@@ -194,7 +194,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                                     checked={form.is_active}
                                     disabled={form.is_current}
                                     onChange={handleChange}
-                                    className="size-5 shrink-0 accent-primary"
+                                    className="size-5 shrink-0 accent-primary dark:accent-primary-fixed-dim"
                                 />
                                 {t.academicYears.isActive}
                             </label>
@@ -205,7 +205,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                                     checked={form.is_current}
                                     disabled={Boolean(year?.is_current)}
                                     onChange={handleChange}
-                                    className="size-5 shrink-0 accent-primary"
+                                    className="size-5 shrink-0 accent-primary dark:accent-primary-fixed-dim"
                                 />
                                 {t.academicYears.isCurrent}
                             </label>
@@ -214,19 +214,19 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                         {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
                     </div>
 
-                    <footer className="flex flex-col gap-3 border-t border-outline-variant pt-4 dark:border-tertiary-container sm:flex-row">
+                    <footer className="flex flex-col gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:flex-row">
                         <button
                             type="button"
                             disabled={saving}
                             onClick={onClose}
-                            className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-60 dark:bg-tertiary-container dark:text-on-tertiary-container dark:hover:bg-tertiary"
+                            className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
                         >
                             {t.academicYears.cancel}
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-container"
+                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3] dark:hover:bg-[#3e7b67]"
                         >
                             <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                             {saving ? t.academicYears.saving : t.academicYears.save}
