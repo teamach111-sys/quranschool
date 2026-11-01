@@ -64,6 +64,131 @@ class AdminUsersController extends Controller
         ]);
     }
 
+    public function store(Request $request): JsonResponse
+    {
+        $schoolId = $this->adminSchoolId();
+        $validated = $this->validatedUser($request, null, true);
+
+        $userId = DB::transaction(function () use ($validated, $schoolId) {
+            $userId = DB::table('users')->insertGetId([
+                'school_id' => $schoolId,
+                'role_id' => $validated['role_id'],
+                'full_name' => $validated['full_name'],
+                'email' => $validated['email'],
+                'password_hash' => Hash::make($validated['password']),
+                'phone' => $validated['phone'],
+                'language' => $validated['language'],
+                'is_active' => $validated['is_active'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('role_change_history')->insert([
+                'school_id' => $schoolId,
+                'user_id' => $userId,
+                'changed_by' => (int) Auth::id(),
+                'old_role_id' => null,
+                'new_role_id' => $validated['role_id'],
+                'reason' => $validated['reason'],
+                'created_at' => now(),
+            ]);
+
+            return $userId;
+        });
+
+        return response()->json(['user_id' => $userId], 201);
+    }
+
+    public function update(Request $request, int $userId): JsonResponse
+    {
+        $schoolId = $this->adminSchoolId();
+        $validated = $this->validatedUser($request, $userId, false);
+
+        DB::transaction(function () use ($validated, $schoolId, $userId) {
+            $activeAdminIds = $this->lockActiveAdminIds($schoolId);
+            $user = DB::table('users')
+                ->where('school_id', $schoolId)
+                ->where('id', $userId)
+                ->lockForUpdate()
+                ->first(['id', 'role_id', 'is_active']);
+            abort_unless($user, 404);
+
+            $roleChanged = (int) $user->role_id !== $validated['role_id'];
+            $statusChanged = (bool) $user->is_active !== $validated['is_active'];
+            if ($roleChanged && (int) $user->id === (int) Auth::id()) {
+                throw ValidationException::withMessages([
+                    'role_id' => 'Administrators cannot change their own role.',
+                ]);
+            }
+
+            if ($roleChanged && blank($validated['reason'])) {
+                throw ValidationException::withMessages([
+                    'reason' => 'A reason is required when changing a user role.',
+                ]);
+            }
+
+            $willRemainActiveAdmin = $validated['is_active']
+                && $this->isAdminRole($validated['role_id']);
+            $isCurrentlyActiveAdmin = (bool) $user->is_active
+                && $this->isAdminRole((int) $user->role_id);
+
+            if ($isCurrentlyActiveAdmin && ! $willRemainActiveAdmin) {
+                abort_if(
+                    (int) $user->id === (int) Auth::id(),
+                    422,
+                    'Administrators cannot deactivate their own account.',
+                );
+                $this->ensureAnotherActiveAdminExists($activeAdminIds, (int) $user->id);
+            } elseif (! $validated['is_active'] && (int) $user->id === (int) Auth::id()) {
+                abort(422, 'Administrators cannot deactivate their own account.');
+            }
+
+            $updates = [
+                'role_id' => $validated['role_id'],
+                'full_name' => $validated['full_name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'language' => $validated['language'],
+                'is_active' => $validated['is_active'],
+                'updated_at' => now(),
+            ];
+            if ($validated['password'] !== null) {
+                $updates['password_hash'] = Hash::make($validated['password']);
+            }
+
+            DB::table('users')
+                ->where('school_id', $schoolId)
+                ->where('id', $userId)
+                ->update($updates);
+
+            if ($roleChanged) {
+                DB::table('role_change_history')->insert([
+                    'school_id' => $schoolId,
+                    'user_id' => $userId,
+                    'changed_by' => (int) Auth::id(),
+                    'old_role_id' => (int) $user->role_id,
+                    'new_role_id' => $validated['role_id'],
+                    'reason' => $validated['reason'],
+                    'created_at' => now(),
+                ]);
+            }
+
+            if ($statusChanged) {
+                DB::table('role_change_history')->insert([
+                    'school_id' => $schoolId,
+                    'user_id' => $userId,
+                    'changed_by' => (int) Auth::id(),
+                    'old_role_id' => $validated['role_id'],
+                    'new_role_id' => $validated['role_id'],
+                    'reason' => $validated['is_active'] ? 'Account reactivated.' : 'Account deactivated.',
+                    'created_at' => now(),
+                ]);
+            }
+        });
+
+        return response()->json(['user_id' => $userId]);
+    }
+
     public function updateStatus(Request $request, int $userId): JsonResponse
     {
         $schoolId = $this->adminSchoolId();
@@ -201,6 +326,58 @@ class AdminUsersController extends Controller
         abort_unless(data_get($user, 'role') === 'admin' && $schoolId, 403);
 
         return (int) $schoolId;
+    }
+
+    /**
+     * @return array{
+     *     full_name: string,
+     *     email: string,
+     *     password: ?string,
+     *     phone: ?string,
+     *     language: string,
+     *     role_id: int,
+     *     is_active: bool,
+     *     reason: ?string
+     * }
+     */
+    private function validatedUser(Request $request, ?int $userId, bool $isCreating): array
+    {
+        $emailRule = Rule::unique('users', 'email');
+        if ($userId !== null) {
+            $emailRule->ignore($userId);
+        }
+
+        $validated = $request->validate([
+            'full_name' => ['required', 'string', 'max:120'],
+            'email' => [
+                'required',
+                'email',
+                'max:190',
+                $emailRule,
+            ],
+            'password' => $isCreating
+                ? ['required', 'string', 'min:12', 'max:255', 'confirmed']
+                : ['sometimes', 'nullable', 'string', 'min:12', 'max:255', 'confirmed'],
+            'password_confirmation' => $isCreating
+                ? ['required', 'string']
+                : ['required_with:password', 'nullable', 'string'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'language' => ['required', Rule::in(['fr', 'ar'])],
+            'role_id' => ['required', 'integer', Rule::exists('roles', 'id')],
+            'is_active' => ['required', 'boolean'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        return [
+            'full_name' => $validated['full_name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'language' => $validated['language'],
+            'role_id' => (int) $validated['role_id'],
+            'is_active' => (bool) $validated['is_active'],
+            'reason' => $validated['reason'] ?? null,
+        ];
     }
 
     private function isAdminRole(int $roleId): bool

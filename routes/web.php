@@ -164,6 +164,15 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-admin')
         ->name('admin.users.table');
 
+    Route::post('/admin/users', [AdminUsersController::class, 'store'])
+        ->middleware('can:access-admin')
+        ->name('admin.users.store');
+
+    Route::put('/admin/users/{userId}', [AdminUsersController::class, 'update'])
+        ->middleware('can:access-admin')
+        ->whereNumber('userId')
+        ->name('admin.users.update');
+
     Route::patch('/admin/users/{userId}/status', [AdminUsersController::class, 'updateStatus'])
         ->middleware('can:access-admin')
         ->whereNumber('userId')

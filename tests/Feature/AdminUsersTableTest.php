@@ -27,11 +27,12 @@ class AdminUsersTableTest extends TestCase
             $table->unsignedBigInteger('school_id');
             $table->unsignedInteger('role_id');
             $table->string('full_name');
-            $table->string('email');
+            $table->string('email')->unique();
             $table->string('password_hash');
             $table->string('phone')->nullable();
             $table->string('language');
             $table->boolean('is_active');
+            $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
         });
 
@@ -61,6 +62,165 @@ class AdminUsersTableTest extends TestCase
             ->assertJsonPath('users.0.role_name_fr', 'Administrateur')
             ->assertJsonPath('users.0.is_self', true);
         $this->assertArrayNotHasKey('password_hash', $response->json('users.0'));
+    }
+
+    public function test_admin_creates_a_user_and_records_the_initial_role(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+
+        $response = $this->postJson('/admin/users', [
+            ...$this->validUser(),
+            'reason' => 'New teaching staff member.',
+        ]);
+
+        $response->assertCreated()->assertJsonStructure(['user_id']);
+        $userId = $response->json('user_id');
+        $this->assertDatabaseHas('users', [
+            'id' => $userId,
+            'school_id' => 1,
+            'role_id' => 2,
+            'full_name' => 'New Teacher',
+            'email' => 'new-teacher@example.test',
+            'phone' => '+212 600 000 002',
+            'language' => 'fr',
+            'is_active' => true,
+        ]);
+        $this->assertTrue(Hash::check(
+            'a-strong-password-2026',
+            DB::table('users')->where('id', $userId)->value('password_hash'),
+        ));
+        $this->assertDatabaseHas('role_change_history', [
+            'user_id' => $userId,
+            'changed_by' => 10,
+            'old_role_id' => null,
+            'new_role_id' => 2,
+            'reason' => 'New teaching staff member.',
+        ]);
+    }
+
+    public function test_admin_cannot_create_a_user_with_an_existing_email(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+
+        $this->postJson('/admin/users', [
+            ...$this->validUser(),
+            'email' => 'teacher@example.test',
+        ])->assertUnprocessable()->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseCount('users', 4);
+        $this->assertDatabaseCount('role_change_history', 0);
+    }
+
+    public function test_admin_cannot_create_a_user_with_an_unconfirmed_password(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+
+        $this->postJson('/admin/users', [
+            ...$this->validUser(),
+            'password_confirmation' => 'a-different-password-2026',
+        ])->assertUnprocessable()->assertJsonValidationErrors('password');
+
+        $this->assertDatabaseCount('users', 4);
+        $this->assertDatabaseCount('role_change_history', 0);
+    }
+
+    public function test_admin_updates_a_user_and_audits_role_change_without_replacing_password(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+        $originalHash = DB::table('users')->where('id', 20)->value('password_hash');
+
+        $this->putJson('/admin/users/20', [
+            'full_name' => 'Updated Teacher',
+            'email' => 'updated-teacher@example.test',
+            'phone' => '+212 600 000 003',
+            'language' => 'ar',
+            'role_id' => 3,
+            'is_active' => true,
+            'reason' => 'Moving to office administration.',
+            'password' => '',
+            'password_confirmation' => '',
+        ])->assertOk()->assertJsonPath('user_id', 20);
+
+        $this->assertDatabaseHas('users', [
+            'id' => 20,
+            'school_id' => 1,
+            'full_name' => 'Updated Teacher',
+            'email' => 'updated-teacher@example.test',
+            'phone' => '+212 600 000 003',
+            'language' => 'ar',
+            'role_id' => 3,
+            'is_active' => true,
+        ]);
+        $this->assertSame($originalHash, DB::table('users')->where('id', 20)->value('password_hash'));
+        $this->assertDatabaseHas('role_change_history', [
+            'user_id' => 20,
+            'changed_by' => 10,
+            'old_role_id' => 2,
+            'new_role_id' => 3,
+            'reason' => 'Moving to office administration.',
+        ]);
+    }
+
+    public function test_admin_cannot_change_a_role_without_a_reason(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+
+        $this->putJson('/admin/users/20', [
+            ...$this->validUser(),
+            'email' => 'teacher@example.test',
+            'role_id' => 3,
+        ])->assertUnprocessable()->assertJsonValidationErrors('reason');
+
+        $this->assertDatabaseHas('users', ['id' => 20, 'role_id' => 2]);
+        $this->assertDatabaseCount('role_change_history', 0);
+    }
+
+    public function test_admin_deactivates_a_user_from_the_edit_form_and_records_it(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+
+        $this->putJson('/admin/users/21', [
+            'full_name' => 'Secretary User',
+            'email' => 'secretary@example.test',
+            'phone' => '+212 600 000 001',
+            'language' => 'fr',
+            'role_id' => 3,
+            'is_active' => false,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('users', ['id' => 21, 'is_active' => false]);
+        $this->assertDatabaseHas('role_change_history', [
+            'user_id' => 21,
+            'changed_by' => 10,
+            'old_role_id' => 3,
+            'new_role_id' => 3,
+            'reason' => 'Account deactivated.',
+        ]);
+    }
+
+    public function test_admin_cannot_edit_a_user_from_another_school(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+
+        $this->putJson('/admin/users/30', [
+            ...$this->validUser(),
+            'email' => 'other-admin@example.test',
+            'role_id' => 1,
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('users', [
+            'id' => 30,
+            'school_id' => 2,
+            'email' => 'other-admin@example.test',
+            'role_id' => 1,
+        ]);
     }
 
     public function test_admin_deactivates_a_user_and_records_the_account_change(): void
@@ -201,6 +361,8 @@ class AdminUsersTableTest extends TestCase
 
         $this->getJson('/admin/users/table')->assertForbidden();
         $this->patchJson('/admin/users/21/status', ['is_active' => false])->assertForbidden();
+        $this->postJson('/admin/users', $this->validUser())->assertForbidden();
+        $this->putJson('/admin/users/21', $this->validUser())->assertForbidden();
     }
 
     public function test_user_management_requires_authentication(): void
@@ -215,6 +377,23 @@ class AdminUsersTableTest extends TestCase
             'school_id' => 1,
             'role' => 'admin',
         ]);
+    }
+
+    /**
+     * @return array<string, bool|int|string|null>
+     */
+    private function validUser(): array
+    {
+        return [
+            'full_name' => 'New Teacher',
+            'email' => 'new-teacher@example.test',
+            'password' => 'a-strong-password-2026',
+            'password_confirmation' => 'a-strong-password-2026',
+            'phone' => '+212 600 000 002',
+            'language' => 'fr',
+            'role_id' => 2,
+            'is_active' => true,
+        ];
     }
 
     private function seedUsers(): void

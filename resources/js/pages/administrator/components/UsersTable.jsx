@@ -6,6 +6,7 @@ import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 import DesktopTable from '../../../tables/desktoptable';
 import MobileTable from '../../../tables/mobiletable';
+import UserFormModal from './UserFormModal';
 
 export default function UsersTable() {
     const { isRTL, lang, t } = useLanguage();
@@ -18,6 +19,7 @@ export default function UsersTable() {
     const [statusFilter, setStatusFilter] = useState('');
     const [action, setAction] = useState(null);
     const [pendingStatus, setPendingStatus] = useState(null);
+    const [formState, setFormState] = useState(null);
     const [roleForm, setRoleForm] = useState({ role_id: '', reason: '' });
     const [passwordForm, setPasswordForm] = useState({ password: '', password_confirmation: '' });
     const [saving, setSaving] = useState(false);
@@ -76,6 +78,8 @@ export default function UsersTable() {
         setActionError('');
         setAction({ type: 'password', user });
     };
+
+    const openUserForm = (user = null) => setFormState({ user });
 
     const closeAction = () => {
         if (saving) return;
@@ -208,6 +212,12 @@ export default function UsersTable() {
     ];
     const actions = [
         {
+            key: 'edit',
+            icon: 'edit',
+            label: t.users.edit,
+            onClick: openUserForm,
+        },
+        {
             key: 'role',
             icon: 'manage_accounts',
             label: t.users.changeRole,
@@ -293,6 +303,16 @@ export default function UsersTable() {
 
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className="flex justify-end">
+                <button
+                    type="button"
+                    onClick={() => openUserForm()}
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                >
+                    <Icon name="add" className="text-[17px]" />
+                    {t.users.create}
+                </button>
+            </div>
             <div className="hidden md:block">
                 <DesktopTable
                     ariaLabel={t.users.listLabel}
@@ -317,6 +337,18 @@ export default function UsersTable() {
                     actions={actions}
                 />
             </div>
+            {formState && (
+                <UserFormModal
+                    open
+                    user={formState.user}
+                    roles={roles}
+                    onClose={() => setFormState(null)}
+                    onSaved={async () => {
+                        setFormState(null);
+                        await loadUsers();
+                    }}
+                />
+            )}
             <Modal
                 open={Boolean(action)}
                 title={actionTitle}
