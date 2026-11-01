@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MemorizationSessionsController;
 use App\Http\Controllers\RoomsController;
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\SchoolSettingsController;
@@ -115,6 +116,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/attendance/table', [AttendanceController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('attendance.table');
+
+    Route::get('/memorization-sessions/table', [MemorizationSessionsController::class, 'table'])
+        ->middleware('can:access-dashboard')
+        ->name('memorization-sessions.table');
 
     Route::post('/attendance', [AttendanceController::class, 'store'])
         ->middleware('can:access-dashboard')
