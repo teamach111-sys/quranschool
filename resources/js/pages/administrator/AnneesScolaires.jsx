@@ -3,6 +3,7 @@ import Icon from '../../components/Icon';
 import { apiFetch } from '../../lib/api';
 import { ACADEMIC_YEARS_UPDATED_EVENT } from '../../persisters/yearselector';
 import { useLanguage } from '../../hooks/useLanguage';
+import AcademicYearFormModal from './components/AcademicYearFormModal';
 
 export default function AnneesScolaires() {
     const { lang, t } = useLanguage();
@@ -12,6 +13,8 @@ export default function AnneesScolaires() {
     const [loadError, setLoadError] = useState(false);
     const [updateError, setUpdateError] = useState(false);
     const [workingYearId, setWorkingYearId] = useState(null);
+    const [formOpen, setFormOpen] = useState(false);
+    const [editingYear, setEditingYear] = useState(null);
     const locale = lang === 'ar' ? 'ar-MA' : 'fr-MA';
 
     useEffect(() => {
@@ -57,6 +60,18 @@ export default function AnneesScolaires() {
         }
     };
 
+    const closeForm = () => {
+        setFormOpen(false);
+        setEditingYear(null);
+    };
+
+    const handleFormSaved = (data) => {
+        setYears(Array.isArray(data.years) ? data.years : []);
+        setCanManage(Boolean(data.can_manage));
+        closeForm();
+        window.dispatchEvent(new Event(ACADEMIC_YEARS_UPDATED_EVENT));
+    };
+
     const formatDate = (date) => new Intl.DateTimeFormat(locale, {
         year: 'numeric',
         month: 'short',
@@ -74,6 +89,14 @@ export default function AnneesScolaires() {
     return (
         <div className="flex w-full flex-col gap-3">
             {updateError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.academicYears.updateError}</p>}
+            {canManage && (
+                <div className="flex justify-end">
+                    <button type="button" onClick={() => { setEditingYear(null); setFormOpen(true); }} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container">
+                        <Icon name="add" className="text-[18px]" />
+                        {t.academicYears.create}
+                    </button>
+                </div>
+            )}
             {years.length === 0 ? (
                 <p className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.academicYears.empty}</p>
             ) : (
@@ -95,6 +118,12 @@ export default function AnneesScolaires() {
                             </div>
                             {canManage && (
                                 <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                    {year.is_active && (
+                                        <button type="button" disabled={workingYearId !== null} onClick={() => { setEditingYear(year); setFormOpen(true); }} className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] leading-4 font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-60 dark:border-tertiary-container dark:bg-inverse-surface dark:text-on-tertiary-container dark:hover:bg-tertiary-container">
+                                            <Icon name="edit" className="text-[16px]" />
+                                            {t.academicYears.edit}
+                                        </button>
+                                    )}
                                     {!year.is_active && (
                                         <button type="button" disabled={workingYearId !== null} onClick={() => updateYear(year, 'open')} className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] leading-4 font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-60 dark:border-tertiary-container dark:bg-inverse-surface dark:text-on-tertiary-container dark:hover:bg-tertiary-container">
                                             <Icon name="lock_open" className="text-[16px]" />
@@ -119,6 +148,14 @@ export default function AnneesScolaires() {
                     ))}
                 </ul>
             )}
+                {canManage && (
+                    <AcademicYearFormModal
+                        open={formOpen}
+                        year={editingYear}
+                        onClose={closeForm}
+                        onSaved={handleFormSaved}
+                    />
+                )}
         </div>
     );
 }

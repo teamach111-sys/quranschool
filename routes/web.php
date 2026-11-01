@@ -43,6 +43,14 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-admin')
         ->name('admin.academic-years.status');
 
+    Route::post('/admin/academic-years', [AcademicYearController::class, 'store'])
+        ->middleware('can:access-admin')
+        ->name('admin.academic-years.store');
+
+    Route::put('/admin/academic-years/{yearId}', [AcademicYearController::class, 'update'])
+        ->middleware('can:access-admin')
+        ->name('admin.academic-years.update');
+
     Route::get('/admin/dashboard-summary', AdminDashboardController::class)
         ->middleware('can:access-admin')
         ->name('admin.dashboard-summary');
