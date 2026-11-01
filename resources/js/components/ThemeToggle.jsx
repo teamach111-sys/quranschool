@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Icon from './Icon';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -11,6 +11,18 @@ export default function ThemeToggle({ theme, onToggle, compact = false }) {
         isRTL ? { right: '2px', left: 'auto' } : { left: '2px', right: 'auto' }
     );
     const [ready, setReady] = useState(false);
+    // Transitions stay off for the first paint so the persisted theme does not
+    // animate from the placeholder position on every reload.
+    const [animate, setAnimate] = useState(false);
+    const measuredOnce = useRef(false);
+
+    // Only turn transitions on once the indicator sits in its real position,
+    // so reloading with a persisted theme never replays the slide animation.
+    useEffect(() => {
+        if (!ready) return undefined;
+        const id = requestAnimationFrame(() => setAnimate(true));
+        return () => cancelAnimationFrame(id);
+    }, [ready]);
 
     const indicatorSize = compact ? 'w-6' : 'w-7';
     const btnSize = compact ? 'w-6 h-6' : 'w-7 h-7';
@@ -23,9 +35,16 @@ export default function ThemeToggle({ theme, onToggle, compact = false }) {
             const container = containerRef.current;
             if (!activeBtn || !container) return;
 
+            // The other breakpoint's layout is display:none, so it has no box.
+            // Skip it; the observer below measures it once it becomes visible.
+            if (container.offsetWidth === 0) return;
+
             if (isRTL) {
                 setIndicatorStyle({
-                    right: `${container.offsetWidth - activeBtn.offsetLeft - activeBtn.offsetWidth}px`,
+                    // clientWidth (padding box) matches the absolutely
+                    // positioned indicator's containing block; offsetWidth
+                    // would add the border and shift it by 2px in RTL.
+                    right: `${container.clientWidth - activeBtn.offsetLeft - activeBtn.offsetWidth}px`,
                     left: 'auto',
                 });
             } else {
@@ -37,8 +56,50 @@ export default function ThemeToggle({ theme, onToggle, compact = false }) {
             setReady(true);
         };
 
-        const id = requestAnimationFrame(measure);
-        return () => cancelAnimationFrame(id);
+        // Re-measure without the slide transition. Crossing the responsive
+        // breakpoint only changes CSS display (not React state), so the newly
+        // visible switcher still holds the hidden layout's stale position;
+        // animating from it looked corrupted.
+        let settleFrame = 0;
+        const remeasure = () => {
+            setAnimate(false);
+            measure();
+            cancelAnimationFrame(settleFrame);
+            settleFrame = requestAnimationFrame(() => setAnimate(true));
+        };
+
+        // Measure synchronously on the first render: the pre-paint script has
+        // already applied the persisted theme/direction, so the indicator can
+        // paint in the right place instead of starting at the placeholder.
+        if (!measuredOnce.current) {
+            measuredOnce.current = true;
+            measure();
+        }
+
+        // Re-measure after the browser settles (handles a direction change).
+        let frame = requestAnimationFrame(measure);
+
+        // A breakpoint switch only toggles display, so watch the container box:
+        // it goes 0 → real size when this instance becomes visible.
+        let observer;
+        if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+            observer = new ResizeObserver(remeasure);
+            observer.observe(containerRef.current);
+        }
+
+        // Fallback for browsers without ResizeObserver.
+        const onResize = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(remeasure);
+        };
+        window.addEventListener('resize', onResize);
+
+        return () => {
+            cancelAnimationFrame(frame);
+            cancelAnimationFrame(settleFrame);
+            observer?.disconnect();
+            window.removeEventListener('resize', onResize);
+        };
     }, [theme, isRTL, compact]);
 
     const lightClasses = theme === 'light'
@@ -56,7 +117,7 @@ export default function ThemeToggle({ theme, onToggle, compact = false }) {
             role="group" aria-label="Theme Switcher"
         >
             <div
-                className={`absolute top-0.5 bottom-0.5 ${indicatorSize} rounded-full bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#475b52] shadow-sm transition-all duration-200 ${ready ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute top-0.5 bottom-0.5 ${indicatorSize} rounded-full bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#475b52] shadow-sm ${animate ? 'transition-all duration-200' : ''} ${ready ? 'opacity-100' : 'opacity-0'}`}
                 style={indicatorStyle}
             />
             <button ref={lightRef} type="button" onClick={() => theme !== 'light' && onToggle()} title={t.themeLight}

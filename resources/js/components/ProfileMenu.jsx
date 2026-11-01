@@ -17,7 +17,7 @@ export default function ProfileMenu({ user, onLogout, compact = false }) {
 
     const name = user?.name || t.userName;
     const email = user?.email || 'user@institution.dz';
-    const role = t.userRole;
+    const role = (user?.role && t.roles?.[user.role]) || t.userRole;
 
     const dropdownSide = isRTL ? 'left-0 origin-top-left' : 'right-0 origin-top-right';
     const textAlign = isRTL ? 'text-right' : 'text-left';
@@ -50,10 +50,6 @@ export default function ProfileMenu({ user, onLogout, compact = false }) {
                 <a href="#" className="flex items-center gap-2 px-3 py-2 text-on-surface dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors">
                     <Icon name="account_circle" className="text-[16px] text-outline dark:text-[#9bb2a8]" />
                     <span className="text-[12px] leading-[16px]">{t.profile}</span>
-                </a>
-                <a href="#" className="flex items-center gap-2 px-3 py-2 text-on-surface dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors">
-                    <Icon name="settings" className="text-[16px] text-outline dark:text-[#9bb2a8]" />
-                    <span className="text-[12px] leading-[16px]">{t.settings}</span>
                 </a>
                 <div className="border-t border-outline-variant dark:border-[#2f4239] my-1" />
                 <button type="button" onClick={onLogout} className="flex items-center gap-2 px-3 py-2 text-error dark:text-[#f87171] hover:bg-error-container dark:hover:bg-[#4a2626]/40 transition-colors w-full">

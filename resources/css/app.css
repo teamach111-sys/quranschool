@@ -8,6 +8,11 @@
    ========================================================================== */
 
 @theme {
+    /* -- Breakpoints ---------------------------------------------------- */
+    /* The desktop shell (sidebar + fixed header) starts above 1085px.
+       Everything at 1085px or narrower uses the mobile/tablet layout. */
+    --breakpoint-desktop: 1086px;
+
     /* -- Fonts ---------------------------------------------------------- */
     --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;

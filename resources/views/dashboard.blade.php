@@ -14,6 +14,11 @@
                     var stored = localStorage.getItem('tahfiz-theme');
                     var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
                     document.documentElement.classList.toggle('dark', dark);
+
+                    // Apply the persisted language before first paint (avoids an RTL flash).
+                    var lang = localStorage.getItem('tahfiz-language') === 'ar' ? 'ar' : 'fr';
+                    document.documentElement.setAttribute('lang', lang);
+                    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
                 } catch (e) {}
             })();
         </script>
@@ -23,10 +28,19 @@
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     </head>
     <body class="bg-gray-50">
+        @php
+            $authUser = auth()->user();
+            $dashboardUser = json_encode([
+                'id' => auth()->id(),
+                'name' => $authUser?->name,
+                'email' => $authUser?->email,
+                'role' => $authUser?->role,
+            ]);
+        @endphp
         <div
             id="root"
             data-page="dashboard"
-            data-user='@json(auth()->user())'
+            data-user="{{ $dashboardUser }}"
         ></div>
     </body>
 </html>

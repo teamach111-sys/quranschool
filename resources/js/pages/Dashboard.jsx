@@ -3,15 +3,31 @@ import Icon from '../components/Icon';
 import Logo from '../components/Logo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import ThemeToggle from '../components/ThemeToggle';
-import YearSelector from '../components/YearSelector';
+import YearSelector from '../persisters/yearselector';
 import ProfileMenu from '../components/ProfileMenu';
+import { PageNav } from '../components/Navigation';
 import useTheme from '../hooks/useTheme';
+import useHashRoute from '../hooks/useHashRoute';
 import { useLanguage } from '../hooks/useLanguage';
+import { findPage, canSeePage, ROLE_DEFAULT_PAGE } from './registry';
 
 export default function Dashboard({ user }) {
     const { theme, toggleTheme } = useTheme();
     const { isRTL, t } = useLanguage();
+    const { route, navigate } = useHashRoute();
     const [drawerOpen, setDrawerOpen] = useState(false);
+
+    const activePage = findPage(route);
+    const role = user?.role;
+    const allowedPage = canSeePage(activePage, role) ? activePage : null;
+    const ActivePageComponent = allowedPage ? allowedPage.component : null;
+    const defaultPageKey = ROLE_DEFAULT_PAGE[role] || 'tableau-de-bord-admin';
+    const pageInfo = t.pages[allowedPage?.key] || t.pages[defaultPageKey] || { title: '', subtitle: '' };
+
+    const handlePageChange = (key) => {
+        navigate(key);
+        setDrawerOpen(false);
+    };
 
     const handleLogout = async () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -24,23 +40,21 @@ export default function Dashboard({ user }) {
     };
 
     const fontClass = isRTL ? 'font-cairo' : 'font-geist';
-    const sidebarItems = t.sidebar;
 
     // RTL-aware classes
     const sidebarSide = isRTL ? 'right-0 border-l' : 'left-0 border-r';
     const contentPad = isRTL ? 'pr-64' : 'pl-64';
     const headerPos = isRTL ? 'right-64 left-0' : 'left-64 right-0';
-    const subItemPad = isRTL ? 'pr-6 pl-1' : 'pl-6 pr-1';
     const drawerTextAlign = isRTL ? 'text-right' : 'text-left';
-    const dateGreg = isRTL ? t.dateGreg : t.dateGreg;
+    const dateGreg = t.dateGreg;
 
     return (
         <div className={`bg-surface dark:bg-[#182620] ${fontClass} text-on-surface dark:text-[#ecf3ef] antialiased transition-colors duration-200`}>
-            {/* ==================== DESKTOP LAYOUT (lg+) ==================== */}
-            <div className="hidden lg:block">
+            {/* ==================== DESKTOP LAYOUT (>1085px) ==================== */}
+            <div className="hidden desktop:block">
                 {/* Sidebar */}
                 <aside className={`fixed ${sidebarSide} top-0 bottom-0 w-64 bg-surface-container-low dark:bg-[#202f29] border-outline-variant dark:border-[#2f4239] z-50 flex flex-col justify-between select-none transition-colors duration-200`}>
-                    <div className="flex flex-col flex-1">
+                    <div className="flex flex-col flex-1 min-h-0">
                         {/* Logo */}
                         <div className="h-16 px-4 flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#202f29] transition-colors duration-200">
                             <Logo className="h-9" />
@@ -50,32 +64,7 @@ export default function Dashboard({ user }) {
                             <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium uppercase text-on-surface-variant dark:text-[#9bb2a8] tracking-wider">{t.navModule}</span>
                         </div>
                         {/* Nav items */}
-                        <nav className="p-2 flex flex-col gap-1 flex-1">
-                            {sidebarItems.map((item, i) => item.children ? (
-                                <details key={i} className="group rounded transition-colors" open>
-                                    <summary className="flex items-center justify-between px-3 py-2 rounded text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] cursor-pointer select-none list-none transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <Icon name={item.icon} className="text-[18px]" />
-                                            <span className="text-[13px] leading-[18px]">{item.label}</span>
-                                        </div>
-                                        <Icon name="expand_more" className="text-[18px] text-outline dark:text-[#9bb2a8] transition-transform duration-200 group-open:rotate-180" />
-                                    </summary>
-                                    <div className={`flex flex-col gap-1 ${subItemPad} pt-1 pb-1`}>
-                                        {item.children.map((child, j) => (
-                                            <a key={j} href="#" className={`flex items-center px-3 py-1 rounded text-[12px] leading-[16px] text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors`}><span>{child}</span></a>
-                                        ))}
-                                    </div>
-                                </details>
-                            ) : (
-                                <a key={i} href="#" aria-current={item.active ? 'page' : undefined}
-                                    className={`flex items-center justify-between px-3 py-2 rounded transition-colors ${item.active ? 'bg-primary dark:bg-[#2e5e4e] text-on-primary dark:text-[#ecf3ef] font-semibold' : 'text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef]'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <Icon name={item.icon} className="text-[18px]" />
-                                        <span className="text-[13px] leading-[18px]">{item.label}</span>
-                                    </div>
-                                </a>
-                            ))}
-                        </nav>
+                        <PageNav activeKey={allowedPage?.key} onNavigate={handlePageChange} role={role} />
                     </div>
                     {/* Logout */}
                     <div className="p-2 border-t border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] transition-colors duration-200">
@@ -119,17 +108,21 @@ export default function Dashboard({ user }) {
                     {/* Page title + content */}
                     <div className="pt-16 flex-1 flex flex-col">
                         <section className="bg-surface-container-lowest dark:bg-[#202f29] border-b border-outline-variant dark:border-[#2f4239] px-4 py-3 transition-colors duration-200">
-                            <h1 className="text-[22px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#ecf3ef] tracking-tight">{t.pageTitle}</h1>
-                            <p className="text-[13px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8] mt-1 max-w-4xl">{t.pageSubtitle}</p>
+                            <h1 className="text-[22px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#ecf3ef] tracking-tight">{pageInfo.title}</h1>
+                            <p className="text-[13px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8] mt-1 max-w-4xl">{pageInfo.subtitle}</p>
                         </section>
                         <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200" style={{ padding: '10px' }}>
-                            <div className="flex flex-col w-full p-[10px] gap-3 select-none">
-                                <div className="w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-dashed border-outline-variant dark:border-[#384d43] rounded flex flex-col items-center justify-center p-[10px] transition-colors duration-200">
-                                    <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
-                                        <Icon name="dashboard_customize" className="text-[24px]" />
-                                        <span className="text-[18px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider">{t.componentsHere}</span>
-                                    </div>
-                                    <span className="text-[12px] leading-[18px] text-outline dark:text-[#9bb2a8] mt-2">{t.spacingLabel}</span>
+                            <div className="flex flex-col w-full p-[10px] gap-3">
+                                <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-outline-variant dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center select-none'}`}>
+                                    {ActivePageComponent ? <ActivePageComponent /> : (
+                                        <div className="flex flex-col items-center justify-center">
+                                            <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
+                                                <Icon name="dashboard_customize" className="text-[24px]" />
+                                                <span className="text-[18px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider">{t.componentsHere}</span>
+                                            </div>
+                                            <span className="text-[12px] leading-[18px] text-outline dark:text-[#9bb2a8] mt-2">{t.spacingLabel}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </main>
@@ -137,8 +130,8 @@ export default function Dashboard({ user }) {
                 </div>
             </div>
 
-            {/* ==================== MOBILE/TABLET LAYOUT (<lg) ==================== */}
-            <div className="lg:hidden flex flex-col min-h-screen bg-surface dark:bg-[#182620]">
+            {/* ==================== MOBILE/TABLET LAYOUT (≤1085px) ==================== */}
+            <div className="desktop:hidden flex flex-col min-h-screen bg-surface dark:bg-[#182620]">
                 <header className="sticky top-0 z-40 bg-surface-container-lowest/90 dark:bg-[#202f29]/90 backdrop-blur border-b border-outline-variant dark:border-[#2f4239] select-none transition-colors duration-200">
                     {/* Primary Mobile App Bar */}
                     <div className="h-14 px-[10px] flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] transition-colors duration-200">
@@ -158,7 +151,7 @@ export default function Dashboard({ user }) {
                     <div className="py-1.5 dark:bg-[#182620] flex items-center justify-between gap-1.5 border-b border-outline-variant dark:border-[#2f4239] text-[11px] w-full overflow-visible select-none px-[10px] transition-colors duration-200 bg-surface-container-lowest">
                         <div className="flex flex-row items-center gap-1.5 flex-nowrap w-full min-w-0">
                             <YearSelector compact />
-                            <div className="flex items-center justify-center gap-1.5 text-on-surface-variant dark:text-[#9bb2a8] bg-surface-container-low dark:bg-[#182620] px-2 py-0.5 rounded border border-outline-variant dark:border-[#2f4239] h-6 min-w-0 flex-1 overflow-hidden truncate text-center transition-colors duration-200">
+                            <div className="flex items-center justify-center gap-1.5 text-on-surface-variant dark:text-[#9bb2a8] bg-surface-container-low dark:bg-[#182620] px-2 py-0.5 rounded border border-outline-variant dark:border-[#2f4239] h-6 sm:h-8 min-w-0 flex-1 overflow-hidden truncate text-center transition-colors duration-200">
                                 <Icon name="schedule" className="text-[13px] text-outline dark:text-[#9bb2a8] shrink-0" />
                                 <span className="font-mono text-[10px] sm:text-[11px] truncate shrink-0 font-medium text-on-surface-variant dark:text-[#9bb2a8]">{isRTL ? t.dateGregMobile : t.dateGreg}</span>
                                 <span className="text-outline dark:text-[#707974] font-mono text-[10px] shrink-0 font-medium">•</span>
@@ -172,7 +165,7 @@ export default function Dashboard({ user }) {
                 <div className="border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#202f29] select-none transition-colors duration-200">
                     <button aria-expanded={drawerOpen} className={`w-full flex items-center justify-between py-2 cursor-pointer bg-surface-container dark:bg-[#182620]/60 hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors px-[10px] ${drawerTextAlign}`} type="button" onClick={() => setDrawerOpen(o => !o)}>
                         <div className="flex items-center gap-2">
-                            <span className="font-mono text-[11px] leading-[14px] tracking-[0.02em] font-medium uppercase tracking-wider text-on-surface-variant dark:text-[#9bb2a8] font-semibold">{t.navModuleMobile}</span>
+                            <span className="font-mono text-[11px] leading-[14px] tracking-[0.02em] font-medium uppercase tracking-wider text-on-surface-variant dark:text-[#9bb2a8] font-semibold">{t.navModule}</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium text-outline dark:text-[#9bb2a8] uppercase">{drawerOpen ? t.drawerClose : t.drawerOpen}</span>
@@ -180,39 +173,18 @@ export default function Dashboard({ user }) {
                         </div>
                     </button>
                     {drawerOpen && (
-                        <div className="flex flex-col gap-1 bg-surface-container-low dark:bg-[#202f29] p-[10px]">
-                            {sidebarItems.map((item, i) => item.children ? (
-                                <details key={i} className="group/nested rounded transition-colors" open>
-                                    <summary className="flex items-center justify-between px-3 py-2 rounded text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] cursor-pointer select-none list-none transition-colors">
+                        <div className="flex flex-col gap-1 bg-surface-container-low dark:bg-[#202f29]">
+                            <PageNav activeKey={allowedPage?.key} onNavigate={handlePageChange} role={role} compact />
+                            <div className="px-[10px] pb-[10px]">
+                                <div className="pt-1 mt-1 border-t border-outline-variant dark:border-[#2f4239]">
+                                    <button type="button" onClick={handleLogout} className="flex items-center justify-between px-3 py-2 rounded text-error dark:text-[#f87171] hover:bg-error-container dark:hover:bg-[#4a2626]/40 hover:text-on-error-container dark:hover:text-[#fca5a5] transition-colors w-full">
                                         <div className="flex items-center gap-2">
-                                            <Icon name={item.icon} className="text-[18px]" />
-                                            <span className="text-[13px] leading-[18px]">{item.label}</span>
+                                            <Icon name="power_settings_new" className="text-[18px]" />
+                                            <span className="text-[13px] leading-[18px] font-medium">{t.logout}</span>
                                         </div>
-                                        <Icon name="expand_more" className="text-[18px] text-outline dark:text-[#9bb2a8] transition-transform duration-200 group-open/nested:rotate-180" />
-                                    </summary>
-                                    <div className={`flex flex-col gap-1 ${subItemPad} pt-1 pb-1`}>
-                                        {item.children.map((child, j) => (
-                                            <a key={j} href="#" className="flex items-center px-3 py-1 rounded text-[12px] leading-[16px] text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors"><span>{child}</span></a>
-                                        ))}
-                                    </div>
-                                </details>
-                            ) : (
-                                <a key={i} href="#" aria-current={item.active ? 'page' : undefined}
-                                    className={`flex items-center justify-between px-3 py-2 rounded ${item.active ? 'bg-primary dark:bg-[#2e5e4e] text-on-primary dark:text-[#ecf3ef] font-semibold' : 'text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef]'} transition-colors`}>
-                                    <div className="flex items-center gap-2">
-                                        <Icon name={item.icon} className="text-[18px]" />
-                                        <span className="text-[13px] leading-[18px]">{item.label}</span>
-                                    </div>
-                                </a>
-                            ))}
-                            <div className="pt-1 mt-1 border-t border-outline-variant dark:border-[#2f4239]">
-                                <button type="button" onClick={handleLogout} className="flex items-center justify-between px-3 py-2 rounded text-error dark:text-[#f87171] hover:bg-error-container dark:hover:bg-[#4a2626]/40 hover:text-on-error-container dark:hover:text-[#fca5a5] transition-colors w-full">
-                                    <div className="flex items-center gap-2">
-                                        <Icon name="power_settings_new" className="text-[18px]" />
-                                        <span className="text-[13px] leading-[18px] font-medium">{t.logout}</span>
-                                    </div>
-                                    <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium border border-error/30 dark:border-red-400/30 px-1.5 py-0.5 rounded uppercase">{t.exitBadge}</span>
-                                </button>
+                                        <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium border border-error/30 dark:border-red-400/30 px-1.5 py-0.5 rounded uppercase">{t.exitBadge}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -221,20 +193,24 @@ export default function Dashboard({ user }) {
                 {/* Page Title Section */}
                 <section className="bg-surface-container-lowest dark:bg-[#202f29] border-b border-outline-variant dark:border-[#2f4239] py-3 px-[10px] transition-colors duration-200">
                     <div>
-                        <h1 className="text-[20px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#ecf3ef] tracking-tight">{t.pageTitle}</h1>
-                        <p className="text-[12px] sm:text-[13px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8] mt-0.5 max-w-4xl">{t.pageSubtitle}</p>
+                        <h1 className="text-[20px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#ecf3ef] tracking-tight">{pageInfo.title}</h1>
+                        <p className="text-[12px] sm:text-[13px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8] mt-0.5 max-w-4xl">{pageInfo.subtitle}</p>
                     </div>
                 </section>
 
                 {/* Main Content Area */}
                 <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200 p-[10px]">
                     <div className="flex flex-col w-full h-full min-h-[70vh]">
-                        <div className="w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-dashed border-[#c0ccc2] dark:border-[#384d43] rounded flex flex-col items-center justify-center p-[10px] text-center select-none transition-colors duration-200">
-                            <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
-                                <Icon name="dashboard_customize" className="text-[24px]" />
-                                <span className="text-[18px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider">{t.componentsHere}</span>
-                            </div>
-                            <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium text-outline dark:text-[#9bb2a8] mt-2 uppercase tracking-wide">{t.spacingLabel}</span>
+                        <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-[#c0ccc2] dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center text-center select-none'}`}>
+                            {ActivePageComponent ? <ActivePageComponent /> : (
+                                <div className="flex flex-col items-center justify-center">
+                                    <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
+                                        <Icon name="dashboard_customize" className="text-[24px]" />
+                                        <span className="text-[18px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider">{t.componentsHere}</span>
+                                    </div>
+                                    <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium text-outline dark:text-[#9bb2a8] mt-2 uppercase tracking-wide">{t.spacingLabel}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </main>

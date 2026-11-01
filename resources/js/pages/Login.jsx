@@ -13,21 +13,57 @@ export default function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return;
         setError('');
         setLoading(true);
         try {
             const res = await apiFetch('/login', {
                 method: 'POST',
-                body: JSON.stringify({ email: identifier, password, remember }),
+                body: JSON.stringify({ email: identifier.trim(), password, remember }),
             });
-            const data = await res.json();
-            if (data.success) {
-                window.location.href = data.redirect;
-            } else {
-                setError(data.message || 'Login failed.');
+
+            // Read the body as text first: a redirect or an error page returns
+            // HTML, and blindly calling res.json() threw the generic error.
+            const raw = await res.text();
+            let data = null;
+            try {
+                data = raw ? JSON.parse(raw) : null;
+            } catch {
+                data = null;
             }
-        } catch {
-            setError('Something went wrong. Please try again.');
+
+            // Laravel answered with a redirect (e.g. an old tab that is already
+            // signed in). Follow it instead of failing.
+            if (res.redirected) {
+                window.location.href = res.url;
+                return;
+            }
+
+            if (data?.success) {
+                window.location.href = data.redirect || '/dashboard';
+                return;
+            }
+
+            if (data?.errors) {
+                setError(Object.values(data.errors).flat().join(' '));
+                return;
+            }
+
+            if (data?.message) {
+                setError(data.message);
+                return;
+            }
+
+            if (!res.ok) {
+                setError(`Connexion impossible (erreur ${res.status}). Veuillez réessayer.`);
+                return;
+            }
+
+            // A 200 with a non-JSON body means the session is already valid.
+            window.location.href = '/dashboard';
+        } catch (err) {
+            console.error('Login request failed:', err);
+            setError('Impossible de contacter le serveur. Vérifiez votre connexion puis réessayez.');
         } finally {
             setLoading(false);
         }

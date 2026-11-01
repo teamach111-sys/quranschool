@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\User;
 use Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,14 +20,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('access-admin', function (User $user) {
-            return $user->hasRole('admin');
+        $dashboardRoles = ['admin', 'teacher', 'secretary'];
+
+        // Only staff accounts may open the dashboard.
+        Gate::define('access-dashboard', function ($user) use ($dashboardRoles) {
+            return in_array($user->role ?? null, $dashboardRoles, true);
         });
-        Gate::define('access-teacher', function (User $user) {
-            return $user->hasRole('teacher');
-        });
-        Gate::define('access-secretary', function (User $user) {
-            return $user->hasRole('secretary');
-        });
+
+        Gate::define('access-admin', fn ($user) => ($user->role ?? null) === 'admin');
+        Gate::define('access-teacher', fn ($user) => ($user->role ?? null) === 'teacher');
+        Gate::define('access-secretary', fn ($user) => ($user->role ?? null) === 'secretary');
     }
 }
