@@ -70,6 +70,16 @@ export const translations = {
                 late: 'En retard',
                 waived: 'Exonérés',
             },
+            alerts: {
+                title: 'Alertes importantes',
+                empty: 'Aucune alerte.',
+                latePayments: 'Paiements en retard',
+                repeatedAbsences: 'Absences répétées',
+                roomsWithoutActiveTeacher: 'Groupes sans enseignant actif',
+                inactiveUsersWithPendingItems: 'Comptes inactifs avec éléments en attente',
+                absenceCount: (count) => `${count} absences cette année`,
+                pendingItems: (assignments, schedules) => `${assignments} affectations actives · ${schedules} cours à venir`,
+            },
         },
         schoolSettings: {
             nameFr: 'Nom de l’école en français',
@@ -724,6 +734,16 @@ export const translations = {
                 due: 'مستحقة',
                 late: 'متأخرة',
                 waived: 'معفاة',
+            },
+            alerts: {
+                title: 'تنبيهات مهمة',
+                empty: 'لا توجد تنبيهات.',
+                latePayments: 'مدفوعات متأخرة',
+                repeatedAbsences: 'غياب متكرر',
+                roomsWithoutActiveTeacher: 'مجموعات بدون معلم نشط',
+                inactiveUsersWithPendingItems: 'حسابات غير نشطة لديها مهام معلقة',
+                absenceCount: (count) => `${count} حالات غياب خلال هذه السنة`,
+                pendingItems: (assignments, schedules) => `${assignments} تكليفات نشطة · ${schedules} حصص قادمة`,
             },
         },
         schoolSettings: {
