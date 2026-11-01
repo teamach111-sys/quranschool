@@ -4,6 +4,7 @@ use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RoomsController;
+use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\StudentsController;
 use Illuminate\Support\Facades\Route;
@@ -105,6 +106,19 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->whereNumber('studentId')
         ->name('students.room');
+
+    Route::get('/schedules/table', [SchedulesController::class, 'table'])
+        ->middleware('can:access-dashboard')
+        ->name('schedules.table');
+
+    Route::post('/schedules', [SchedulesController::class, 'store'])
+        ->middleware('can:access-dashboard')
+        ->name('schedules.store');
+
+    Route::put('/schedules/{scheduleId}', [SchedulesController::class, 'update'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('scheduleId')
+        ->name('schedules.update');
 
     Route::patch('/admin/academic-years/{yearId}/status', [AcademicYearController::class, 'changeStatus'])
         ->middleware('can:access-admin')
