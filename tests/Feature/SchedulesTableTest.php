@@ -195,6 +195,30 @@ class SchedulesTableTest extends TestCase
         ]);
     }
 
+    public function test_schedule_write_rejects_a_day_outside_the_week(): void
+    {
+        $this->seedScheduleData();
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->postJson('/schedules', [
+            'year_id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'day_of_week' => 8,
+            'starts_at' => '09:00',
+            'ends_at' => '10:00',
+            'valid_from' => '2026-09-01',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('day_of_week');
+
+        $this->assertDatabaseCount('schedules', 0);
+    }
+
     public function test_schedule_writes_reject_invalid_times_and_room_or_teacher_overlaps(): void
     {
         $this->seedScheduleData();
