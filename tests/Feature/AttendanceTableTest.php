@@ -106,12 +106,14 @@ class AttendanceTableTest extends TestCase
     public function test_teacher_only_sees_records_from_rooms_assigned_on_the_attendance_date(): void
     {
         $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
         $this->actingAs($this->user(20, 1, 'teacher'));
 
         $this->getJson('/attendance/table?year_id=1')
             ->assertOk()
             ->assertJsonPath('can_mark', true)
             ->assertJsonPath('can_correct', false)
+            ->assertJsonPath('attendance.0.can_edit', true)
             ->assertJsonCount(1, 'attendance')
             ->assertJsonPath('attendance.0.student_name', 'Zayd Ali')
             ->assertJsonPath('attendance.0.room_name', 'Alpha')
@@ -170,6 +172,241 @@ class AttendanceTableTest extends TestCase
         $this->actingAs($this->user(10, 1, 'admin'));
 
         $this->getJson('/attendance/table?year_id=2')->assertNotFound();
+    }
+
+    public function test_admin_correction_updates_the_existing_attendance_record(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 2,
+            'attendance_date' => '2026-10-10',
+            'status' => 'late',
+            'note' => 'Arrived after class started',
+        ])
+            ->assertOk()
+            ->assertJsonPath('attendance_id', 2)
+            ->assertJsonPath('created', false);
+
+        $this->assertDatabaseCount('attendance', 5);
+        $this->assertDatabaseHas('attendance', [
+            'id' => 2,
+            'recorded_by' => 21,
+            'status' => 'late',
+            'note' => 'Arrived after class started',
+        ]);
+    }
+
+    public function test_admin_cannot_create_an_attendance_record_from_the_correction_form(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 1,
+            'attendance_date' => '2026-10-11',
+            'status' => 'present',
+            'note' => null,
+        ])->assertNotFound();
+
+        $this->assertDatabaseMissing('attendance', [
+            'student_id' => 1,
+            'year_id' => 1,
+            'attendance_date' => '2026-10-11',
+        ]);
+    }
+
+    public function test_teacher_can_mark_and_remark_an_attendance_record_only_once_per_day(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-11 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+        $payload = [
+            'year_id' => 1,
+            'student_id' => 1,
+            'attendance_date' => '2026-10-11',
+            'status' => 'present',
+            'note' => null,
+        ];
+
+        $this->postJson('/attendance', $payload)
+            ->assertCreated()
+            ->assertJsonPath('created', true);
+
+        $this->postJson('/attendance', [
+            ...$payload,
+            'status' => 'late',
+            'note' => 'Arrived late',
+        ])
+            ->assertOk()
+            ->assertJsonPath('created', false);
+
+        $this->assertDatabaseCount('attendance', 6);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 1,
+            'attendance_date' => '2026-10-11',
+            'recorded_by' => 20,
+            'status' => 'late',
+            'note' => 'Arrived late',
+        ]);
+    }
+
+    public function test_teacher_cannot_change_another_teachers_attendance_record(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 2,
+            'attendance_date' => '2026-10-10',
+            'status' => 'present',
+            'note' => null,
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 2,
+            'recorded_by' => 21,
+            'status' => 'absent',
+            'note' => 'Family informed',
+        ]);
+    }
+
+    public function test_teacher_cannot_correct_attendance_after_the_same_calendar_day(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-11-03 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 1,
+            'attendance_date' => '2026-11-02',
+            'status' => 'absent',
+            'note' => null,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('attendance_date');
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 3,
+            'recorded_by' => 20,
+            'status' => 'late',
+        ]);
+    }
+
+    public function test_teacher_cannot_mark_students_in_an_unassigned_room(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 2,
+            'attendance_date' => '2026-10-10',
+            'status' => 'present',
+            'note' => null,
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 2,
+            'recorded_by' => 21,
+            'status' => 'absent',
+        ]);
+    }
+
+    public function test_teacher_cannot_mark_attendance_in_an_archived_room(): void
+    {
+        $this->seedAttendance();
+        DB::table('rooms')->where('id', 1)->update(['is_active' => false]);
+        $this->travelTo('2026-10-11 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 1,
+            'attendance_date' => '2026-10-11',
+            'status' => 'present',
+            'note' => null,
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('attendance', [
+            'student_id' => 1,
+            'year_id' => 1,
+            'attendance_date' => '2026-10-11',
+        ]);
+    }
+
+    public function test_teacher_cannot_mark_attendance_for_an_inactive_student(): void
+    {
+        $this->seedAttendance();
+        DB::table('students')->where('id', 1)->update(['status' => 'inactive']);
+        $this->travelTo('2026-10-11 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 1,
+            'attendance_date' => '2026-10-11',
+            'status' => 'present',
+            'note' => null,
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('attendance', [
+            'student_id' => 1,
+            'year_id' => 1,
+            'attendance_date' => '2026-10-11',
+        ]);
+    }
+
+    public function test_secretary_can_change_a_follow_up_note_without_changing_status(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 2,
+            'attendance_date' => '2026-10-10',
+            'note' => 'Guardian contacted',
+        ])
+            ->assertOk()
+            ->assertJsonPath('attendance_id', 2)
+            ->assertJsonPath('created', false);
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 2,
+            'status' => 'absent',
+            'note' => 'Guardian contacted',
+            'recorded_by' => 21,
+        ]);
+    }
+
+    public function test_secretary_cannot_change_attendance_status(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->postJson('/attendance', [
+            'year_id' => 1,
+            'student_id' => 2,
+            'attendance_date' => '2026-10-10',
+            'status' => 'present',
+            'note' => 'Guardian contacted',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 2,
+            'status' => 'absent',
+            'note' => 'Family informed',
+        ]);
     }
 
     private function seedAttendance(): void

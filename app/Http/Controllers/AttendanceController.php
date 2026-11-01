@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use stdClass;
 
 class AttendanceController extends Controller
@@ -48,11 +49,33 @@ class AttendanceController extends Controller
         ]);
 
         $rooms = $this->roomsForYear($schoolId, $yearId, $user->role, $user->id, $year);
-        $roomIds = $rooms->pluck('id')->all();
         $students = DB::table('students')
             ->where('school_id', $schoolId)
             ->where('year_id', $yearId)
-            ->when($user->role === 'teacher', fn (Builder $query) => $query->whereIn('room_id', $roomIds ?: [0]))
+            ->when($user->role === 'teacher', function (Builder $query) use ($schoolId, $yearId, $user) {
+                $today = now()->toDateString();
+                $query
+                    ->whereIn('status', ['active', 'paused'])
+                    ->whereExists(function (Builder $assignments) use ($schoolId, $yearId, $user, $today) {
+                        $assignments->selectRaw('1')
+                            ->from('room_teachers')
+                            ->join('rooms', function (JoinClause $join) {
+                                $join->on('rooms.id', '=', 'room_teachers.room_id')
+                                    ->on('rooms.school_id', '=', 'room_teachers.school_id')
+                                    ->on('rooms.year_id', '=', 'room_teachers.year_id');
+                            })
+                            ->whereColumn('room_teachers.room_id', 'students.room_id')
+                            ->where('room_teachers.school_id', $schoolId)
+                            ->where('room_teachers.year_id', $yearId)
+                            ->where('room_teachers.teacher_id', $user->id)
+                            ->where('room_teachers.assigned_from', '<=', $today)
+                            ->where(function (Builder $dates) use ($today) {
+                                $dates->whereNull('room_teachers.assigned_until')
+                                    ->orWhere('room_teachers.assigned_until', '>=', $today);
+                            })
+                            ->where('rooms.is_active', true);
+                    });
+            })
             ->orderBy('full_name')
             ->get(['id', 'full_name', 'student_number', 'room_id'])
             ->map(fn ($student) => [
@@ -123,6 +146,7 @@ class AttendanceController extends Controller
                 'attendance.attendance_date',
                 'attendance.status',
                 'attendance.note',
+                'attendance.recorded_by',
                 'students.full_name as student_name',
                 'students.student_number',
                 'rooms.name as room_name',
@@ -141,11 +165,19 @@ class AttendanceController extends Controller
                 'attendance_date' => $record->attendance_date,
                 'status' => $record->status,
                 'note' => $record->note,
+                'can_edit' => $user->role === 'admin'
+                    || $user->role === 'secretary'
+                    || (
+                        $user->role === 'teacher'
+                        && (int) $record->recorded_by === (int) $user->id
+                        && $record->attendance_date === now()->toDateString()
+                    ),
             ])
             ->values();
 
         return response()->json([
             'year_id' => $yearId,
+            'today' => now()->toDateString(),
             'attendance' => $attendance,
             'rooms' => $rooms,
             'teachers' => $teachers,
@@ -155,6 +187,137 @@ class AttendanceController extends Controller
             'can_mark' => $user->role === 'teacher',
             'can_follow_up' => $user->role === 'secretary',
         ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        $yearId = $request->validate([
+            'year_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_years', 'id')->where('school_id', $schoolId),
+            ],
+        ])['year_id'];
+        $year = DB::table('academic_years')
+            ->where('id', $yearId)
+            ->where('school_id', $schoolId)
+            ->first(['start_date', 'end_date']);
+        abort_unless($year, 404);
+
+        $validated = $request->validate([
+            'year_id' => ['required', 'integer'],
+            'student_id' => [
+                'required',
+                'integer',
+                Rule::exists('students', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'attendance_date' => ['required', 'date_format:Y-m-d'],
+            'status' => $user->role === 'secretary'
+                ? ['prohibited']
+                : ['required', Rule::in(self::STATUSES)],
+            'note' => $user->role === 'secretary'
+                ? ['required', 'string', 'max:500']
+                : ['nullable', 'string', 'max:500'],
+        ]);
+
+        if (
+            $validated['attendance_date'] < $year->start_date
+            || $validated['attendance_date'] > $year->end_date
+        ) {
+            throw ValidationException::withMessages([
+                'attendance_date' => 'The attendance date must belong to the selected academic year.',
+            ]);
+        }
+
+        if ($user->role === 'teacher' && $validated['attendance_date'] !== now()->toDateString()) {
+            throw ValidationException::withMessages([
+                'attendance_date' => 'Teachers may correct attendance only on the attendance date.',
+            ]);
+        }
+
+        $result = DB::transaction(function () use ($validated, $user, $schoolId, $yearId) {
+            $student = DB::table('students')
+                ->where('id', $validated['student_id'])
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->lockForUpdate()
+                ->first(['id', 'room_id', 'status']);
+            abort_unless($student, 404);
+
+            $existing = DB::table('attendance')
+                ->where('student_id', $student->id)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('attendance_date', $validated['attendance_date'])
+                ->lockForUpdate()
+                ->first(['id', 'room_id', 'recorded_by']);
+
+            if ($user->role === 'secretary') {
+                abort_unless($existing, 404);
+
+                DB::table('attendance')
+                    ->where('id', $existing->id)
+                    ->where('school_id', $schoolId)
+                    ->update(['note' => $validated['note']]);
+
+                return ['attendance_id' => (int) $existing->id, 'created' => false];
+            }
+
+            if ($user->role === 'admin') {
+                abort_unless($existing, 404);
+            }
+
+            $roomId = $existing?->room_id ?? $student->room_id;
+
+            if ($user->role === 'teacher') {
+                abort_unless(in_array($student->status, ['active', 'paused'], true), 403);
+                abort_unless(
+                    ! $existing || (int) $existing->recorded_by === (int) $user->id,
+                    403,
+                );
+                abort_unless(
+                    $roomId !== null
+                        && $this->teacherOwnsActiveRoom(
+                            (int) $user->id,
+                            (int) $roomId,
+                            $schoolId,
+                            $yearId,
+                            $validated['attendance_date'],
+                        ),
+                    403,
+                );
+            }
+
+            $now = now();
+            DB::table('attendance')->upsert(
+                [[
+                    'student_id' => $student->id,
+                    'school_id' => $schoolId,
+                    'room_id' => $roomId,
+                    'year_id' => $yearId,
+                    'recorded_by' => $existing?->recorded_by ?? $user->id,
+                    'attendance_date' => $validated['attendance_date'],
+                    'status' => $validated['status'],
+                    'note' => $validated['note'] ?? null,
+                    'created_at' => $existing ? null : $now,
+                ]],
+                ['student_id', 'year_id', 'attendance_date'],
+                ['room_id', 'status', 'note'],
+            );
+
+            $attendanceId = DB::table('attendance')
+                ->where('student_id', $student->id)
+                ->where('year_id', $yearId)
+                ->where('attendance_date', $validated['attendance_date'])
+                ->value('id');
+
+            return ['attendance_id' => (int) $attendanceId, 'created' => ! $existing];
+        });
+
+        return response()->json($result, $result['created'] ? 201 : 200);
     }
 
     private function roomsForYear(int $schoolId, int $yearId, string $role, int $userId, stdClass $year): Collection
@@ -227,16 +390,48 @@ class AttendanceController extends Controller
         $query->whereExists(function (Builder $assignments) use ($teacherId) {
             $assignments->selectRaw('1')
                 ->from('room_teachers')
+                ->join('rooms', function (JoinClause $join) {
+                    $join->on('rooms.id', '=', 'room_teachers.room_id')
+                        ->on('rooms.school_id', '=', 'room_teachers.school_id')
+                        ->on('rooms.year_id', '=', 'room_teachers.year_id');
+                })
                 ->whereColumn('room_teachers.room_id', 'attendance.room_id')
                 ->whereColumn('room_teachers.school_id', 'attendance.school_id')
                 ->whereColumn('room_teachers.year_id', 'attendance.year_id')
                 ->where('room_teachers.teacher_id', $teacherId)
                 ->whereColumn('room_teachers.assigned_from', '<=', 'attendance.attendance_date')
+                ->where('rooms.is_active', true)
                 ->where(function (Builder $dates) {
                     $dates->whereNull('room_teachers.assigned_until')
                         ->orWhereColumn('room_teachers.assigned_until', '>=', 'attendance.attendance_date');
                 });
         });
+    }
+
+    private function teacherOwnsActiveRoom(
+        int $teacherId,
+        int $roomId,
+        int $schoolId,
+        int $yearId,
+        string $attendanceDate,
+    ): bool {
+        return DB::table('room_teachers')
+            ->join('rooms', function (JoinClause $join) {
+                $join->on('rooms.id', '=', 'room_teachers.room_id')
+                    ->on('rooms.school_id', '=', 'room_teachers.school_id')
+                    ->on('rooms.year_id', '=', 'room_teachers.year_id');
+            })
+            ->where('room_teachers.teacher_id', $teacherId)
+            ->where('room_teachers.room_id', $roomId)
+            ->where('room_teachers.school_id', $schoolId)
+            ->where('room_teachers.year_id', $yearId)
+            ->where('room_teachers.assigned_from', '<=', $attendanceDate)
+            ->where(function (Builder $dates) use ($attendanceDate) {
+                $dates->whereNull('room_teachers.assigned_until')
+                    ->orWhere('room_teachers.assigned_until', '>=', $attendanceDate);
+            })
+            ->where('rooms.is_active', true)
+            ->exists();
     }
 
     /**

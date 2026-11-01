@@ -116,6 +116,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('attendance.table');
 
+    Route::post('/attendance', [AttendanceController::class, 'store'])
+        ->middleware('can:access-dashboard')
+        ->name('attendance.store');
+
     Route::post('/schedules', [SchedulesController::class, 'store'])
         ->middleware('can:access-dashboard')
         ->name('schedules.store');

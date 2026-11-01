@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import Icon from '../../../components/Icon';
+import AttendanceEntryModal from './AttendanceEntryModal';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
 import {
@@ -25,8 +27,13 @@ export default function AttendanceTable() {
     const [rooms, setRooms] = useState([]);
     const [teachers, setTeachers] = useState([]);
     const [students, setStudents] = useState([]);
+    const [todayDate, setTodayDate] = useState('');
+    const [canCorrect, setCanCorrect] = useState(false);
+    const [canMark, setCanMark] = useState(false);
+    const [canFollowUp, setCanFollowUp] = useState(false);
     const [filters, setFilters] = useState(emptyFilters);
     const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
+    const [entry, setEntry] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
@@ -36,6 +43,7 @@ export default function AttendanceTable() {
             setYearId(nextYearId ? Number(nextYearId) : null);
             setFilters(emptyFilters());
             setAppliedFilters(emptyFilters());
+            setEntry(null);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -63,6 +71,10 @@ export default function AttendanceTable() {
             setRooms(Array.isArray(data.rooms) ? data.rooms : []);
             setTeachers(Array.isArray(data.teachers) ? data.teachers : []);
             setStudents(Array.isArray(data.students) ? data.students : []);
+            setTodayDate(data.today ?? '');
+            setCanCorrect(Boolean(data.can_correct));
+            setCanMark(Boolean(data.can_mark));
+            setCanFollowUp(Boolean(data.can_follow_up));
         } catch (requestError) {
             if (requestError.name !== 'AbortError') setLoadError(true);
         } finally {
@@ -90,6 +102,16 @@ export default function AttendanceTable() {
         const clearedFilters = emptyFilters();
         setFilters(clearedFilters);
         setAppliedFilters(clearedFilters);
+    };
+
+    const openEntry = (record = null) => {
+        const mode = canFollowUp ? 'follow_up' : canCorrect ? 'correct' : 'mark';
+        setEntry({ mode, record });
+    };
+
+    const handleEntrySaved = async () => {
+        setEntry(null);
+        await loadAttendance();
     };
 
     const columns = [
@@ -149,70 +171,95 @@ export default function AttendanceTable() {
         sortBy: (label) => t.attendance.table.sortBy(label),
         range: (first, last, total) => t.attendance.table.range(first, last, total),
     };
+    const actions = canCorrect || canMark || canFollowUp ? [{
+        key: 'edit',
+        icon: canFollowUp ? 'note_alt' : 'edit',
+        label: canFollowUp
+            ? t.attendance.followUp
+            : canMark
+                ? t.attendance.editOwn
+                : t.attendance.correct,
+        hidden: (record) => !record.can_edit,
+        onClick: openEntry,
+    }] : [];
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
-        <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-6">
-            <label className={labelClass}>
-                {t.attendance.filters.room}
-                <select name="room_id" value={filters.room_id} onChange={handleFilterChange} className={inputClass}>
-                    <option value="">{t.attendance.filters.allRooms}</option>
-                    {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-                </select>
-            </label>
-            <label className={labelClass}>
-                {t.attendance.filters.teacher}
-                <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} className={inputClass}>
-                    <option value="">{t.attendance.filters.allTeachers}</option>
-                    {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
-                </select>
-            </label>
-            <label className={labelClass}>
-                {t.attendance.filters.student}
-                <select name="student_id" value={filters.student_id} onChange={handleFilterChange} className={inputClass}>
-                    <option value="">{t.attendance.filters.allStudents}</option>
-                    {students.map((student) => (
-                        <option key={student.id} value={student.id}>
-                            {student.name}{student.student_number ? ` (${student.student_number})` : ''}
-                        </option>
-                    ))}
-                </select>
-            </label>
-            <label className={labelClass}>
-                {t.attendance.filters.date}
-                <input
-                    type="date"
-                    name="attendance_date"
-                    value={filters.attendance_date}
-                    onChange={handleFilterChange}
-                    className={inputClass}
-                />
-            </label>
-            <label className={labelClass}>
-                {t.attendance.filters.status}
-                <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClass}>
-                    <option value="">{t.attendance.filters.allStatuses}</option>
-                    {Object.entries(t.attendance.statuses).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                    ))}
-                </select>
-            </label>
-            <div className="flex flex-col gap-2 sm:flex-row lg:col-span-1">
-                <button
-                    type="submit"
-                    className="min-h-10 flex-1 rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
-                >
-                    {t.attendance.filters.apply}
-                </button>
-                <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="min-h-10 flex-1 rounded-lg bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef]"
-                >
-                    {t.attendance.filters.clear}
-                </button>
-            </div>
-        </form>
+        <div className="flex flex-col gap-3">
+            {canMark && (
+                <div className="flex justify-end">
+                    <button
+                        type="button"
+                        onClick={() => openEntry()}
+                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                    >
+                        <Icon name="add" className="text-[17px]" />
+                        {t.attendance.mark}
+                    </button>
+                </div>
+            )}
+            <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-6">
+                <label className={labelClass}>
+                    {t.attendance.filters.room}
+                    <select name="room_id" value={filters.room_id} onChange={handleFilterChange} className={inputClass}>
+                        <option value="">{t.attendance.filters.allRooms}</option>
+                        {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
+                    </select>
+                </label>
+                <label className={labelClass}>
+                    {t.attendance.filters.teacher}
+                    <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} className={inputClass}>
+                        <option value="">{t.attendance.filters.allTeachers}</option>
+                        {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+                    </select>
+                </label>
+                <label className={labelClass}>
+                    {t.attendance.filters.student}
+                    <select name="student_id" value={filters.student_id} onChange={handleFilterChange} className={inputClass}>
+                        <option value="">{t.attendance.filters.allStudents}</option>
+                        {students.map((student) => (
+                            <option key={student.id} value={student.id}>
+                                {student.name}{student.student_number ? ` (${student.student_number})` : ''}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                <label className={labelClass}>
+                    {t.attendance.filters.date}
+                    <input
+                        type="date"
+                        name="attendance_date"
+                        value={filters.attendance_date}
+                        onChange={handleFilterChange}
+                        className={inputClass}
+                    />
+                </label>
+                <label className={labelClass}>
+                    {t.attendance.filters.status}
+                    <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClass}>
+                        <option value="">{t.attendance.filters.allStatuses}</option>
+                        {Object.entries(t.attendance.statuses).map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
+                    </select>
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row lg:col-span-1">
+                    <button
+                        type="submit"
+                        className="min-h-10 flex-1 rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                    >
+                        {t.attendance.filters.apply}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="min-h-10 flex-1 rounded-lg bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef]"
+                    >
+                        {t.attendance.filters.clear}
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 
     if (loadError) {
@@ -234,6 +281,7 @@ export default function AttendanceTable() {
                     labels={labels}
                     rows={attendance}
                     toolbar={toolbar}
+                    actions={actions}
                 />
             </div>
             <div className="md:hidden">
@@ -245,8 +293,21 @@ export default function AttendanceTable() {
                     labels={labels}
                     rows={attendance}
                     toolbar={toolbar}
+                    actions={actions}
                 />
             </div>
+            {entry && (
+                <AttendanceEntryModal
+                    open
+                    mode={entry.mode}
+                    record={entry.record}
+                    yearId={yearId}
+                    todayDate={todayDate}
+                    students={students}
+                    onClose={() => setEntry(null)}
+                    onSaved={handleEntrySaved}
+                />
+            )}
         </section>
     );
 }
