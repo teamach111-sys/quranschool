@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
@@ -26,31 +27,41 @@ class AuthController extends Controller
         ]);
 
         $user = DB::table('users')->where('email', $credentials['email'])->first();
+        $passwordHash = $user->password_hash ?? $user->password ?? null;
 
-        if ($user && Hash::check($credentials['password'], $user->password)) {
-            Auth::loginUsingId($user->id, $request->boolean('remember'));
-            $request->session()->regenerate();
-
-            if (! in_array($user->role ?? null, ['admin', 'teacher', 'secretary'], true)) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This account is not allowed to access the dashboard.',
-                ], 403);
-            }
-
-            // Relative URL so the browser stays on the host it used to log in
-            // (localhost vs 127.0.0.1 keep separate session cookies).
-            return response()->json(['success' => true, 'redirect' => route('dashboard', [], false)]);
+        if (! $user || ! $passwordHash || ! Hash::check($credentials['password'], $passwordHash)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The provided credentials do not match our records.',
+            ], 422);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'The provided credentials do not match our records.',
-        ], 422);
+        $role = $user->role ?? null;
+        if (! $role && isset($user->role_id)) {
+            $role = DB::table('roles')->where('id', $user->role_id)->value('role_key');
+        }
+
+        if (isset($user->is_active) && ! $user->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This account is not active.',
+            ], 403);
+        }
+
+        if (! in_array($role, ['admin', 'teacher', 'secretary'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This account is not allowed to access the dashboard.',
+            ], 403);
+        }
+
+        $remember = $request->boolean('remember') && Schema::hasColumn('users', 'remember_token');
+        Auth::loginUsingId($user->id, $remember);
+        $request->session()->regenerate();
+
+        // Relative URL so the browser stays on the host it used to log in
+        // (localhost vs 127.0.0.1 keep separate session cookies).
+        return response()->json(['success' => true, 'redirect' => route('dashboard', [], false)]);
     }
 
     public function logout(Request $request)

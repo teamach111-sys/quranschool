@@ -2,6 +2,14 @@ export const translations = {
     fr: {
         logo: 'LOGO GOES HERE',
         navModule: 'Navigation',
+        yearSelector: {
+            label: 'Année scolaire',
+            current: 'En cours',
+            readOnly: 'Lecture seule',
+            loading: 'Chargement des années scolaires…',
+            unavailable: 'Impossible de charger les années scolaires.',
+            empty: 'Aucune année scolaire disponible.',
+        },
         sidebar: [
             { icon: 'grid_view', key: 'tableau-de-bord-admin', label: 'Tableau de bord', active: true },
             { icon: 'school', key: 'ecole', label: 'École' },
@@ -65,6 +73,14 @@ export const translations = {
         logo: 'شعار المدرسة هنا',
         logoMobile: 'شعار المؤسسة هنا',
         navModule: 'التنقل',
+        yearSelector: {
+            label: 'السنة الدراسية',
+            current: 'الحالية',
+            readOnly: 'للقراءة فقط',
+            loading: 'جارٍ تحميل السنوات الدراسية…',
+            unavailable: 'تعذر تحميل السنوات الدراسية.',
+            empty: 'لا توجد سنة دراسية متاحة.',
+        },
         sidebar: [
             { icon: 'grid_view', key: 'tableau-de-bord-admin', label: 'لوحة القيادة', active: true },
             { icon: 'school', key: 'ecole', label: 'المدرسة' },

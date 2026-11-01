@@ -61,7 +61,7 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'database',
+            'driver' => 'school-database',
             'table' => 'users',
         ],
     ],
