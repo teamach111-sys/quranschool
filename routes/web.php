@@ -66,6 +66,11 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('studentId')
         ->name('students.update');
 
+    Route::patch('/students/{studentId}/status', [StudentsController::class, 'updateStatus'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('studentId')
+        ->name('students.status');
+
     Route::patch('/admin/academic-years/{yearId}/status', [AcademicYearController::class, 'changeStatus'])
         ->middleware('can:access-admin')
         ->name('admin.academic-years.status');

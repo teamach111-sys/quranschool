@@ -186,7 +186,7 @@ export default function DesktopTable({
                                     {actions.length > 0 && (
                                         <td className={`px-4 py-3 ${actionAlign}`}>
                                             <div className={`inline-flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                                                {actions.map((action) => (
+                                                {actions.filter((action) => !action.hidden?.(row)).map((action) => (
                                                     <button
                                                         key={action.key}
                                                         type="button"

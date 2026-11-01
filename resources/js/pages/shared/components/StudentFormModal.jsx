@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useState } from 'react';
 import Icon from '../../../components/Icon';
+import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -39,6 +40,7 @@ export default function StudentFormModal({
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [confirmingStatus, setConfirmingStatus] = useState(null);
     const [canEditYear, setCanEditYear] = useState(false);
     const [error, setError] = useState(null);
     const formId = useId();
@@ -49,6 +51,7 @@ export default function StudentFormModal({
 
         const controller = new AbortController();
         setForm(initialValues(student));
+        setConfirmingStatus(null);
         setDetail(null);
         setRooms([]);
         setCanEditYear(false);
@@ -83,6 +86,12 @@ export default function StudentFormModal({
     }, [open, student, yearId, readOnly, t.students.form.loadError]);
 
     const handleChange = (event) => {
+        const { name, value } = event.target;
+        if (name === 'status' && value !== form.status && ['paused', 'withdrawn'].includes(value)) {
+            setConfirmingStatus(value);
+            return;
+        }
+
         setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
         setError(null);
     };
@@ -263,6 +272,23 @@ export default function StudentFormModal({
         >
             <span role="status" className="sr-only">{loading ? t.students.form.loading : ''}</span>
             {content}
+            <ConfirmDeleteModal
+                open={Boolean(confirmingStatus)}
+                title={confirmingStatus === 'paused' ? t.students.archive.pauseTitle : t.students.archive.withdrawTitle}
+                description={confirmingStatus === 'paused'
+                    ? t.students.archive.pauseMessage(form.full_name || student?.full_name || t.students.archive.studentFallback)
+                    : t.students.archive.withdrawMessage(form.full_name || student?.full_name || t.students.archive.studentFallback)}
+                confirmLabel={confirmingStatus === 'paused' ? t.students.archive.confirmPause : t.students.archive.confirmWithdraw}
+                cancelLabel={t.students.archive.cancel}
+                onConfirm={() => {
+                    if (!confirmingStatus) return;
+                    setForm((current) => ({ ...current, status: confirmingStatus }));
+                    setConfirmingStatus(null);
+                    setError(null);
+                }}
+                onClose={() => setConfirmingStatus(null)}
+                isRTL={isRTL}
+            />
         </Modal>
     );
 }

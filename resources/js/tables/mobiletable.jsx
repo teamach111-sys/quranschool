@@ -105,7 +105,7 @@ export default function MobileTable({
                                     </div>
                                     {actions.length > 0 && (
                                         <div className={`flex shrink-0 items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                                            {actions.map((action) => (
+                                            {actions.filter((action) => !action.hidden?.(row)).map((action) => (
                                                 <button
                                                     key={action.key}
                                                     type="button"

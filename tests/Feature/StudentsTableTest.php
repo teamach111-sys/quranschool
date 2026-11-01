@@ -192,6 +192,135 @@ class StudentsTableTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_pause_a_student_without_changing_student_details(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->patchJson('/students/1/status', [
+            'year_id' => 1,
+            'status' => 'paused',
+        ])
+            ->assertOk()
+            ->assertJsonPath('student.status', 'paused')
+            ->assertJsonPath('student.full_name', 'Zayd Ali');
+
+        $this->assertDatabaseHas('students', [
+            'id' => 1,
+            'status' => 'paused',
+            'full_name' => 'Zayd Ali',
+            'room_id' => 1,
+        ]);
+    }
+
+    public function test_secretary_can_withdraw_a_student(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $this->patchJson('/students/1/status', [
+            'year_id' => 1,
+            'status' => 'withdrawn',
+        ])
+            ->assertOk()
+            ->assertJsonPath('student.status', 'withdrawn');
+
+        $this->assertDatabaseHas('students', [
+            'id' => 1,
+            'status' => 'withdrawn',
+        ]);
+    }
+
+    public function test_student_archive_rejects_active_status_and_preserves_student(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->patchJson('/students/1/status', [
+            'year_id' => 1,
+            'status' => 'active',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('students', [
+            'id' => 1,
+            'status' => 'active',
+        ]);
+    }
+
+    public function test_teacher_cannot_archive_a_student_and_other_school_students_are_hidden(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->patchJson('/students/1/status', [
+            'year_id' => 1,
+            'status' => 'paused',
+        ])->assertForbidden();
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->patchJson('/students/4/status', [
+            'year_id' => 2,
+            'status' => 'paused',
+        ])->assertNotFound();
+    }
+
+    public function test_student_archive_rejects_a_closed_academic_year(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2024-2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-06-30',
+            'is_current' => false,
+            'is_active' => false,
+        ]);
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 3,
+            'full_name' => 'Closed Year Student',
+            'status' => 'active',
+            'enrollment_date' => '2024-09-10',
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->patchJson('/students/5/status', [
+            'year_id' => 3,
+            'status' => 'paused',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+
+        $this->assertDatabaseHas('students', [
+            'id' => 5,
+            'status' => 'active',
+        ]);
+    }
+
     public function test_student_number_must_be_unique_per_year_and_room_must_match_school_and_year(): void
     {
         $this->actingAs(new GenericUser([

@@ -219,6 +219,36 @@ class StudentsController extends Controller
         ]);
     }
 
+    public function updateStatus(Request $request, int $studentId)
+    {
+        [, $schoolId] = $this->managerContext();
+        $existing = DB::table('students')
+            ->where('id', $studentId)
+            ->where('school_id', $schoolId)
+            ->first(['id', 'year_id']);
+        abort_unless($existing, 404);
+
+        $yearId = $this->validateYearId($request, $schoolId);
+        abort_unless((int) $existing->year_id === $yearId, 404);
+        $this->ensureYearIsEditable($schoolId, $yearId);
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['paused', 'withdrawn'])],
+        ]);
+
+        DB::table('students')
+            ->where('id', $studentId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->update([
+                'status' => $validated['status'],
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'student' => $this->findStudentPayload($studentId, $schoolId, $yearId),
+        ]);
+    }
+
     private function managerContext(): array
     {
         $user = Auth::user();

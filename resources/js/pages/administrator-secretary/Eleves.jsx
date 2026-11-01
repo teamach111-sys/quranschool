@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/Icon';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
+import ConfirmDeleteModal from '../../modals/confirmdelete';
 import {
     ACADEMIC_YEAR_CHANGED_EVENT,
     getSelectedAcademicYearId,
@@ -24,6 +25,9 @@ export default function Eleves() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
     const [formReadOnly, setFormReadOnly] = useState(false);
+    const [archiveTarget, setArchiveTarget] = useState(null);
+    const [archiveError, setArchiveError] = useState(null);
+    const [archiving, setArchiving] = useState(false);
 
     useEffect(() => {
         const syncYear = (event) => {
@@ -101,7 +105,7 @@ export default function Eleves() {
         setEditingStudent(null);
         setFormReadOnly(false);
     }, []);
-    const handleStudentSaved = useCallback((student) => {
+    const updateStudentInList = useCallback((student) => {
         setStudents((current) => {
             const exists = current.some((item) => item.id === student.id);
             const next = exists
@@ -109,8 +113,50 @@ export default function Eleves() {
                 : [...current, student];
             return next.sort((a, b) => a.full_name.localeCompare(b.full_name));
         });
+    }, []);
+    const handleStudentSaved = useCallback((student) => {
+        updateStudentInList(student);
         closeForm();
-    }, [closeForm]);
+    }, [closeForm, updateStudentInList]);
+    const openArchiveConfirmation = (student, nextStatus) => {
+        setArchiveTarget({ student, status: nextStatus });
+        setArchiveError(null);
+    };
+    const closeArchiveConfirmation = () => {
+        if (archiving) return;
+        setArchiveTarget(null);
+        setArchiveError(null);
+    };
+    const confirmArchive = async () => {
+        if (!archiveTarget) return;
+        setArchiving(true);
+        setArchiveError(null);
+
+        try {
+            const response = await apiFetch(`/students/${archiveTarget.student.id}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    year_id: yearId,
+                    status: archiveTarget.status,
+                }),
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                setArchiveError(data?.errors?.year_id
+                    ? t.students.form.closedYearError
+                    : t.students.archive.error);
+                return;
+            }
+
+            updateStudentInList(data.student);
+            setArchiveTarget(null);
+        } catch {
+            setArchiveError(t.students.archive.error);
+        } finally {
+            setArchiving(false);
+        }
+    };
     const tableLabels = {
         actions: t.students.table.actions,
         pagination: t.students.table.pagination,
@@ -186,6 +232,22 @@ export default function Eleves() {
             label: t.students.form.editTitle,
             onClick: (student) => openForm(student),
         }] : []),
+        ...(canManage && yearIsActive ? [
+            {
+                key: 'pause',
+                icon: 'pause_circle',
+                label: t.students.archive.pause,
+                hidden: (student) => student.status !== 'active',
+                onClick: (student) => openArchiveConfirmation(student, 'paused'),
+            },
+            {
+                key: 'withdraw',
+                icon: 'person_remove',
+                label: t.students.archive.withdraw,
+                hidden: (student) => student.status === 'withdrawn',
+                onClick: (student) => openArchiveConfirmation(student, 'withdrawn'),
+            },
+        ] : []),
     ];
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -281,6 +343,24 @@ export default function Eleves() {
                 readOnly={formReadOnly}
                 onClose={closeForm}
                 onSaved={handleStudentSaved}
+            />
+            <ConfirmDeleteModal
+                open={Boolean(archiveTarget)}
+                title={archiveTarget?.status === 'paused'
+                    ? t.students.archive.pauseTitle
+                    : t.students.archive.withdrawTitle}
+                description={archiveTarget?.status === 'paused'
+                    ? t.students.archive.pauseMessage(archiveTarget?.student.full_name ?? t.students.archive.studentFallback)
+                    : t.students.archive.withdrawMessage(archiveTarget?.student.full_name ?? t.students.archive.studentFallback)}
+                confirmLabel={archiveTarget?.status === 'paused'
+                    ? t.students.archive.confirmPause
+                    : t.students.archive.confirmWithdraw}
+                cancelLabel={t.students.archive.cancel}
+                onConfirm={confirmArchive}
+                onClose={closeArchiveConfirmation}
+                isLoading={archiving}
+                error={archiveError}
+                isRTL={isRTL}
             />
         </section>
     );
