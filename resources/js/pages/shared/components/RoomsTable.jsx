@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '../../../components/Icon';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
+import RoomFormModal from '../../administrator/components/RoomFormModal';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
 import {
@@ -15,17 +16,6 @@ function today() {
     const date = new Date();
     date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
     return date.toISOString().slice(0, 10);
-}
-
-function emptyRoom() {
-    return {
-        name: '',
-        level: 'beginner',
-        age_min: '',
-        age_max: '',
-        capacity: '12',
-        is_active: true,
-    };
 }
 
 export default function RoomsTable() {
@@ -42,8 +32,6 @@ export default function RoomsTable() {
     const [error, setError] = useState(null);
     const [roomEditorOpen, setRoomEditorOpen] = useState(false);
     const [editingRoom, setEditingRoom] = useState(null);
-    const [roomForm, setRoomForm] = useState(emptyRoom);
-    const [savingRoom, setSavingRoom] = useState(false);
     const [archiveRoom, setArchiveRoom] = useState(null);
     const [savingArchive, setSavingArchive] = useState(false);
     const [assignmentRoom, setAssignmentRoom] = useState(null);
@@ -116,46 +104,18 @@ export default function RoomsTable() {
 
     const openRoomEditor = (room = null) => {
         setEditingRoom(room);
-        setRoomForm(room ? {
-            name: room.name,
-            level: room.level,
-            age_min: room.age_min ?? '',
-            age_max: room.age_max ?? '',
-            capacity: String(room.capacity),
-            is_active: room.is_active,
-        } : emptyRoom());
         setRoomEditorOpen(true);
         setError(null);
     };
 
-    const saveRoom = async (event) => {
-        event.preventDefault();
-        setSavingRoom(true);
-        const payload = {
-            ...roomForm,
-            age_min: roomForm.age_min === '' ? null : Number(roomForm.age_min),
-            age_max: roomForm.age_max === '' ? null : Number(roomForm.age_max),
-            capacity: Number(roomForm.capacity),
-            year_id: yearId,
-        };
+    const closeRoomEditor = () => {
+        setRoomEditorOpen(false);
+        setEditingRoom(null);
+    };
 
-        try {
-            const saved = await runRequest(
-                editingRoom ? `/rooms/${editingRoom.id}` : '/rooms',
-                editingRoom ? 'PUT' : 'POST',
-                payload,
-                t.rooms.saveError,
-            );
-            if (saved) {
-                setRoomEditorOpen(false);
-                setEditingRoom(null);
-                await loadRooms();
-            }
-        } catch {
-            setError(t.rooms.saveError);
-        } finally {
-            setSavingRoom(false);
-        }
+    const handleRoomSaved = async () => {
+        closeRoomEditor();
+        await loadRooms();
     };
 
     const archiveSelectedRoom = async () => {
@@ -383,45 +343,6 @@ export default function RoomsTable() {
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {error && !archiveRoom && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
-            {roomEditorOpen && (
-                <form onSubmit={saveRoom} className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#384d43] dark:bg-[#22302a] sm:grid-cols-2 lg:grid-cols-3">
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.name}
-                        <input required maxLength={100} value={roomForm.name} onChange={(event) => setRoomForm((form) => ({ ...form, name: event.target.value }))} className={controlClass} />
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.level}
-                        <select value={roomForm.level} onChange={(event) => setRoomForm((form) => ({ ...form, level: event.target.value }))} className={controlClass}>
-                            {Object.entries(t.rooms.levels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                        </select>
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.ageMin}
-                        <input type="number" min="0" max="255" value={roomForm.age_min} onChange={(event) => setRoomForm((form) => ({ ...form, age_min: event.target.value }))} className={controlClass} />
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.ageMax}
-                        <input type="number" min="0" max="255" value={roomForm.age_max} onChange={(event) => setRoomForm((form) => ({ ...form, age_max: event.target.value }))} className={controlClass} />
-                    </label>
-                    <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        {t.rooms.form.capacity}
-                        <input type="number" min="1" max="65535" required value={roomForm.capacity} onChange={(event) => setRoomForm((form) => ({ ...form, capacity: event.target.value }))} className={controlClass} />
-                    </label>
-                    <label className="flex items-center gap-2 self-end pb-2 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                        <input type="checkbox" checked={roomForm.is_active} onChange={(event) => setRoomForm((form) => ({ ...form, is_active: event.target.checked }))} className="h-4 w-4 accent-primary" />
-                        {t.rooms.form.active}
-                    </label>
-                    {error && <p role="alert" className="text-[13px] text-error dark:text-error-container sm:col-span-2 lg:col-span-3">{error}</p>}
-                    <div className="flex flex-col-reverse gap-2 sm:col-span-2 sm:flex-row sm:justify-end lg:col-span-3">
-                        <button type="button" disabled={savingRoom} onClick={() => setRoomEditorOpen(false)} className="min-h-10 rounded-lg bg-surface-container px-4 py-2 text-[12px] font-semibold text-on-surface disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef]">
-                            {t.rooms.cancel}
-                        </button>
-                        <button type="submit" disabled={savingRoom} className="min-h-10 rounded-lg bg-primary-container px-4 py-2 text-[12px] font-semibold text-on-primary disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]">
-                            {savingRoom ? t.rooms.saving : t.rooms.save}
-                        </button>
-                    </div>
-                </form>
-            )}
             {assignmentRoom && (
                 <form onSubmit={assignTeacher} className="grid grid-cols-1 gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#384d43] dark:bg-[#22302a] sm:grid-cols-2 lg:grid-cols-4">
                     <h2 className="text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface sm:col-span-2 lg:col-span-4">
@@ -528,6 +449,15 @@ export default function RoomsTable() {
                     {error && <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>}
                 </form>
             </Modal>
+            {canManage && (
+                <RoomFormModal
+                    open={roomEditorOpen}
+                    room={editingRoom}
+                    yearId={yearId}
+                    onClose={closeRoomEditor}
+                    onSaved={handleRoomSaved}
+                />
+            )}
             <ConfirmDeleteModal
                 open={Boolean(archiveRoom)}
                 title={t.rooms.archiveTitle}

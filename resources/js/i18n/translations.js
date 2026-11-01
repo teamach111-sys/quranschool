@@ -214,6 +214,8 @@ export const translations = {
             saving: 'Enregistrement…',
             cancel: 'Annuler',
             saveError: 'Impossible d’enregistrer le groupe. Vérifiez les âges et la capacité.',
+            ageRangeError: 'L’âge minimum ne peut pas dépasser l’âge maximum.',
+            capacityError: 'La capacité doit être un nombre entier supérieur à zéro.',
             closedYearError: 'Cette année scolaire est fermée et ne peut pas être modifiée.',
             ageRange: (min, max) => min === null && max === null
                 ? 'Tous les âges'
@@ -496,6 +498,8 @@ export const translations = {
             saving: 'جارٍ الحفظ…',
             cancel: 'إلغاء',
             saveError: 'تعذر حفظ المجموعة. تحقق من الأعمار والسعة.',
+            ageRangeError: 'لا يمكن أن يتجاوز الحد الأدنى للعمر الحد الأقصى.',
+            capacityError: 'يجب أن تكون السعة عددًا صحيحًا أكبر من صفر.',
             closedYearError: 'السنة الدراسية مغلقة ولا يمكن تعديلها.',
             ageRange: (min, max) => min === null && max === null
                 ? 'كل الأعمار'
