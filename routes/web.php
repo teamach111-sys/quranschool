@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemorizationSessionsController;
+use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\RoleChangeHistoryController;
 use App\Http\Controllers\RoomsController;
 use App\Http\Controllers\SchedulesController;
@@ -122,6 +123,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/memorization-sessions/table', [MemorizationSessionsController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('memorization-sessions.table');
+
+    Route::get('/payments/table', [PaymentsController::class, 'table'])
+        ->middleware('can:access-dashboard')
+        ->name('payments.table');
 
     Route::post('/memorization-sessions', [MemorizationSessionsController::class, 'store'])
         ->middleware('can:access-dashboard')
