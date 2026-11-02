@@ -186,7 +186,6 @@ export default function AttendanceTable() {
         onClick: openEntry,
     }] : [];
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
-    const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="flex flex-col gap-3">
             {canMark && (
@@ -201,24 +200,21 @@ export default function AttendanceTable() {
                     </button>
                 </div>
             )}
-            <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-6">
-                <label className={labelClass}>
-                    {t.attendance.filters.room}
-                    <select name="room_id" value={filters.room_id} onChange={handleFilterChange} className={inputClass}>
+            <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="min-w-0">
+                    <select name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.attendance.filters.room} className={inputClass}>
                         <option value="">{t.attendance.filters.allRooms}</option>
                         {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
                     </select>
-                </label>
-                <label className={labelClass}>
-                    {t.attendance.filters.teacher}
-                    <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} className={inputClass}>
+                </div>
+                <div className="min-w-0">
+                    <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} aria-label={t.attendance.filters.teacher} className={inputClass}>
                         <option value="">{t.attendance.filters.allTeachers}</option>
                         {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
                     </select>
-                </label>
-                <label className={labelClass}>
-                    {t.attendance.filters.student}
-                    <select name="student_id" value={filters.student_id} onChange={handleFilterChange} className={inputClass}>
+                </div>
+                <div className="min-w-0">
+                    <select name="student_id" value={filters.student_id} onChange={handleFilterChange} aria-label={t.attendance.filters.student} className={inputClass}>
                         <option value="">{t.attendance.filters.allStudents}</option>
                         {students.map((student) => (
                             <option key={student.id} value={student.id}>
@@ -226,26 +222,25 @@ export default function AttendanceTable() {
                             </option>
                         ))}
                     </select>
-                </label>
-                <label className={labelClass}>
-                    {t.attendance.filters.date}
+                </div>
+                <div className="min-w-0">
                     <input
                         type="date"
                         name="attendance_date"
                         value={filters.attendance_date}
                         onChange={handleFilterChange}
+                        aria-label={t.attendance.filters.date}
                         className={inputClass}
                     />
-                </label>
-                <label className={labelClass}>
-                    {t.attendance.filters.status}
-                    <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClass}>
+                </div>
+                <div className="min-w-0">
+                    <select name="status" value={filters.status} onChange={handleFilterChange} aria-label={t.attendance.filters.status} className={inputClass}>
                         <option value="">{t.attendance.filters.allStatuses}</option>
                         {Object.entries(t.attendance.statuses).map(([value, label]) => (
                             <option key={value} value={value}>{label}</option>
                         ))}
                     </select>
-                </label>
+                </div>
                 <div className="flex flex-col gap-2 sm:flex-row lg:col-span-1">
                     <button
                         type="submit"

@@ -200,7 +200,6 @@ export default function MemorizationSessionsTable() {
         onClick: openEntry,
     }] : [];
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
-    const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="flex flex-col gap-3">
             {canCreate && (
@@ -215,59 +214,56 @@ export default function MemorizationSessionsTable() {
                     </button>
                 </div>
             )}
-            <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <label className={labelClass}>
-                {t.memorization.filters.room}
-                <select name="room_id" value={filters.room_id} onChange={handleFilterChange} className={inputClass}>
-                    <option value="">{t.memorization.filters.allRooms}</option>
-                    {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-                </select>
-            </label>
-            {canFilterTeacher && (
-                <label className={labelClass}>
-                    {t.memorization.filters.teacher}
-                    <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} className={inputClass}>
-                        <option value="">{t.memorization.filters.allTeachers}</option>
-                        {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+            <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="min-w-0">
+                    <select name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.memorization.filters.room} className={inputClass}>
+                        <option value="">{t.memorization.filters.allRooms}</option>
+                        {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
                     </select>
-                </label>
-            )}
-            <label className={labelClass}>
-                {t.memorization.filters.student}
-                <select name="student_id" value={filters.student_id} onChange={handleFilterChange} className={inputClass}>
-                    <option value="">{t.memorization.filters.allStudents}</option>
-                    {students.map((student) => (
-                        <option key={student.id} value={student.id}>
-                            {student.name}{student.student_number ? ` (${student.student_number})` : ''}
-                        </option>
-                    ))}
-                </select>
-            </label>
-            <label className={labelClass}>
-                {t.memorization.filters.date}
-                <input
-                    type="date"
-                    name="session_date"
-                    value={filters.session_date}
-                    onChange={handleFilterChange}
-                    className={inputClass}
-                />
-            </label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-                <button
-                    type="submit"
-                    className="min-h-10 flex-1 rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
-                >
-                    {t.memorization.filters.apply}
-                </button>
-                <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="min-h-10 flex-1 rounded-lg bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-inverse-surface dark:text-inverse-on-surface dark:hover:bg-tertiary-container"
-                >
-                    {t.memorization.filters.clear}
-                </button>
-            </div>
+                </div>
+                {canFilterTeacher && (
+                    <div className="min-w-0">
+                        <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} aria-label={t.memorization.filters.teacher} className={inputClass}>
+                            <option value="">{t.memorization.filters.allTeachers}</option>
+                            {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
+                        </select>
+                    </div>
+                )}
+                <div className="min-w-0">
+                    <select name="student_id" value={filters.student_id} onChange={handleFilterChange} aria-label={t.memorization.filters.student} className={inputClass}>
+                        <option value="">{t.memorization.filters.allStudents}</option>
+                        {students.map((student) => (
+                            <option key={student.id} value={student.id}>
+                                {student.name}{student.student_number ? ` (${student.student_number})` : ''}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="min-w-0">
+                    <input
+                        type="date"
+                        name="session_date"
+                        value={filters.session_date}
+                        onChange={handleFilterChange}
+                        aria-label={t.memorization.filters.date}
+                        className={inputClass}
+                    />
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <button
+                        type="submit"
+                        className="min-h-10 rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary sm:flex-1 lg:flex-none"
+                    >
+                        {t.memorization.filters.apply}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="min-h-10 rounded-lg bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-inverse-surface dark:text-inverse-on-surface dark:hover:bg-tertiary-container sm:flex-1 lg:flex-none"
+                    >
+                        {t.memorization.filters.clear}
+                    </button>
+                </div>
             </form>
         </div>
     );

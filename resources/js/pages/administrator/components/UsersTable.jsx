@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
+import SearchInput from '../../../components/SearchInput';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
@@ -273,30 +274,38 @@ export default function UsersTable({ routeParams = {} }) {
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <label className={labelClass}>
-                {t.users.search}
-                <input
-                    type="search"
+            <div className="min-w-0">
+                <SearchInput
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    className={inputClass}
+                    isRTL={isRTL}
+                    placeholder={t.users.search}
+                    ariaLabel={t.users.search}
                 />
-            </label>
-            <label className={labelClass}>
-                {t.users.roleFilter}
-                <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className={inputClass}>
+            </div>
+            <div className="min-w-0">
+                <select
+                    value={roleFilter}
+                    onChange={(event) => setRoleFilter(event.target.value)}
+                    aria-label={t.users.roleFilter}
+                    className={inputClass}
+                >
                     <option value="">{t.users.allRoles}</option>
                     {roles.map((role) => <option key={role.id} value={role.id}>{roleLabel(role)}</option>)}
                 </select>
-            </label>
-            <label className={labelClass}>
-                {t.users.statusFilter}
-                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className={inputClass}>
+            </div>
+            <div className="min-w-0">
+                <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                    aria-label={t.users.statusFilter}
+                    className={inputClass}
+                >
                     <option value="">{t.users.allStatuses}</option>
                     <option value="active">{t.users.active}</option>
                     <option value="inactive">{t.users.inactive}</option>
                 </select>
-            </label>
+            </div>
         </div>
     );
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
+import SearchInput from '../../../components/SearchInput';
 import PaymentFormModal from './PaymentFormModal';
 import {
     ACADEMIC_YEAR_CHANGED_EVENT,
@@ -312,7 +313,6 @@ export default function PaymentsTable({ routeParams = {} }) {
             }]
             : [];
     const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
-    const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
         <form onSubmit={applyFilters} className="flex flex-col gap-3">
             {isSecretary && (
@@ -354,19 +354,24 @@ export default function PaymentsTable({ routeParams = {} }) {
                     </button>
                 </div>
             )}
-            <label className={labelClass}>
-                {t.payments.search}
-                <input
-                    type="search"
+            <div className="min-w-0">
+                <SearchInput
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    className={controlClass}
+                    isRTL={isRTL}
+                    placeholder={t.payments.search}
+                    ariaLabel={t.payments.search}
                 />
-            </label>
-            <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <label className={labelClass}>
-                    {t.payments.filters.student}
-                    <select name="student_id" value={filters.student_id} onChange={handleFilterChange} className={controlClass}>
+            </div>
+            <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="min-w-0">
+                    <select
+                        name="student_id"
+                        value={filters.student_id}
+                        onChange={handleFilterChange}
+                        aria-label={t.payments.filters.student}
+                        className={controlClass}
+                    >
                         <option value="">{t.payments.filters.allStudents}</option>
                         {students.map((student) => (
                             <option key={student.id} value={student.id}>
@@ -374,10 +379,15 @@ export default function PaymentsTable({ routeParams = {} }) {
                             </option>
                         ))}
                     </select>
-                </label>
-                <label className={labelClass}>
-                    {t.payments.filters.status}
-                    <select name="status" value={filters.status} onChange={handleFilterChange} className={controlClass}>
+                </div>
+                <div className="min-w-0">
+                    <select
+                        name="status"
+                        value={filters.status}
+                        onChange={handleFilterChange}
+                        aria-label={t.payments.filters.status}
+                        className={controlClass}
+                    >
                         <option value="">{t.payments.filters.allStatuses}</option>
                         {Object.entries(isSecretary
                             ? { due: t.payments.statuses.due, late: t.payments.statuses.late }
@@ -385,17 +395,17 @@ export default function PaymentsTable({ routeParams = {} }) {
                             <option key={status} value={status}>{label}</option>
                         ))}
                     </select>
-                </label>
-                <label className={labelClass}>
-                    {t.payments.filters.period}
+                </div>
+                <div className="min-w-0">
                     <input
                         type="date"
                         name="period_date"
                         value={filters.period_date}
                         onChange={handleFilterChange}
+                        aria-label={t.payments.filters.period}
                         className={controlClass}
                     />
-                </label>
+                </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <button
                         type="submit"

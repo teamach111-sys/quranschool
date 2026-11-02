@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import SearchInput from '../../../components/SearchInput';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 import DesktopTable from '../../../tables/desktoptable';
@@ -125,34 +126,37 @@ export default function RoleChangeHistoryTable() {
         range: (first, last, total) => t.roleHistory.table.range(first, last, total),
     };
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
-    const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <label className={labelClass}>
-                {t.roleHistory.search}
-                <input
-                    type="search"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(24rem,2fr)_minmax(10rem,1fr)_minmax(9rem,1fr)]">
+            <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+                <SearchInput
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    className={inputClass}
+                    isRTL={isRTL}
+                    placeholder={t.roleHistory.search}
+                    ariaLabel={t.roleHistory.search}
                 />
-            </label>
-            <label className={labelClass}>
-                {t.roleHistory.userFilter}
-                <select value={userFilter} onChange={(event) => setUserFilter(event.target.value)} className={inputClass}>
+            </div>
+            <div className="min-w-0">
+                <select
+                    value={userFilter}
+                    onChange={(event) => setUserFilter(event.target.value)}
+                    aria-label={t.roleHistory.userFilter}
+                    className={inputClass}
+                >
                     <option value="">{t.roleHistory.allUsers}</option>
                     {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
                 </select>
-            </label>
-            <label className={labelClass}>
-                {t.roleHistory.dateFilter}
+            </div>
+            <div className="min-w-0">
                 <input
                     type="date"
                     value={dateFilter}
                     onChange={(event) => setDateFilter(event.target.value)}
+                    aria-label={t.roleHistory.dateFilter}
                     className={inputClass}
                 />
-            </label>
+            </div>
         </div>
     );
 

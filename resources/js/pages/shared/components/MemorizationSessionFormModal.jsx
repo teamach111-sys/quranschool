@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import Icon from '../../../components/Icon';
+import SearchInput from '../../../components/SearchInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -44,6 +45,7 @@ function SurahPicker({
     value,
     searchTerm,
     options,
+    isRTL,
     lang,
     inputClass,
     labelClass,
@@ -56,13 +58,12 @@ function SurahPicker({
     return (
         <div className={labelClass}>
             <span>{label}</span>
-            <input
-                type="search"
-                aria-label={searchLabel}
+            <SearchInput
+                isRTL={isRTL}
+                ariaLabel={searchLabel}
                 placeholder={searchLabel}
                 value={searchTerm}
                 onChange={onSearchChange}
-                className={inputClass}
             />
             <select
                 aria-label={selectLabel}
@@ -532,6 +533,7 @@ export default function MemorizationSessionFormModal({
                                     value={form.surah_start}
                                     searchTerm={startSurahSearch}
                                     options={startSurahOptions}
+                                    isRTL={isRTL}
                                     lang={lang}
                                     inputClass={inputClass}
                                     labelClass={labelClass}
@@ -565,6 +567,7 @@ export default function MemorizationSessionFormModal({
                                     value={form.surah_end}
                                     searchTerm={endSurahSearch}
                                     options={endSurahOptions}
+                                    isRTL={isRTL}
                                     lang={lang}
                                     inputClass={inputClass}
                                     labelClass={labelClass}

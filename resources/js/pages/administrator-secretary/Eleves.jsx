@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon';
+import SearchInput from '../../components/SearchInput';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
 import ConfirmDeleteModal from '../../modals/confirmdelete';
@@ -269,14 +270,12 @@ export default function Eleves({ routeParams = {} }) {
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <label className="relative min-w-0 flex-1 sm:max-w-sm">
-                <Icon name="search" className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-[18px] text-outline dark:text-[#9fd1bd]/50 ${isRTL ? 'right-3' : 'left-3'}`} />
-                <input
-                    type="search"
+                <SearchInput
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
+                    isRTL={isRTL}
                     placeholder={t.students.search}
-                    aria-label={t.students.search}
-                    className={`min-h-11 w-full rounded-lg border border-transparent bg-surface-container-low px-3 text-[13px] text-on-surface outline-none placeholder:text-outline focus:border-primary dark:bg-[#1a2520] dark:text-[#f0fcf3] dark:placeholder:text-[#9fd1bd]/40 dark:focus:border-[#9fd1bd] ${isRTL ? 'pr-10' : 'pl-10'}`}
+                    ariaLabel={t.students.search}
                 />
             </label>
             <div className="flex flex-col gap-2 sm:flex-row">
