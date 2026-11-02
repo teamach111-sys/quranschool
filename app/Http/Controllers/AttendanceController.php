@@ -23,6 +23,7 @@ class AttendanceController extends Controller
         $year = $this->resolveYear($request, $schoolId);
         $yearId = (int) $year->id;
         $yearIsWritable = (bool) $year->is_active;
+        $yearIsCurrent = (bool) $year->is_current;
         $filters = $request->validate([
             'room_id' => [
                 'nullable',
@@ -179,6 +180,7 @@ class AttendanceController extends Controller
         return response()->json([
             'year_id' => $yearId,
             'year_is_writable' => $yearIsWritable,
+            'year_is_current' => $yearIsCurrent,
             'today' => now()->toDateString(),
             'attendance' => $attendance,
             'rooms' => $rooms,
@@ -186,8 +188,91 @@ class AttendanceController extends Controller
             'students' => $students,
             'statuses' => self::STATUSES,
             'can_correct' => $yearIsWritable && $user->role === 'admin',
-            'can_mark' => $yearIsWritable && $user->role === 'teacher',
+            'can_mark' => $yearIsWritable && $yearIsCurrent && $user->role === 'teacher',
             'can_follow_up' => $yearIsWritable && $user->role === 'secretary',
+        ]);
+    }
+
+    public function roster(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        abort_unless($user->role === 'teacher', 403);
+
+        $yearId = $request->validate([
+            'year_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_years', 'id')->where('school_id', $schoolId),
+            ],
+        ])['year_id'];
+
+        $year = DB::table('academic_years')
+            ->where('id', $yearId)
+            ->where('school_id', $schoolId)
+            ->first(['id', 'is_current', 'is_active']);
+        abort_unless($year, 404);
+
+        if (! $year->is_current || ! $year->is_active) {
+            throw ValidationException::withMessages([
+                'year_id' => 'Attendance rosters are only available for the current active academic year.',
+            ]);
+        }
+
+        $today = now()->toDateString();
+        $rooms = DB::table('rooms')
+            ->join('room_teachers', function (JoinClause $join) {
+                $join->on('room_teachers.room_id', '=', 'rooms.id')
+                    ->on('room_teachers.school_id', '=', 'rooms.school_id')
+                    ->on('room_teachers.year_id', '=', 'rooms.year_id');
+            })
+            ->where('rooms.school_id', $schoolId)
+            ->where('rooms.year_id', $yearId)
+            ->where('rooms.is_active', true)
+            ->where('room_teachers.teacher_id', $user->id)
+            ->where('room_teachers.assigned_from', '<=', $today)
+            ->where(function (Builder $dates) use ($today) {
+                $dates->whereNull('room_teachers.assigned_until')
+                    ->orWhere('room_teachers.assigned_until', '>=', $today);
+            })
+            ->orderBy('rooms.name')
+            ->get(['rooms.id', 'rooms.name']);
+
+        $students = DB::table('students')
+            ->leftJoin('attendance', function (JoinClause $join) use ($today) {
+                $join->on('attendance.student_id', '=', 'students.id')
+                    ->on('attendance.school_id', '=', 'students.school_id')
+                    ->on('attendance.year_id', '=', 'students.year_id')
+                    ->where('attendance.attendance_date', $today);
+            })
+            ->where('students.school_id', $schoolId)
+            ->where('students.year_id', $yearId)
+            ->where('students.status', 'active')
+            ->whereIn('students.room_id', $rooms->pluck('id'))
+            ->orderBy('students.full_name')
+            ->get([
+                'students.id',
+                'students.full_name as name',
+                'students.student_number',
+                'students.room_id',
+                'attendance.status',
+            ])
+            ->groupBy('room_id');
+
+        return response()->json([
+            'year_id' => (int) $yearId,
+            'attendance_date' => $today,
+            'rooms' => $rooms->map(fn ($room) => [
+                'id' => (int) $room->id,
+                'name' => $room->name,
+                'students' => ($students->get($room->id, collect()))
+                    ->map(fn ($student) => [
+                        'id' => (int) $student->id,
+                        'name' => $student->name,
+                        'student_number' => $student->student_number,
+                        'status' => $student->status,
+                    ])
+                    ->values(),
+            ])->values(),
         ]);
     }
 
@@ -519,6 +604,7 @@ class AttendanceController extends Controller
             'id',
             'start_date',
             'end_date',
+            'is_current',
             'is_active',
         ]);
         abort_unless($year, 404);

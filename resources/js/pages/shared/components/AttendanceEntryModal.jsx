@@ -4,9 +4,9 @@ import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 
-function initialValues(record, todayDate) {
+function initialValues(record, todayDate, selectedStudentId) {
     return {
-        student_id: record ? String(record.student_id) : '',
+        student_id: selectedStudentId ?? (record ? String(record.student_id) : ''),
         attendance_date: record?.attendance_date ?? todayDate,
         status: record?.status ?? 'present',
         note: record?.note ?? '',
@@ -17,6 +17,9 @@ export default function AttendanceEntryModal({
     open,
     mode,
     record = null,
+    selectedStudentId,
+    embedded = false,
+    cancelLabel,
     yearId,
     todayDate,
     students,
@@ -24,7 +27,7 @@ export default function AttendanceEntryModal({
     onSaved,
 }) {
     const { isRTL, t } = useLanguage();
-    const [form, setForm] = useState(() => initialValues(record, todayDate));
+    const [form, setForm] = useState(() => initialValues(record, todayDate, selectedStudentId));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const formId = useId();
@@ -37,9 +40,9 @@ export default function AttendanceEntryModal({
     useEffect(() => {
         if (!open) return;
 
-        setForm(initialValues(record, todayDate));
+        setForm(initialValues(record, todayDate, selectedStudentId));
         setError(null);
-    }, [open, record, todayDate]);
+    }, [open, record, selectedStudentId, todayDate]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -97,21 +100,12 @@ export default function AttendanceEntryModal({
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const selectedStudent = students.find((student) => String(student.id) === form.student_id);
 
-    return (
-        <Modal
-            open={open}
-            title={title}
-            icon="fact_check"
-            onClose={handleClose}
-            isRTL={isRTL}
-            closeLabel={t.attendance.cancel}
-            maxWidth="max-w-[600px]"
-        >
-            <form id={`${formId}-form`} onSubmit={handleSubmit} className="flex flex-col gap-5">
+    const formContent = (
+        <form id={`${formId}-form`} onSubmit={handleSubmit} className="flex flex-col gap-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <label className={labelClass}>
                         {t.attendance.columns.student}
-                        {isNewMark ? (
+                        {isNewMark && !selectedStudentId ? (
                             <select
                                 required
                                 name="student_id"
@@ -191,7 +185,7 @@ export default function AttendanceEntryModal({
                         onClick={handleClose}
                         className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
                     >
-                        {t.attendance.cancel}
+                        {cancelLabel ?? t.attendance.cancel}
                     </button>
                     <button
                         type="submit"
@@ -202,7 +196,24 @@ export default function AttendanceEntryModal({
                         {saving ? t.attendance.saving : t.attendance.save}
                     </button>
                 </footer>
-            </form>
+        </form>
+    );
+
+    if (embedded) {
+        return formContent;
+    }
+
+    return (
+        <Modal
+            open={open}
+            title={title}
+            icon="fact_check"
+            onClose={handleClose}
+            isRTL={isRTL}
+            closeLabel={t.attendance.cancel}
+            maxWidth="max-w-[600px]"
+        >
+            {formContent}
         </Modal>
     );
 }

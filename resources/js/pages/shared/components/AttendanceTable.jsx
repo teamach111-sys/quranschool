@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Icon from '../../../components/Icon';
+import AttendanceRosterModal from './AttendanceRosterModal';
 import AttendanceEntryModal from './AttendanceEntryModal';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
@@ -28,10 +29,12 @@ export default function AttendanceTable() {
     const [teachers, setTeachers] = useState([]);
     const [students, setStudents] = useState([]);
     const [todayDate, setTodayDate] = useState('');
+    const [yearIsCurrent, setYearIsCurrent] = useState(false);
     const [canCorrect, setCanCorrect] = useState(false);
     const [canMark, setCanMark] = useState(false);
     const [canFollowUp, setCanFollowUp] = useState(false);
     const [filters, setFilters] = useState(emptyFilters);
+    const [rosterOpen, setRosterOpen] = useState(false);
     const [entry, setEntry] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
@@ -42,6 +45,7 @@ export default function AttendanceTable() {
             setYearId(nextYearId ? Number(nextYearId) : null);
             setFilters(emptyFilters());
             setEntry(null);
+            setRosterOpen(false);
             setCanCorrect(false);
             setCanMark(false);
             setCanFollowUp(false);
@@ -68,6 +72,7 @@ export default function AttendanceTable() {
 
             if (signal?.aborted) return;
             setYearId((currentYearId) => currentYearId ?? Number(data.year_id));
+            setYearIsCurrent(Boolean(data.year_is_current));
             setAttendance(Array.isArray(data.attendance) ? data.attendance : []);
             setRooms(Array.isArray(data.rooms) ? data.rooms : []);
             setTeachers(Array.isArray(data.teachers) ? data.teachers : []);
@@ -175,11 +180,11 @@ export default function AttendanceTable() {
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
     const toolbar = (
         <div className="flex flex-col gap-3">
-            {canMark && (
+            {canMark && yearIsCurrent && (
                 <div className="flex justify-end">
                     <button
                         type="button"
-                        onClick={() => openEntry()}
+                        onClick={() => setRosterOpen(true)}
                         className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
                     >
                         <Icon name="add" className="text-[17px]" />
@@ -266,11 +271,21 @@ export default function AttendanceTable() {
                     actions={actions}
                 />
             </div>
+            {rosterOpen && (
+                <AttendanceRosterModal
+                    open
+                    yearId={yearId}
+                    todayDate={todayDate}
+                    onClose={() => setRosterOpen(false)}
+                    onSaved={handleEntrySaved}
+                />
+            )}
             {entry && (
                 <AttendanceEntryModal
                     open
                     mode={entry.mode}
                     record={entry.record}
+                    selectedStudentId={entry.selectedStudentId}
                     yearId={yearId}
                     todayDate={todayDate}
                     students={students}

@@ -123,6 +123,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('attendance.table');
 
+    Route::get('/attendance/roster', [AttendanceController::class, 'roster'])
+        ->middleware('can:access-dashboard')
+        ->name('attendance.roster');
+
     Route::get('/memorization-sessions/table', [MemorizationSessionsController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('memorization-sessions.table');

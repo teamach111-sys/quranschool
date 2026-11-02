@@ -85,6 +85,11 @@ class AttendanceTableTest extends TestCase
         $this->getJson('/attendance/table')->assertUnauthorized();
     }
 
+    public function test_attendance_roster_requires_authentication(): void
+    {
+        $this->getJson('/attendance/roster?year_id=1')->assertUnauthorized();
+    }
+
     public function test_admin_sees_only_school_records_for_the_selected_year(): void
     {
         $this->seedAttendance();
@@ -153,7 +158,8 @@ class AttendanceTableTest extends TestCase
         $this->getJson('/attendance/table?year_id=3')
             ->assertOk()
             ->assertJsonPath('year_id', 3)
-            ->assertJsonPath('year_is_writable', true);
+            ->assertJsonPath('year_is_writable', true)
+            ->assertJsonPath('can_mark', false);
     }
 
     public function test_teacher_only_sees_records_from_rooms_assigned_on_the_attendance_date(): void
@@ -217,6 +223,70 @@ class AttendanceTableTest extends TestCase
         $this->getJson('/attendance/table?year_id=1&student_id=3')
             ->assertUnprocessable()
             ->assertJsonValidationErrors('student_id');
+    }
+
+    public function test_teacher_roster_contains_only_active_students_in_current_assigned_rooms_without_writing(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('students')->insert([
+            ['id' => 5, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-102', 'full_name' => 'Adam Active', 'status' => 'active'],
+            ['id' => 6, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-103', 'full_name' => 'Lina Paused', 'status' => 'paused'],
+            ['id' => 7, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-104', 'full_name' => 'Mina Withdrawn', 'status' => 'withdrawn'],
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/attendance/roster?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('year_id', 1)
+            ->assertJsonPath('attendance_date', '2026-10-10')
+            ->assertJsonCount(1, 'rooms')
+            ->assertJsonPath('rooms.0.id', 1)
+            ->assertJsonCount(2, 'rooms.0.students')
+            ->assertJsonPath('rooms.0.students.0.name', 'Adam Active')
+            ->assertJsonPath('rooms.0.students.0.status', null)
+            ->assertJsonPath('rooms.0.students.1.name', 'Zayd Ali')
+            ->assertJsonPath('rooms.0.students.1.status', 'present');
+
+        $this->assertDatabaseCount('attendance', 5);
+    }
+
+    public function test_attendance_roster_requires_a_teacher_and_scopes_the_selected_year_to_the_school(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/attendance/roster?year_id=1')->assertForbidden();
+
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/attendance/roster?year_id=2')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+    }
+
+    public function test_teacher_roster_includes_only_rooms_assigned_on_the_roster_date(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(21, 1, 'teacher'));
+
+        $this->getJson('/attendance/roster?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'rooms')
+            ->assertJsonPath('rooms.0.id', 2)
+            ->assertJsonCount(1, 'rooms.0.students')
+            ->assertJsonPath('rooms.0.students.0.name', 'Amina Benali');
+    }
+
+    public function test_attendance_roster_is_unavailable_for_a_past_year(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/attendance/roster?year_id=3')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
     }
 
     public function test_attendance_table_does_not_resolve_another_schools_year(): void

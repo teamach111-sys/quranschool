@@ -9,7 +9,6 @@ export default function Modal({
     children,
     footer,
     maxWidth = 'max-w-[600px]',
-    height,
     isRTL = false,
     closeLabel = 'Close',
 }) {
@@ -56,7 +55,6 @@ export default function Modal({
                 aria-labelledby={`${dialogId}-title`}
                 tabIndex={-1}
                 dir={isRTL ? 'rtl' : 'ltr'}
-                style={height ? { height } : undefined}
                 className={`max-h-[calc(100vh-1.5rem)] w-full ${maxWidth} overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-ambient outline-none dark:border-[#384d43] dark:bg-[#202f29] dark:shadow-2xl sm:p-7`}
             >
                 <div className="flex flex-col gap-5">

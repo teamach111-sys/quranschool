@@ -569,7 +569,6 @@ export default function StudentFormModal({
             icon={readOnly ? 'person' : isEditing ? 'edit' : 'person_add'}
             onClose={onClose}
             footer={footer}
-            height="min(760px, calc(100vh - 1.5rem))"
             isRTL={isRTL}
             closeLabel={t.students.form.close}
         >
