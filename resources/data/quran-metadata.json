@@ -22,7 +22,7 @@
       "id": 1,
       "name": "Al-Fatiha",
       "name_ar": "الفاتحة",
-      "name_fr": "L'Ouverture",
+      "name_fr": "Al-Fatiha",
       "ayah_count": 7,
       "revelation": "meccan",
       "juz_start": 1
@@ -31,7 +31,7 @@
       "id": 2,
       "name": "Al-Baqarah",
       "name_ar": "البقرة",
-      "name_fr": "La Vache",
+      "name_fr": "Al-Baqarah",
       "ayah_count": 286,
       "revelation": "medinan",
       "juz_start": 1
@@ -40,7 +40,7 @@
       "id": 3,
       "name": "Ali 'Imran",
       "name_ar": "آل عمران",
-      "name_fr": "La Famille d'Imran",
+      "name_fr": "Ali 'Imran",
       "ayah_count": 200,
       "revelation": "medinan",
       "juz_start": 3
@@ -49,7 +49,7 @@
       "id": 4,
       "name": "An-Nisa",
       "name_ar": "النساء",
-      "name_fr": "Les Femmes",
+      "name_fr": "An-Nisa",
       "ayah_count": 176,
       "revelation": "medinan",
       "juz_start": 4
@@ -58,7 +58,7 @@
       "id": 5,
       "name": "Al-Ma'idah",
       "name_ar": "المائدة",
-      "name_fr": "La Table servie",
+      "name_fr": "Al-Ma'idah",
       "ayah_count": 120,
       "revelation": "medinan",
       "juz_start": 6
@@ -67,7 +67,7 @@
       "id": 6,
       "name": "Al-An'am",
       "name_ar": "الأنعام",
-      "name_fr": "Les Bestiaux",
+      "name_fr": "Al-An'am",
       "ayah_count": 165,
       "revelation": "meccan",
       "juz_start": 7
@@ -76,7 +76,7 @@
       "id": 7,
       "name": "Al-A'raf",
       "name_ar": "الأعراف",
-      "name_fr": "Les Boutures",
+      "name_fr": "Al-A'raf",
       "ayah_count": 206,
       "revelation": "meccan",
       "juz_start": 8
@@ -85,7 +85,7 @@
       "id": 8,
       "name": "Al-Anfal",
       "name_ar": "الأنفال",
-      "name_fr": "Le Butin",
+      "name_fr": "Al-Anfal",
       "ayah_count": 75,
       "revelation": "medinan",
       "juz_start": 9
@@ -94,7 +94,7 @@
       "id": 9,
       "name": "At-Tawbah",
       "name_ar": "التوبة",
-      "name_fr": "Le Repentir",
+      "name_fr": "At-Tawbah",
       "ayah_count": 129,
       "revelation": "medinan",
       "juz_start": 10
@@ -103,7 +103,7 @@
       "id": 10,
       "name": "Yunus",
       "name_ar": "يونس",
-      "name_fr": "Jonas",
+      "name_fr": "Yunus",
       "ayah_count": 109,
       "revelation": "meccan",
       "juz_start": 11
@@ -121,7 +121,7 @@
       "id": 12,
       "name": "Yusuf",
       "name_ar": "يوسف",
-      "name_fr": "Joseph",
+      "name_fr": "Yusuf",
       "ayah_count": 111,
       "revelation": "meccan",
       "juz_start": 12
@@ -130,7 +130,7 @@
       "id": 13,
       "name": "Ar-Ra'd",
       "name_ar": "الرعد",
-      "name_fr": "Le Tonnerre",
+      "name_fr": "Ar-Ra'd",
       "ayah_count": 43,
       "revelation": "medinan",
       "juz_start": 13
@@ -139,7 +139,7 @@
       "id": 14,
       "name": "Ibrahim",
       "name_ar": "إبراهيم",
-      "name_fr": "Abraham",
+      "name_fr": "Ibrahim",
       "ayah_count": 52,
       "revelation": "meccan",
       "juz_start": 13
@@ -157,7 +157,7 @@
       "id": 16,
       "name": "An-Nahl",
       "name_ar": "النحل",
-      "name_fr": "Les Abeilles",
+      "name_fr": "An-Nahl",
       "ayah_count": 128,
       "revelation": "meccan",
       "juz_start": 14
@@ -166,7 +166,7 @@
       "id": 17,
       "name": "Al-Isra",
       "name_ar": "الإسراء",
-      "name_fr": "Le Voyage nocturne",
+      "name_fr": "Al-Isra",
       "ayah_count": 111,
       "revelation": "meccan",
       "juz_start": 15
@@ -175,7 +175,7 @@
       "id": 18,
       "name": "Al-Kahf",
       "name_ar": "الكهف",
-      "name_fr": "La Caverne",
+      "name_fr": "Al-Kahf",
       "ayah_count": 110,
       "revelation": "meccan",
       "juz_start": 15
@@ -184,7 +184,7 @@
       "id": 19,
       "name": "Maryam",
       "name_ar": "مريم",
-      "name_fr": "Marie",
+      "name_fr": "Maryam",
       "ayah_count": 98,
       "revelation": "meccan",
       "juz_start": 16
@@ -193,7 +193,7 @@
       "id": 20,
       "name": "Taha",
       "name_ar": "طه",
-      "name_fr": "Tâ-Hâ",
+      "name_fr": "Taha",
       "ayah_count": 135,
       "revelation": "meccan",
       "juz_start": 16
@@ -202,7 +202,7 @@
       "id": 21,
       "name": "Al-Anbiya",
       "name_ar": "الأنبياء",
-      "name_fr": "Les Prophètes",
+      "name_fr": "Al-Anbiya",
       "ayah_count": 112,
       "revelation": "meccan",
       "juz_start": 17
@@ -211,7 +211,7 @@
       "id": 22,
       "name": "Al-Hajj",
       "name_ar": "الحج",
-      "name_fr": "Le Pèlerinage",
+      "name_fr": "Al-Hajj",
       "ayah_count": 78,
       "revelation": "medinan",
       "juz_start": 17
@@ -220,7 +220,7 @@
       "id": 23,
       "name": "Al-Mu'minun",
       "name_ar": "المؤمنون",
-      "name_fr": "Les Croyants",
+      "name_fr": "Al-Mu'minun",
       "ayah_count": 118,
       "revelation": "meccan",
       "juz_start": 18
@@ -229,7 +229,7 @@
       "id": 24,
       "name": "An-Nur",
       "name_ar": "النور",
-      "name_fr": "La Lumière",
+      "name_fr": "An-Nur",
       "ayah_count": 64,
       "revelation": "medinan",
       "juz_start": 18
@@ -238,7 +238,7 @@
       "id": 25,
       "name": "Al-Furqan",
       "name_ar": "الفرقان",
-      "name_fr": "Le Discernement",
+      "name_fr": "Al-Furqan",
       "ayah_count": 77,
       "revelation": "meccan",
       "juz_start": 18
@@ -247,7 +247,7 @@
       "id": 26,
       "name": "Ash-Shu'ara",
       "name_ar": "الشعراء",
-      "name_fr": "Les Poètes",
+      "name_fr": "Ash-Shu'ara",
       "ayah_count": 227,
       "revelation": "meccan",
       "juz_start": 19
@@ -256,7 +256,7 @@
       "id": 27,
       "name": "An-Naml",
       "name_ar": "النمل",
-      "name_fr": "Les Fourmis",
+      "name_fr": "An-Naml",
       "ayah_count": 93,
       "revelation": "meccan",
       "juz_start": 19
@@ -265,7 +265,7 @@
       "id": 28,
       "name": "Al-Qasas",
       "name_ar": "القصص",
-      "name_fr": "Le Récit",
+      "name_fr": "Al-Qasas",
       "ayah_count": 88,
       "revelation": "meccan",
       "juz_start": 20
@@ -274,7 +274,7 @@
       "id": 29,
       "name": "Al-'Ankabut",
       "name_ar": "العنكبوت",
-      "name_fr": "L'Araignée",
+      "name_fr": "Al-'Ankabut",
       "ayah_count": 69,
       "revelation": "meccan",
       "juz_start": 20
@@ -283,7 +283,7 @@
       "id": 30,
       "name": "Ar-Rum",
       "name_ar": "الروم",
-      "name_fr": "Les Romains",
+      "name_fr": "Ar-Rum",
       "ayah_count": 60,
       "revelation": "meccan",
       "juz_start": 21
@@ -301,7 +301,7 @@
       "id": 32,
       "name": "As-Sajdah",
       "name_ar": "السجدة",
-      "name_fr": "La Prosternation",
+      "name_fr": "As-Sajdah",
       "ayah_count": 30,
       "revelation": "meccan",
       "juz_start": 21
@@ -310,7 +310,7 @@
       "id": 33,
       "name": "Al-Ahzab",
       "name_ar": "الأحزاب",
-      "name_fr": "Les Coalisés",
+      "name_fr": "Al-Ahzab",
       "ayah_count": 73,
       "revelation": "medinan",
       "juz_start": 21
@@ -328,7 +328,7 @@
       "id": 35,
       "name": "Fatir",
       "name_ar": "فاطر",
-      "name_fr": "Le Créateur",
+      "name_fr": "Fatir",
       "ayah_count": 45,
       "revelation": "meccan",
       "juz_start": 22
@@ -337,7 +337,7 @@
       "id": 36,
       "name": "Ya-Sin",
       "name_ar": "يس",
-      "name_fr": "Yâ-Sîn",
+      "name_fr": "Ya-Sin",
       "ayah_count": 83,
       "revelation": "meccan",
       "juz_start": 22
@@ -346,7 +346,7 @@
       "id": 37,
       "name": "As-Saffat",
       "name_ar": "الصافات",
-      "name_fr": "Les Rangés",
+      "name_fr": "As-Saffat",
       "ayah_count": 182,
       "revelation": "meccan",
       "juz_start": 23
@@ -355,7 +355,7 @@
       "id": 38,
       "name": "Sad",
       "name_ar": "ص",
-      "name_fr": "Sâd",
+      "name_fr": "Sad",
       "ayah_count": 88,
       "revelation": "meccan",
       "juz_start": 23
@@ -364,7 +364,7 @@
       "id": 39,
       "name": "Az-Zumar",
       "name_ar": "الزمر",
-      "name_fr": "Les Groupes",
+      "name_fr": "Az-Zumar",
       "ayah_count": 75,
       "revelation": "meccan",
       "juz_start": 23
@@ -373,7 +373,7 @@
       "id": 40,
       "name": "Ghafir",
       "name_ar": "غافر",
-      "name_fr": "Le Pardonneur",
+      "name_fr": "Ghafir",
       "ayah_count": 85,
       "revelation": "meccan",
       "juz_start": 24
@@ -382,7 +382,7 @@
       "id": 41,
       "name": "Fussilat",
       "name_ar": "فصلت",
-      "name_fr": "Les Versets détaillés",
+      "name_fr": "Fussilat",
       "ayah_count": 54,
       "revelation": "meccan",
       "juz_start": 24
@@ -391,7 +391,7 @@
       "id": 42,
       "name": "Ash-Shura",
       "name_ar": "الشورى",
-      "name_fr": "La Consultation",
+      "name_fr": "Ash-Shura",
       "ayah_count": 53,
       "revelation": "meccan",
       "juz_start": 25
@@ -400,7 +400,7 @@
       "id": 43,
       "name": "Az-Zukhruf",
       "name_ar": "الزخرف",
-      "name_fr": "L'Ornement d'or",
+      "name_fr": "Az-Zukhruf",
       "ayah_count": 89,
       "revelation": "meccan",
       "juz_start": 25
@@ -409,7 +409,7 @@
       "id": 44,
       "name": "Ad-Dukhan",
       "name_ar": "الدخان",
-      "name_fr": "La Fumée",
+      "name_fr": "Ad-Dukhan",
       "ayah_count": 59,
       "revelation": "meccan",
       "juz_start": 25
@@ -418,7 +418,7 @@
       "id": 45,
       "name": "Al-Jathiyah",
       "name_ar": "الجاثية",
-      "name_fr": "L'Agenouillée",
+      "name_fr": "Al-Jathiyah",
       "ayah_count": 37,
       "revelation": "meccan",
       "juz_start": 25
@@ -427,7 +427,7 @@
       "id": 46,
       "name": "Al-Ahqaf",
       "name_ar": "الأحقاف",
-      "name_fr": "Les Dunes",
+      "name_fr": "Al-Ahqaf",
       "ayah_count": 35,
       "revelation": "meccan",
       "juz_start": 26
@@ -445,7 +445,7 @@
       "id": 48,
       "name": "Al-Fath",
       "name_ar": "الفتح",
-      "name_fr": "La Victoire",
+      "name_fr": "Al-Fath",
       "ayah_count": 29,
       "revelation": "medinan",
       "juz_start": 26
@@ -454,7 +454,7 @@
       "id": 49,
       "name": "Al-Hujurat",
       "name_ar": "الحجرات",
-      "name_fr": "Les Appartements",
+      "name_fr": "Al-Hujurat",
       "ayah_count": 18,
       "revelation": "medinan",
       "juz_start": 26
@@ -463,7 +463,7 @@
       "id": 50,
       "name": "Qaf",
       "name_ar": "ق",
-      "name_fr": "Qâf",
+      "name_fr": "Qaf",
       "ayah_count": 45,
       "revelation": "meccan",
       "juz_start": 26
@@ -472,7 +472,7 @@
       "id": 51,
       "name": "Adh-Dhariyat",
       "name_ar": "الذاريات",
-      "name_fr": "Qui éparpillent",
+      "name_fr": "Adh-Dhariyat",
       "ayah_count": 60,
       "revelation": "meccan",
       "juz_start": 26
@@ -481,7 +481,7 @@
       "id": 52,
       "name": "At-Tur",
       "name_ar": "الطور",
-      "name_fr": "Le Mont",
+      "name_fr": "At-Tur",
       "ayah_count": 49,
       "revelation": "meccan",
       "juz_start": 27
@@ -490,7 +490,7 @@
       "id": 53,
       "name": "An-Najm",
       "name_ar": "النجم",
-      "name_fr": "L'Étoile",
+      "name_fr": "An-Najm",
       "ayah_count": 62,
       "revelation": "meccan",
       "juz_start": 27
@@ -499,7 +499,7 @@
       "id": 54,
       "name": "Al-Qamar",
       "name_ar": "القمر",
-      "name_fr": "La Lune",
+      "name_fr": "Al-Qamar",
       "ayah_count": 55,
       "revelation": "meccan",
       "juz_start": 27
@@ -508,7 +508,7 @@
       "id": 55,
       "name": "Ar-Rahman",
       "name_ar": "الرحمن",
-      "name_fr": "Le Tout Miséricordieux",
+      "name_fr": "Ar-Rahman",
       "ayah_count": 78,
       "revelation": "medinan",
       "juz_start": 27
@@ -517,7 +517,7 @@
       "id": 56,
       "name": "Al-Waqi'ah",
       "name_ar": "الواقعة",
-      "name_fr": "L'Événement",
+      "name_fr": "Al-Waqi'ah",
       "ayah_count": 96,
       "revelation": "meccan",
       "juz_start": 27
@@ -526,7 +526,7 @@
       "id": 57,
       "name": "Al-Hadid",
       "name_ar": "الحديد",
-      "name_fr": "Le Fer",
+      "name_fr": "Al-Hadid",
       "ayah_count": 29,
       "revelation": "medinan",
       "juz_start": 27
@@ -535,7 +535,7 @@
       "id": 58,
       "name": "Al-Mujadila",
       "name_ar": "المجادلة",
-      "name_fr": "La Disputatrice",
+      "name_fr": "Al-Mujadila",
       "ayah_count": 22,
       "revelation": "medinan",
       "juz_start": 28
@@ -544,7 +544,7 @@
       "id": 59,
       "name": "Al-Hashr",
       "name_ar": "الحشر",
-      "name_fr": "L'Exode",
+      "name_fr": "Al-Hashr",
       "ayah_count": 24,
       "revelation": "medinan",
       "juz_start": 28
@@ -553,7 +553,7 @@
       "id": 60,
       "name": "Al-Mumtahanah",
       "name_ar": "الممتحنة",
-      "name_fr": "L'Éprouvée",
+      "name_fr": "Al-Mumtahanah",
       "ayah_count": 13,
       "revelation": "medinan",
       "juz_start": 28
@@ -562,7 +562,7 @@
       "id": 61,
       "name": "As-Saff",
       "name_ar": "الصف",
-      "name_fr": "Le Rang",
+      "name_fr": "As-Saff",
       "ayah_count": 14,
       "revelation": "medinan",
       "juz_start": 28
@@ -571,7 +571,7 @@
       "id": 62,
       "name": "Al-Jumu'ah",
       "name_ar": "الجمعة",
-      "name_fr": "Le Vendredi",
+      "name_fr": "Al-Jumu'ah",
       "ayah_count": 11,
       "revelation": "medinan",
       "juz_start": 28
@@ -580,7 +580,7 @@
       "id": 63,
       "name": "Al-Munafiqun",
       "name_ar": "المنافقون",
-      "name_fr": "Les Hypocrites",
+      "name_fr": "Al-Munafiqun",
       "ayah_count": 11,
       "revelation": "medinan",
       "juz_start": 28
@@ -589,7 +589,7 @@
       "id": 64,
       "name": "At-Taghabun",
       "name_ar": "التغابن",
-      "name_fr": "La Grande perte",
+      "name_fr": "At-Taghabun",
       "ayah_count": 18,
       "revelation": "medinan",
       "juz_start": 28
@@ -598,7 +598,7 @@
       "id": 65,
       "name": "At-Talaq",
       "name_ar": "الطلاق",
-      "name_fr": "Le Divorce",
+      "name_fr": "At-Talaq",
       "ayah_count": 12,
       "revelation": "medinan",
       "juz_start": 28
@@ -607,7 +607,7 @@
       "id": 66,
       "name": "At-Tahrim",
       "name_ar": "التحريم",
-      "name_fr": "L'Interdiction",
+      "name_fr": "At-Tahrim",
       "ayah_count": 12,
       "revelation": "medinan",
       "juz_start": 28
@@ -616,7 +616,7 @@
       "id": 67,
       "name": "Al-Mulk",
       "name_ar": "الملك",
-      "name_fr": "La Royauté",
+      "name_fr": "Al-Mulk",
       "ayah_count": 30,
       "revelation": "meccan",
       "juz_start": 29
@@ -625,7 +625,7 @@
       "id": 68,
       "name": "Al-Qalam",
       "name_ar": "القلم",
-      "name_fr": "Le Calame",
+      "name_fr": "Al-Qalam",
       "ayah_count": 52,
       "revelation": "meccan",
       "juz_start": 29
@@ -634,7 +634,7 @@
       "id": 69,
       "name": "Al-Haqqah",
       "name_ar": "الحاقة",
-      "name_fr": "La Réalité",
+      "name_fr": "Al-Haqqah",
       "ayah_count": 52,
       "revelation": "meccan",
       "juz_start": 29
@@ -643,7 +643,7 @@
       "id": 70,
       "name": "Al-Ma'arij",
       "name_ar": "المعارج",
-      "name_fr": "Les Voies d'ascension",
+      "name_fr": "Al-Ma'arij",
       "ayah_count": 44,
       "revelation": "meccan",
       "juz_start": 29
@@ -652,7 +652,7 @@
       "id": 71,
       "name": "Nuh",
       "name_ar": "نوح",
-      "name_fr": "Noé",
+      "name_fr": "Nuh",
       "ayah_count": 28,
       "revelation": "meccan",
       "juz_start": 29
@@ -661,7 +661,7 @@
       "id": 72,
       "name": "Al-Jinn",
       "name_ar": "الجن",
-      "name_fr": "Les Djinns",
+      "name_fr": "Al-Jinn",
       "ayah_count": 28,
       "revelation": "meccan",
       "juz_start": 29
@@ -670,7 +670,7 @@
       "id": 73,
       "name": "Al-Muzzammil",
       "name_ar": "المزمل",
-      "name_fr": "L'Enveloppé",
+      "name_fr": "Al-Muzzammil",
       "ayah_count": 20,
       "revelation": "meccan",
       "juz_start": 29
@@ -679,7 +679,7 @@
       "id": 74,
       "name": "Al-Muddaththir",
       "name_ar": "المدثر",
-      "name_fr": "Le Bousculé",
+      "name_fr": "Al-Muddaththir",
       "ayah_count": 56,
       "revelation": "meccan",
       "juz_start": 29
@@ -688,7 +688,7 @@
       "id": 75,
       "name": "Al-Qiyamah",
       "name_ar": "القيامة",
-      "name_fr": "La Résurrection",
+      "name_fr": "Al-Qiyamah",
       "ayah_count": 40,
       "revelation": "meccan",
       "juz_start": 29
@@ -697,7 +697,7 @@
       "id": 76,
       "name": "Al-Insan",
       "name_ar": "الإنسان",
-      "name_fr": "L'Homme",
+      "name_fr": "Al-Insan",
       "ayah_count": 31,
       "revelation": "medinan",
       "juz_start": 29
@@ -706,7 +706,7 @@
       "id": 77,
       "name": "Al-Mursalat",
       "name_ar": "المرسلات",
-      "name_fr": "Les Envoyés",
+      "name_fr": "Al-Mursalat",
       "ayah_count": 50,
       "revelation": "meccan",
       "juz_start": 29
@@ -715,7 +715,7 @@
       "id": 78,
       "name": "An-Naba",
       "name_ar": "النبأ",
-      "name_fr": "L'Annonce",
+      "name_fr": "An-Naba",
       "ayah_count": 40,
       "revelation": "meccan",
       "juz_start": 30
@@ -724,7 +724,7 @@
       "id": 79,
       "name": "An-Nazi'at",
       "name_ar": "النازعات",
-      "name_fr": "Qui arrachent",
+      "name_fr": "An-Nazi'at",
       "ayah_count": 46,
       "revelation": "meccan",
       "juz_start": 30
@@ -733,7 +733,7 @@
       "id": 80,
       "name": "Abasa",
       "name_ar": "عبس",
-      "name_fr": "Il a froncé le sourcil",
+      "name_fr": "Abasa",
       "ayah_count": 42,
       "revelation": "meccan",
       "juz_start": 30
@@ -742,7 +742,7 @@
       "id": 81,
       "name": "At-Takwir",
       "name_ar": "التكوير",
-      "name_fr": "L'Obscurcissement",
+      "name_fr": "At-Takwir",
       "ayah_count": 29,
       "revelation": "meccan",
       "juz_start": 30
@@ -751,7 +751,7 @@
       "id": 82,
       "name": "Al-Infitar",
       "name_ar": "الانفطار",
-      "name_fr": "La Rupture",
+      "name_fr": "Al-Infitar",
       "ayah_count": 19,
       "revelation": "meccan",
       "juz_start": 30
@@ -760,7 +760,7 @@
       "id": 83,
       "name": "Al-Mutaffifin",
       "name_ar": "المطففين",
-      "name_fr": "Les Fraudeurs",
+      "name_fr": "Al-Mutaffifin",
       "ayah_count": 36,
       "revelation": "meccan",
       "juz_start": 30
@@ -769,7 +769,7 @@
       "id": 84,
       "name": "Al-Inshiqaq",
       "name_ar": "الانشقاق",
-      "name_fr": "La Déchirure",
+      "name_fr": "Al-Inshiqaq",
       "ayah_count": 25,
       "revelation": "meccan",
       "juz_start": 30
@@ -778,7 +778,7 @@
       "id": 85,
       "name": "Al-Buruj",
       "name_ar": "البروج",
-      "name_fr": "Les Constellations",
+      "name_fr": "Al-Buruj",
       "ayah_count": 22,
       "revelation": "meccan",
       "juz_start": 30
@@ -787,7 +787,7 @@
       "id": 86,
       "name": "At-Tariq",
       "name_ar": "الطارق",
-      "name_fr": "L'Astre nocturne",
+      "name_fr": "At-Tariq",
       "ayah_count": 17,
       "revelation": "meccan",
       "juz_start": 30
@@ -796,7 +796,7 @@
       "id": 87,
       "name": "Al-A'la",
       "name_ar": "الأعلى",
-      "name_fr": "Le Très-Haut",
+      "name_fr": "Al-A'la",
       "ayah_count": 19,
       "revelation": "meccan",
       "juz_start": 30
@@ -805,7 +805,7 @@
       "id": 88,
       "name": "Al-Ghashiyah",
       "name_ar": "الغاشية",
-      "name_fr": "L'Enveloppante",
+      "name_fr": "Al-Ghashiyah",
       "ayah_count": 26,
       "revelation": "meccan",
       "juz_start": 30
@@ -814,7 +814,7 @@
       "id": 89,
       "name": "Al-Fajr",
       "name_ar": "الفجر",
-      "name_fr": "L'Aube",
+      "name_fr": "Al-Fajr",
       "ayah_count": 30,
       "revelation": "meccan",
       "juz_start": 30
@@ -823,7 +823,7 @@
       "id": 90,
       "name": "Al-Balad",
       "name_ar": "البلد",
-      "name_fr": "La Cité",
+      "name_fr": "Al-Balad",
       "ayah_count": 20,
       "revelation": "meccan",
       "juz_start": 30
@@ -832,7 +832,7 @@
       "id": 91,
       "name": "Ash-Shams",
       "name_ar": "الشمس",
-      "name_fr": "Le Soleil",
+      "name_fr": "Ash-Shams",
       "ayah_count": 15,
       "revelation": "meccan",
       "juz_start": 30
@@ -841,7 +841,7 @@
       "id": 92,
       "name": "Al-Layl",
       "name_ar": "الليل",
-      "name_fr": "La Nuit",
+      "name_fr": "Al-Layl",
       "ayah_count": 21,
       "revelation": "meccan",
       "juz_start": 30
@@ -850,7 +850,7 @@
       "id": 93,
       "name": "Ad-Duha",
       "name_ar": "الضحى",
-      "name_fr": "Le Jour montant",
+      "name_fr": "Ad-Duha",
       "ayah_count": 11,
       "revelation": "meccan",
       "juz_start": 30
@@ -859,7 +859,7 @@
       "id": 94,
       "name": "Ash-Sharh",
       "name_ar": "الشرح",
-      "name_fr": "L'Ouverture de la poitrine",
+      "name_fr": "Ash-Sharh",
       "ayah_count": 8,
       "revelation": "meccan",
       "juz_start": 30
@@ -868,7 +868,7 @@
       "id": 95,
       "name": "At-Tin",
       "name_ar": "التين",
-      "name_fr": "Le Figuier",
+      "name_fr": "At-Tin",
       "ayah_count": 8,
       "revelation": "meccan",
       "juz_start": 30
@@ -877,7 +877,7 @@
       "id": 96,
       "name": "Al-'Alaq",
       "name_ar": "العلق",
-      "name_fr": "L'Adhérence",
+      "name_fr": "Al-'Alaq",
       "ayah_count": 19,
       "revelation": "meccan",
       "juz_start": 30
@@ -886,7 +886,7 @@
       "id": 97,
       "name": "Al-Qadr",
       "name_ar": "القدر",
-      "name_fr": "La Nuit du Destin",
+      "name_fr": "Al-Qadr",
       "ayah_count": 5,
       "revelation": "meccan",
       "juz_start": 30
@@ -895,7 +895,7 @@
       "id": 98,
       "name": "Al-Bayyinah",
       "name_ar": "البينة",
-      "name_fr": "La Preuve",
+      "name_fr": "Al-Bayyinah",
       "ayah_count": 8,
       "revelation": "medinan",
       "juz_start": 30
@@ -904,7 +904,7 @@
       "id": 99,
       "name": "Az-Zalzalah",
       "name_ar": "الزلزلة",
-      "name_fr": "La Secousse",
+      "name_fr": "Az-Zalzalah",
       "ayah_count": 8,
       "revelation": "medinan",
       "juz_start": 30
@@ -913,7 +913,7 @@
       "id": 100,
       "name": "Al-'Adiyat",
       "name_ar": "العاديات",
-      "name_fr": "Les Coursiers",
+      "name_fr": "Al-'Adiyat",
       "ayah_count": 11,
       "revelation": "meccan",
       "juz_start": 30
@@ -922,7 +922,7 @@
       "id": 101,
       "name": "Al-Qari'ah",
       "name_ar": "القارعة",
-      "name_fr": "Le Fracas",
+      "name_fr": "Al-Qari'ah",
       "ayah_count": 11,
       "revelation": "meccan",
       "juz_start": 30
@@ -931,7 +931,7 @@
       "id": 102,
       "name": "At-Takathur",
       "name_ar": "التكاثر",
-      "name_fr": "La Rivalité",
+      "name_fr": "At-Takathur",
       "ayah_count": 8,
       "revelation": "meccan",
       "juz_start": 30
@@ -940,7 +940,7 @@
       "id": 103,
       "name": "Al-'Asr",
       "name_ar": "العصر",
-      "name_fr": "Le Temps",
+      "name_fr": "Al-'Asr",
       "ayah_count": 3,
       "revelation": "meccan",
       "juz_start": 30
@@ -949,7 +949,7 @@
       "id": 104,
       "name": "Al-Humazah",
       "name_ar": "الهمزة",
-      "name_fr": "Le Calomniateur",
+      "name_fr": "Al-Humazah",
       "ayah_count": 9,
       "revelation": "meccan",
       "juz_start": 30
@@ -958,7 +958,7 @@
       "id": 105,
       "name": "Al-Fil",
       "name_ar": "الفيل",
-      "name_fr": "L'Éléphant",
+      "name_fr": "Al-Fil",
       "ayah_count": 5,
       "revelation": "meccan",
       "juz_start": 30
@@ -976,7 +976,7 @@
       "id": 107,
       "name": "Al-Ma'un",
       "name_ar": "الماعون",
-      "name_fr": "L'Ustensile",
+      "name_fr": "Al-Ma'un",
       "ayah_count": 7,
       "revelation": "meccan",
       "juz_start": 30
@@ -985,7 +985,7 @@
       "id": 108,
       "name": "Al-Kawthar",
       "name_ar": "الكوثر",
-      "name_fr": "L'Abondance",
+      "name_fr": "Al-Kawthar",
       "ayah_count": 3,
       "revelation": "meccan",
       "juz_start": 30
@@ -994,7 +994,7 @@
       "id": 109,
       "name": "Al-Kafirun",
       "name_ar": "الكافرون",
-      "name_fr": "Les Mécréants",
+      "name_fr": "Al-Kafirun",
       "ayah_count": 6,
       "revelation": "meccan",
       "juz_start": 30
@@ -1003,7 +1003,7 @@
       "id": 110,
       "name": "An-Nasr",
       "name_ar": "النصر",
-      "name_fr": "Les Secours",
+      "name_fr": "An-Nasr",
       "ayah_count": 3,
       "revelation": "medinan",
       "juz_start": 30
@@ -1012,7 +1012,7 @@
       "id": 111,
       "name": "Al-Masad",
       "name_ar": "المسد",
-      "name_fr": "Les Fibres",
+      "name_fr": "Al-Masad",
       "ayah_count": 5,
       "revelation": "meccan",
       "juz_start": 30
@@ -1021,7 +1021,7 @@
       "id": 112,
       "name": "Al-Ikhlas",
       "name_ar": "الإخلاص",
-      "name_fr": "Le Monothéisme pur",
+      "name_fr": "Al-Ikhlas",
       "ayah_count": 4,
       "revelation": "meccan",
       "juz_start": 30
@@ -1030,7 +1030,7 @@
       "id": 113,
       "name": "Al-Falaq",
       "name_ar": "الفلق",
-      "name_fr": "L'Aurore",
+      "name_fr": "Al-Falaq",
       "ayah_count": 5,
       "revelation": "meccan",
       "juz_start": 30
@@ -1039,7 +1039,7 @@
       "id": 114,
       "name": "An-Nas",
       "name_ar": "الناس",
-      "name_fr": "Les Hommes",
+      "name_fr": "An-Nas",
       "ayah_count": 6,
       "revelation": "meccan",
       "juz_start": 30

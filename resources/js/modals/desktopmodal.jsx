@@ -15,13 +15,18 @@ export default function Modal({
 }) {
     const dialogId = useId();
     const dialogRef = useRef(null);
+    const onCloseRef = useRef(onClose);
+
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
 
     useEffect(() => {
         if (!open) return undefined;
 
         const previousOverflow = document.body.style.overflow;
         const onKeyDown = (event) => {
-            if (event.key === 'Escape') onClose();
+            if (event.key === 'Escape') onCloseRef.current();
         };
 
         document.body.style.overflow = 'hidden';
@@ -32,7 +37,7 @@ export default function Modal({
             document.body.style.overflow = previousOverflow;
             window.removeEventListener('keydown', onKeyDown);
         };
-    }, [open, onClose]);
+    }, [open]);
 
     if (!open) return null;
 
