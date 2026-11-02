@@ -24,7 +24,7 @@ export default function RoomsTable({ routeParams = {} }) {
     const [canManage, setCanManage] = useState(false);
     const [canPlace, setCanPlace] = useState(false);
     const [isTeacherView, setIsTeacherView] = useState(false);
-    const [yearIsActive, setYearIsActive] = useState(false);
+    const [yearIsWritable, setYearIsWritable] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [error, setError] = useState(null);
@@ -43,6 +43,12 @@ export default function RoomsTable({ routeParams = {} }) {
         const syncYear = (event) => {
             const nextYearId = event?.detail?.id ?? getSelectedAcademicYearId();
             setYearId(nextYearId ? Number(nextYearId) : null);
+            setYearIsWritable(false);
+            setRoomEditorOpen(false);
+            setEditingRoom(null);
+            setArchiveRoom(null);
+            setAssignmentRoom(null);
+            setPlacementOpen(false);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -68,7 +74,7 @@ export default function RoomsTable({ routeParams = {} }) {
             setCanManage(Boolean(data.can_manage));
             setCanPlace(Boolean(data.can_place));
             setIsTeacherView(Boolean(data.is_teacher_view));
-            setYearIsActive(Boolean(data.year_is_active));
+            setYearIsWritable(Boolean(data.year_is_writable));
         } catch (requestError) {
             if (requestError.name !== 'AbortError') setLoadError(true);
         } finally {
@@ -90,13 +96,13 @@ export default function RoomsTable({ routeParams = {} }) {
         if (!room) return;
 
         openedAlertRoomId.current = alertRoomId;
-        if (canManage && yearIsActive && room.is_active) {
+        if (canManage && yearIsWritable && room.is_active) {
             setFocusedAlertRoomId('');
             setAssignmentRoom(room);
         } else {
             setFocusedAlertRoomId(alertRoomId);
         }
-    }, [canManage, loading, rooms, routeParams.room_id, yearIsActive]);
+    }, [canManage, loading, rooms, routeParams.room_id, yearIsWritable]);
 
     const runRequest = async (endpoint, method, body, errorMessage) => {
         setError(null);
@@ -245,7 +251,7 @@ export default function RoomsTable({ routeParams = {} }) {
         },
     ];
     const actions = [
-        ...(canPlace && yearIsActive ? [{
+        ...(canPlace && yearIsWritable ? [{
             key: 'place',
             icon: 'person_add',
             label: t.rooms.placeStudent,
@@ -255,7 +261,7 @@ export default function RoomsTable({ routeParams = {} }) {
                 setPlacementOpen(true);
             },
         }] : []),
-        ...(canManage && yearIsActive ? [
+        ...(canManage && yearIsWritable ? [
             {
                 key: 'assign',
                 icon: 'assignment_ind',
@@ -362,7 +368,7 @@ export default function RoomsTable({ routeParams = {} }) {
 
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            {canManage && yearIsActive && (
+            {canManage && yearIsWritable && (
                 <button
                     type="button"
                     onClick={() => setAssignmentRoom(true)}
@@ -372,7 +378,7 @@ export default function RoomsTable({ routeParams = {} }) {
                     {t.rooms.assignTeacher}
                 </button>
             )}
-            {canPlace && yearIsActive && (
+            {canPlace && yearIsWritable && (
                 <button
                     type="button"
                     onClick={() => {
@@ -385,7 +391,7 @@ export default function RoomsTable({ routeParams = {} }) {
                     {t.rooms.placeStudent}
                 </button>
             )}
-            {canManage && yearIsActive && (
+            {canManage && yearIsWritable && (
                 <button
                     type="button"
                     onClick={() => openRoomEditor()}
@@ -444,7 +450,7 @@ export default function RoomsTable({ routeParams = {} }) {
                 <RoomTeacherAssignmentTable
                     assignments={assignments}
                     yearId={yearId}
-                    yearIsActive={yearIsActive}
+                    yearIsWritable={yearIsWritable}
                     onChanged={loadRooms}
                 />
             )}

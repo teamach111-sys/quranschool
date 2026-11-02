@@ -67,12 +67,16 @@ class StudentsController extends Controller
             ];
         });
 
+        $year = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('id', $yearId)
+            ->first(['is_active', 'is_current']);
+        $yearIsWritable = (bool) $year?->is_active && (bool) $year?->is_current;
+
         return response()->json([
             'year_id' => $yearId,
-            'year_is_active' => (bool) DB::table('academic_years')
-                ->where('school_id', $schoolId)
-                ->where('id', $yearId)
-                ->value('is_active'),
+            'year_is_active' => (bool) $year?->is_active,
+            'year_is_writable' => $yearIsWritable,
             'students' => $students,
             'can_manage' => in_array($role, ['admin', 'secretary'], true),
             'is_teacher_view' => $role === 'teacher',
@@ -83,14 +87,14 @@ class StudentsController extends Controller
     {
         [$user, $schoolId] = $this->managerContext();
         $yearId = $this->resolveYearId($request, $schoolId);
-        $yearIsActive = (bool) DB::table('academic_years')
+        $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->value('is_active');
+            ->first(['is_active', 'is_current']);
 
         return response()->json([
             'year_id' => $yearId,
-            'is_editable' => $yearIsActive,
+            'is_editable' => (bool) $year?->is_active && (bool) $year?->is_current,
             'rooms' => DB::table('rooms')
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
@@ -380,14 +384,14 @@ class StudentsController extends Controller
 
     private function ensureYearIsEditable(int $schoolId, int $yearId): void
     {
-        $isActive = DB::table('academic_years')
+        $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->value('is_active');
+            ->first(['is_active', 'is_current']);
 
-        if (! $isActive) {
+        if (! $year || ! $year->is_active || ! $year->is_current) {
             throw ValidationException::withMessages([
-                'year_id' => 'Students in a closed academic year cannot be changed.',
+                'year_id' => 'Students in a read-only academic year cannot be changed.',
             ]);
         }
     }

@@ -66,17 +66,21 @@ class SchedulesController extends Controller
             ])
             ->values();
 
+        $academicYear = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('id', $yearId)
+            ->first(['is_active', 'is_current']);
+        abort_unless($academicYear, 404);
+
         $response = [
             'year_id' => $yearId,
+            'year_is_writable' => (bool) $academicYear->is_active && (bool) $academicYear->is_current,
             'schedules' => $schedules,
             'can_manage' => $user->role === 'admin',
         ];
 
         if ($user->role === 'admin') {
-            $response['year_is_active'] = (bool) DB::table('academic_years')
-                ->where('id', $yearId)
-                ->where('school_id', $schoolId)
-                ->value('is_active');
+            $response['year_is_active'] = (bool) $academicYear->is_active;
             $response['rooms'] = DB::table('rooms')
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
@@ -308,14 +312,14 @@ class SchedulesController extends Controller
 
     private function ensureYearIsEditable(int $schoolId, int $yearId): void
     {
-        $isActive = DB::table('academic_years')
+        $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->value('is_active');
+            ->first(['is_active', 'is_current']);
 
-        if (! $isActive) {
+        if (! $year || ! $year->is_active || ! $year->is_current) {
             throw ValidationException::withMessages([
-                'year_id' => 'Schedules in a closed academic year cannot be changed.',
+                'year_id' => 'Schedules in a read-only academic year cannot be changed.',
             ]);
         }
     }

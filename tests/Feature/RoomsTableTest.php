@@ -319,7 +319,7 @@ class RoomsTableTest extends TestCase
         ])->assertNotFound();
     }
 
-    public function test_room_and_student_placement_cannot_change_in_a_closed_year(): void
+    public function test_room_and_student_placement_cannot_change_in_nonwritable_years(): void
     {
         $this->seedRooms();
         DB::table('academic_years')->insert([
@@ -329,7 +329,7 @@ class RoomsTableTest extends TestCase
             'start_date' => '2024-09-01',
             'end_date' => '2025-06-30',
             'is_current' => false,
-            'is_active' => false,
+            'is_active' => true,
         ]);
         DB::table('rooms')->insert([
             'id' => 4,
@@ -354,9 +354,15 @@ class RoomsTableTest extends TestCase
             'role' => 'admin',
         ]));
 
+        $this->getJson('/rooms/table?year_id=3')
+            ->assertOk()
+            ->assertJsonPath('year_is_active', true)
+            ->assertJsonPath('year_is_writable', false);
+
         $this->patchJson('/rooms/4/archive', ['year_id' => 3])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('year_id');
+            ->assertJsonValidationErrors('year_id')
+            ->assertJsonPath('errors.year_id.0', 'Rooms and student placements in a read-only academic year cannot be changed.');
 
         $this->assertDatabaseHas('rooms', ['id' => 4, 'is_active' => true]);
 
@@ -365,6 +371,16 @@ class RoomsTableTest extends TestCase
             ->assertJsonValidationErrors('year_id');
 
         $this->assertDatabaseHas('students', ['id' => 6, 'room_id' => 4]);
+
+        DB::table('academic_years')->where('id', 3)->update(['is_active' => false]);
+
+        $this->patchJson('/rooms/4/archive', ['year_id' => 3])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+
+        $this->patchJson('/students/6/room', ['year_id' => 3, 'room_id' => null])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
     }
 
     public function test_admin_assignment_requires_active_teacher_and_rejects_overlapping_ranges(): void

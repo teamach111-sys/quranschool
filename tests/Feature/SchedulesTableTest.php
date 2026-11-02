@@ -345,6 +345,53 @@ class SchedulesTableTest extends TestCase
         $this->postJson('/schedules', [])->assertForbidden();
     }
 
+    public function test_schedule_writes_are_rejected_for_an_active_noncurrent_year(): void
+    {
+        $this->seedScheduleData();
+        DB::table('academic_years')->where('id', 1)->update(['is_current' => false]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/schedules/table?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('year_is_active', true)
+            ->assertJsonPath('year_is_writable', false);
+
+        $this->postJson('/schedules', [
+            'year_id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'day_of_week' => 1,
+            'starts_at' => '09:00',
+            'ends_at' => '10:00',
+            'valid_from' => '2026-09-01',
+            'label' => 'Historical slot',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id')
+            ->assertJsonPath('errors.year_id.0', 'Schedules in a read-only academic year cannot be changed.');
+
+        DB::table('academic_years')->where('id', 1)->update(['is_active' => false]);
+
+        $this->postJson('/schedules', [
+            'year_id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'day_of_week' => 1,
+            'starts_at' => '09:00',
+            'ends_at' => '10:00',
+            'valid_from' => '2026-09-01',
+            'label' => 'Historical slot',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+
+        $this->assertDatabaseCount('schedules', 0);
+    }
+
     public function test_schedule_access_is_scoped_to_the_users_school(): void
     {
         $this->seedScheduleData();

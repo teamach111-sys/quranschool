@@ -3,6 +3,7 @@ import Icon from '../components/Icon';
 import Logo from '../components/Logo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import ThemeToggle from '../components/ThemeToggle';
+import PastYearBanner from '../components/PastYearBanner';
 import YearSelector from '../persisters/yearselector';
 import ProfileMenu from '../components/ProfileMenu';
 import { PageNav } from '../components/Navigation';
@@ -10,6 +11,16 @@ import useTheme from '../hooks/useTheme';
 import useHashRoute from '../hooks/useHashRoute';
 import { useLanguage } from '../hooks/useLanguage';
 import { findPage, canSeePage, ROLE_DEFAULT_PAGE } from './registry';
+
+const yearScopedPageKeys = new Set([
+    'tableau-de-bord-admin',
+    'eleves',
+    'groupes-attribution',
+    'emploi-du-temps',
+    'presences',
+    'seances-memorisation',
+    'paiements-finances',
+]);
 
 export default function Dashboard({ user }) {
     const { theme, toggleTheme } = useTheme();
@@ -21,6 +32,7 @@ export default function Dashboard({ user }) {
     const role = user?.role;
     const allowedPage = canSeePage(activePage, role) ? activePage : null;
     const ActivePageComponent = allowedPage ? allowedPage.component : null;
+    const showPastYearBanner = role === 'admin' && yearScopedPageKeys.has(allowedPage?.key);
     const defaultPageKey = ROLE_DEFAULT_PAGE[role] || 'tableau-de-bord-admin';
     const pageInfo = t.pages[allowedPage?.key] || t.pages[defaultPageKey] || { title: '', subtitle: '' };
 
@@ -114,6 +126,7 @@ export default function Dashboard({ user }) {
                         <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200" style={{ padding: '10px' }}>
                             <div className="flex flex-col w-full p-[10px] gap-3">
                                 <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-outline-variant dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center select-none'}`}>
+                                    <PastYearBanner visible={showPastYearBanner} />
                                     {ActivePageComponent ? <ActivePageComponent routeParams={routeParams} /> : (
                                         <div className="flex flex-col items-center justify-center">
                                             <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
@@ -202,6 +215,7 @@ export default function Dashboard({ user }) {
                 <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200 p-[10px]">
                     <div className="flex flex-col w-full h-full min-h-[70vh]">
                         <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-[#c0ccc2] dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center text-center select-none'}`}>
+                            <PastYearBanner visible={showPastYearBanner} />
                             {ActivePageComponent ? <ActivePageComponent routeParams={routeParams} /> : (
                                 <div className="flex flex-col items-center justify-center">
                                     <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">

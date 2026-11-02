@@ -50,6 +50,10 @@ export function getSelectedAcademicYearIsReadOnly() {
     return readStoredReadOnly();
 }
 
+export function selectAcademicYear(year) {
+    writeStoredYear(year);
+}
+
 /**
  * Persistent academic year selector.
  *
@@ -144,7 +148,7 @@ export default function YearSelector({ compact = false }) {
     }, []);
 
     const selectYear = useCallback((year) => {
-        writeStoredYear(year);
+        selectAcademicYear(year);
         setYearId(year.id);
         setIsReadOnly(Boolean(year.is_read_only));
         setOpen(false);

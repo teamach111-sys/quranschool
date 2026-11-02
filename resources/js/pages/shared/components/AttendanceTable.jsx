@@ -44,6 +44,9 @@ export default function AttendanceTable() {
             setFilters(emptyFilters());
             setAppliedFilters(emptyFilters());
             setEntry(null);
+            setCanCorrect(false);
+            setCanMark(false);
+            setCanFollowUp(false);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);

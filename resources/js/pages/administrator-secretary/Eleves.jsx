@@ -21,7 +21,7 @@ export default function Eleves({ routeParams = {} }) {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [canManage, setCanManage] = useState(false);
-    const [yearIsActive, setYearIsActive] = useState(false);
+    const [yearIsWritable, setYearIsWritable] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
     const openedAlertStudentId = useRef(null);
@@ -34,6 +34,12 @@ export default function Eleves({ routeParams = {} }) {
         const syncYear = (event) => {
             const nextYearId = event?.detail?.id ?? getSelectedAcademicYearId();
             setYearId(nextYearId ? Number(nextYearId) : null);
+            setYearIsWritable(false);
+            setFormOpen(false);
+            setEditingStudent(null);
+            setFormReadOnly(false);
+            setArchiveTarget(null);
+            setArchiveError(null);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -55,7 +61,7 @@ export default function Eleves({ routeParams = {} }) {
             .then((data) => {
                 setStudents(Array.isArray(data.students) ? data.students : []);
                 setCanManage(Boolean(data.can_manage));
-                setYearIsActive(Boolean(data.year_is_active));
+                setYearIsWritable(Boolean(data.year_is_writable));
             })
             .catch((error) => {
                 if (error.name !== 'AbortError') setLoadError(true);
@@ -98,9 +104,9 @@ export default function Eleves({ routeParams = {} }) {
     const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface sm:w-auto';
     const openForm = useCallback((student = null, readOnly = false) => {
         setEditingStudent(student);
-        setFormReadOnly(readOnly || !yearIsActive);
+        setFormReadOnly(readOnly || !yearIsWritable);
         setFormOpen(true);
-    }, [yearIsActive]);
+    }, [yearIsWritable]);
     useEffect(() => {
         const alertStudentId = String(routeParams.student_id ?? '');
         if (!alertStudentId || loading || openedAlertStudentId.current === alertStudentId) return;
@@ -237,13 +243,13 @@ export default function Eleves({ routeParams = {} }) {
             label: t.students.form.view,
             onClick: (student) => openForm(student, true),
         },
-        ...(canManage && yearIsActive ? [{
+        ...(canManage && yearIsWritable ? [{
             key: 'edit',
             icon: 'edit',
             label: t.students.form.editTitle,
             onClick: (student) => openForm(student),
         }] : []),
-        ...(canManage && yearIsActive ? [
+        ...(canManage && yearIsWritable ? [
             {
                 key: 'pause',
                 icon: 'pause_circle',
@@ -294,7 +300,7 @@ export default function Eleves({ routeParams = {} }) {
                     <option value="all">{t.students.allRooms}</option>
                     {rooms.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
                 </select>
-                {canManage && yearIsActive && (
+                {canManage && yearIsWritable && (
                     <button
                         type="button"
                         onClick={() => openForm()}

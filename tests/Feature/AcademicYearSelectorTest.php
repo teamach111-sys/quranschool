@@ -81,8 +81,12 @@ class AcademicYearSelectorTest extends TestCase
             ->assertJsonCount(3, 'years')
             ->assertJsonPath('current_id', 3)
             ->assertJsonPath('years.0.is_read_only', false)
-            ->assertJsonPath('years.1.is_read_only', false)
+            ->assertJsonPath('years.1.is_read_only', true)
             ->assertJsonPath('years.2.is_read_only', true);
+
+        $this->getJson('/academic-years/table')
+            ->assertOk()
+            ->assertJsonPath('years.1.is_read_only', true);
     }
 
     public function test_teachers_and_secretaries_only_see_the_current_active_year(): void

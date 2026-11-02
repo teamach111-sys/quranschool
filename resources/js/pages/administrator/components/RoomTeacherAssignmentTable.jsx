@@ -14,7 +14,7 @@ function today() {
 export default function RoomTeacherAssignmentTable({
     assignments = [],
     yearId,
-    yearIsActive,
+    yearIsWritable,
     onChanged,
 }) {
     const { isRTL, t } = useLanguage();
@@ -88,7 +88,7 @@ export default function RoomTeacherAssignmentTable({
                     : t.rooms.assignmentOngoing),
         },
     ];
-    const actions = yearIsActive ? [{
+    const actions = yearIsWritable ? [{
         key: 'end',
         icon: 'event_busy',
         label: t.rooms.endAssignment,

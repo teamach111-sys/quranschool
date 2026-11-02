@@ -22,6 +22,7 @@ class AttendanceController extends Controller
         [$user, $schoolId] = $this->staffContext();
         $year = $this->resolveYear($request, $schoolId);
         $yearId = (int) $year->id;
+        $yearIsWritable = (bool) $year->is_active && (bool) $year->is_current;
         $filters = $request->validate([
             'room_id' => [
                 'nullable',
@@ -165,27 +166,28 @@ class AttendanceController extends Controller
                 'attendance_date' => $record->attendance_date,
                 'status' => $record->status,
                 'note' => $record->note,
-                'can_edit' => $user->role === 'admin'
+                'can_edit' => $yearIsWritable && ($user->role === 'admin'
                     || $user->role === 'secretary'
                     || (
                         $user->role === 'teacher'
                         && (int) $record->recorded_by === (int) $user->id
                         && $record->attendance_date === now()->toDateString()
-                    ),
+                    )),
             ])
             ->values();
 
         return response()->json([
             'year_id' => $yearId,
+            'year_is_writable' => $yearIsWritable,
             'today' => now()->toDateString(),
             'attendance' => $attendance,
             'rooms' => $rooms,
             'teachers' => $teachers,
             'students' => $students,
             'statuses' => self::STATUSES,
-            'can_correct' => $user->role === 'admin',
-            'can_mark' => $user->role === 'teacher',
-            'can_follow_up' => $user->role === 'secretary',
+            'can_correct' => $yearIsWritable && $user->role === 'admin',
+            'can_mark' => $yearIsWritable && $user->role === 'teacher',
+            'can_follow_up' => $yearIsWritable && $user->role === 'secretary',
         ]);
     }
 
@@ -202,8 +204,13 @@ class AttendanceController extends Controller
         $year = DB::table('academic_years')
             ->where('id', $yearId)
             ->where('school_id', $schoolId)
-            ->first(['start_date', 'end_date']);
+            ->first(['start_date', 'end_date', 'is_active', 'is_current']);
         abort_unless($year, 404);
+        if (! $year->is_active || ! $year->is_current) {
+            throw ValidationException::withMessages([
+                'year_id' => 'Attendance in a read-only academic year cannot be changed.',
+            ]);
+        }
 
         $validated = $request->validate([
             'year_id' => ['required', 'integer'],
@@ -508,7 +515,13 @@ class AttendanceController extends Controller
             $query->where('is_current', true)->where('is_active', true);
         }
 
-        $year = $query->orderByDesc('start_date')->first(['id', 'start_date', 'end_date']);
+        $year = $query->orderByDesc('start_date')->first([
+            'id',
+            'start_date',
+            'end_date',
+            'is_active',
+            'is_current',
+        ]);
         abort_unless($year, 404);
 
         return $year;

@@ -17,7 +17,7 @@ export default function SchedulesTable() {
     const [rooms, setRooms] = useState([]);
     const [teachers, setTeachers] = useState([]);
     const [canManage, setCanManage] = useState(false);
-    const [yearIsActive, setYearIsActive] = useState(false);
+    const [yearIsWritable, setYearIsWritable] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [error, setError] = useState(null);
@@ -28,6 +28,7 @@ export default function SchedulesTable() {
         const syncYear = (event) => {
             const nextYearId = event?.detail?.id ?? getSelectedAcademicYearId();
             setYearId(nextYearId ? Number(nextYearId) : null);
+            setYearIsWritable(false);
             setFormOpen(false);
             setEditingSchedule(null);
         };
@@ -52,7 +53,7 @@ export default function SchedulesTable() {
             setRooms(Array.isArray(data.rooms) ? data.rooms : []);
             setTeachers(Array.isArray(data.teachers) ? data.teachers : []);
             setCanManage(Boolean(data.can_manage));
-            setYearIsActive(Boolean(data.year_is_active));
+            setYearIsWritable(Boolean(data.year_is_writable));
         } catch (requestError) {
             if (requestError.name !== 'AbortError') setLoadError(true);
         } finally {
@@ -135,7 +136,7 @@ export default function SchedulesTable() {
             mobile: 'detail',
         },
     ];
-    const actions = canManage && yearIsActive ? [{
+    const actions = canManage && yearIsWritable ? [{
         key: 'edit',
         icon: 'edit',
         label: t.schedules.edit,
@@ -162,7 +163,7 @@ export default function SchedulesTable() {
 
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            {canManage && yearIsActive && (
+            {canManage && yearIsWritable && (
                 <button
                     type="button"
                     onClick={openCreateForm}

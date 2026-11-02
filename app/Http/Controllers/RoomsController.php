@@ -20,7 +20,7 @@ class RoomsController extends Controller
         $academicYear = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['start_date', 'end_date', 'is_active']);
+            ->first(['start_date', 'end_date', 'is_active', 'is_current']);
         abort_unless($academicYear, 404);
         $today = now()->toDateString();
         $studentCounts = DB::table('students')
@@ -130,6 +130,7 @@ class RoomsController extends Controller
         $response = [
             'year_id' => $yearId,
             'year_is_active' => (bool) $academicYear->is_active,
+            'year_is_writable' => (bool) $academicYear->is_active && (bool) $academicYear->is_current,
             'rooms' => $rooms,
             'can_manage' => $role === 'admin',
             'can_place' => in_array($role, ['admin', 'secretary'], true),
@@ -373,7 +374,6 @@ class RoomsController extends Controller
     {
         [, $schoolId] = $this->adminContext();
         $yearId = $this->validateYearId($request, $schoolId);
-        $this->ensureYearIsEditable($schoolId, $yearId);
         $validated = $request->validate([
             'assigned_from' => ['required', 'date'],
         ]);
@@ -390,6 +390,7 @@ class RoomsController extends Controller
                 ->lockForUpdate()
                 ->first(['assigned_from']);
             abort_unless($assignment, 404);
+            $this->ensureYearIsEditable($schoolId, $yearId);
 
             if ($assignment->assigned_from > $today) {
                 throw ValidationException::withMessages([
@@ -587,14 +588,14 @@ class RoomsController extends Controller
 
     private function ensureYearIsEditable(int $schoolId, int $yearId): void
     {
-        $isActive = DB::table('academic_years')
+        $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->value('is_active');
+            ->first(['is_active', 'is_current']);
 
-        if (! $isActive) {
+        if (! $year || ! $year->is_active || ! $year->is_current) {
             throw ValidationException::withMessages([
-                'year_id' => 'Rooms and student placements in a closed academic year cannot be changed.',
+                'year_id' => 'Rooms and student placements in a read-only academic year cannot be changed.',
             ]);
         }
     }
