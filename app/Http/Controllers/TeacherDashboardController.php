@@ -146,6 +146,7 @@ class TeacherDashboardController extends Controller
             ->map(fn (array $lesson) => [
                 ...$lesson,
                 'students' => $todayLessonStudents->get($lesson['room_id'], collect())->values(),
+                'late_suggestion' => $lesson['ends_at'] <= $now->format('H:i'),
             ])
             ->values();
 

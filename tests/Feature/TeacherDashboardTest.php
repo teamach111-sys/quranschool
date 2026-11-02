@@ -108,6 +108,7 @@ class TeacherDashboardTest extends TestCase
             ->assertJsonCount(1, 'today_lessons')
             ->assertJsonPath('today_lessons.0.room_name', 'Alpha')
             ->assertJsonPath('today_lessons.0.starts_at', '16:00')
+            ->assertJsonPath('today_lessons.0.late_suggestion', false)
             ->assertJsonPath('today_focus_lesson_id', 1)
             ->assertJsonCount(2, 'today_lessons.0.students')
             ->assertJsonPath('today_lessons.0.students.0.student_name', 'Bilal Ali')
@@ -192,7 +193,24 @@ class TeacherDashboardTest extends TestCase
 
         $this->getJson('/teacher/dashboard-summary?year_id=1')
             ->assertOk()
-            ->assertJsonPath('today_focus_lesson_id', 1);
+            ->assertJsonPath('today_focus_lesson_id', 1)
+            ->assertJsonPath('today_lessons.0.late_suggestion', true)
+            ->assertJsonPath('today_lessons.0.ends_at', '17:00');
+
+        $this->assertDatabaseCount('attendance', 1);
+    }
+
+    public function test_dashboard_does_not_suggest_late_before_a_lesson_ends(): void
+    {
+        $this->seedDashboardData();
+        $this->travelTo('2026-11-02 16:59:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('today_lessons.0.late_suggestion', false);
+
+        $this->assertDatabaseCount('attendance', 1);
     }
 
     public function test_dashboard_marks_another_teachers_attendance_as_read_only(): void

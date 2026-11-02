@@ -18,6 +18,8 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
     const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
     const markedCount = students.filter((student) => student.status !== null).length;
     const allMarked = savingStudentIds.length === 0 && students.every((student) => student.status !== null);
+    const hasSuggestedLateStudents = lesson.late_suggestion
+        && students.some((student) => student.status === null && student.can_edit);
     const attendanceDate = dateFormat.format(new Date(`${todayDate}T00:00:00Z`));
     const statuses = Object.entries(t.attendance.statuses);
 
@@ -182,11 +184,20 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                 </span>
             </div>
 
+            {hasSuggestedLateStudents && (
+                <p role="note" className="rounded-lg border border-primary/30 bg-primary-fixed/40 p-3 text-[13px] leading-5 text-on-surface dark:border-primary-fixed-dim/30 dark:bg-primary-container/30 dark:text-inverse-on-surface">
+                    {t.teacherDashboard.lateSuggestion(lesson.starts_at, lesson.ends_at)}
+                </p>
+            )}
+
             {students.length > 0 ? (
                 <ul className="flex flex-col gap-2" aria-label={t.teacherDashboard.studentAttendance}>
                     {students.map((student) => {
                         const isSaving = savingStudentIds.includes(student.student_id);
                         const retryStatus = retryStatuses[student.student_id];
+                        const hasLateSuggestion = lesson.late_suggestion
+                            && student.status === null
+                            && student.can_edit;
 
                         return (
                             <li
@@ -202,6 +213,11 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                                         {student.student_number && (
                                             <p className="text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
                                                 {student.student_number}
+                                            </p>
+                                        )}
+                                        {hasLateSuggestion && (
+                                            <p className="text-[12px] leading-5 font-semibold text-primary dark:text-primary-fixed-dim">
+                                                {t.teacherDashboard.suggestedLate}
                                             </p>
                                         )}
                                     </div>
