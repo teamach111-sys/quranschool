@@ -116,11 +116,7 @@ class AdminDashboardAlertsTest extends TestCase
             ->assertJsonPath('alerts.late_payments.0.id', 1)
             ->assertJsonPath('alerts.late_payments.0.student_name', 'Mariam Ali')
             ->assertJsonPath('alerts.late_payments.0.period_end', '2026-10-01')
-            ->assertJsonCount(1, 'alerts.repeated_absences')
-            ->assertJsonPath('alerts.repeated_absences.0.student_id', 1)
-            ->assertJsonPath('alerts.repeated_absences.0.student_name', 'Mariam Ali')
-            ->assertJsonPath('alerts.repeated_absences.0.absence_count', 3)
-            ->assertJsonPath('alerts.repeated_absences.0.room_name', 'Alpha')
+            ->assertJsonCount(0, 'alerts.repeated_absences')
             ->assertJsonCount(2, 'alerts.rooms_without_active_teacher')
             ->assertJsonPath('alerts.rooms_without_active_teacher.0.room_id', 2)
             ->assertJsonPath('alerts.rooms_without_active_teacher.0.room_name', 'Beta')
@@ -130,6 +126,49 @@ class AdminDashboardAlertsTest extends TestCase
             ->assertJsonPath('alerts.inactive_users_with_pending_items.0.user_name', 'Inactive Teacher')
             ->assertJsonPath('alerts.inactive_users_with_pending_items.0.active_assignments', 1)
             ->assertJsonPath('alerts.inactive_users_with_pending_items.0.future_schedules', 2);
+    }
+
+    public function test_admin_sees_recent_absent_and_late_attendance_at_the_shared_threshold(): void
+    {
+        $this->seedDashboardData();
+        DB::table('attendance')->where('id', 1)->update([
+            'attendance_date' => '2026-09-11',
+            'status' => 'absent',
+        ]);
+        DB::table('attendance')->where('id', 2)->update([
+            'attendance_date' => '2026-10-05',
+            'status' => 'late',
+        ]);
+        DB::table('attendance')->where('id', 3)->update([
+            'attendance_date' => '2026-10-09',
+            'status' => 'absent',
+        ]);
+        DB::table('attendance')->where('id', 4)->update([
+            'attendance_date' => '2026-09-10',
+            'status' => 'late',
+        ]);
+        DB::table('attendance')->where('id', 5)->update([
+            'attendance_date' => '2026-10-01',
+            'status' => 'absent',
+        ]);
+        DB::table('attendance')->where('id', 6)->update([
+            'attendance_date' => '2026-10-02',
+            'status' => 'late',
+        ]);
+        DB::table('attendance')->whereIn('id', [7, 8, 9, 10, 11, 12, 13, 14, 15])->update([
+            'attendance_date' => '2026-10-01',
+        ]);
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/admin/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'alerts.repeated_absences')
+            ->assertJsonPath('alerts.repeated_absences.0.student_id', 1)
+            ->assertJsonPath('alerts.repeated_absences.0.student_name', 'Mariam Ali')
+            ->assertJsonPath('alerts.repeated_absences.0.absence_count', 3)
+            ->assertJsonPath('alerts.repeated_absences.0.latest_attendance_date', '2026-10-09')
+            ->assertJsonPath('alerts.repeated_absences.0.room_name', 'Alpha');
     }
 
     public function test_admin_sees_unmarked_schedule_dates_only_after_the_session_ends(): void

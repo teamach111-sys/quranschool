@@ -105,6 +105,10 @@ class SecretaryDashboardTest extends TestCase
             ->assertJsonPath('recent_payments.0.created_at', '2026-11-02 11:00:00')
             ->assertJsonPath('alerts.late_payments', 1)
             ->assertJsonPath('alerts.repeated_absences', 1)
+            ->assertJsonCount(1, 'repeated_absence_items')
+            ->assertJsonPath('repeated_absence_items.0.student_id', 1)
+            ->assertJsonPath('repeated_absence_items.0.absence_count', 4)
+            ->assertJsonPath('repeated_absence_items.0.latest_attendance_date', '2026-10-31')
             ->assertJsonPath('alerts.incomplete_student_records', 3);
     }
 

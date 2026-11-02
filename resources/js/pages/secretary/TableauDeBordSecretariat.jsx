@@ -225,14 +225,46 @@ export default function TableauDeBordSecretariat() {
                         <ul className="flex flex-col gap-2">
                             {alertCategories
                                 .filter((category) => dashboard.alerts[category] > 0)
-                                .map((category) => (
-                                    <li key={category} className={`${cardClass} flex items-center gap-3`}>
-                                        <Icon name="warning" className="shrink-0 text-[18px] text-secondary dark:text-secondary-fixed-dim" />
-                                        <p className={`text-[13px] leading-5 font-medium ${textClass}`}>
-                                            {t.secretaryDashboard.alerts[category](numberFormat.format(dashboard.alerts[category]))}
-                                        </p>
-                                    </li>
-                                ))}
+                                .map((category) => {
+                                    const alertLabel = t.secretaryDashboard.alerts[category](numberFormat.format(dashboard.alerts[category]));
+
+                                    if (category === 'repeated_absences') {
+                                        return (
+                                            <li key={category} className={`${cardClass} flex flex-col gap-3`}>
+                                                <div className="flex items-start gap-3">
+                                                    <Icon name="warning" className="shrink-0 text-[18px] text-secondary dark:text-secondary-fixed-dim" />
+                                                    <p className={`text-[13px] leading-5 font-medium ${textClass}`}>{alertLabel}</p>
+                                                </div>
+                                                <ul className="flex flex-col gap-2">
+                                                    {dashboard.repeated_absence_items.map((student) => (
+                                                        <li key={student.student_id}>
+                                                            <a
+                                                                href={`#/presences?student_id=${encodeURIComponent(student.student_id)}`}
+                                                                className="flex min-h-11 flex-col gap-1 rounded border-t border-outline-variant px-2 py-2 text-[12px] leading-5 outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary dark:border-tertiary-container dark:hover:bg-tertiary-container"
+                                                            >
+                                                                <span className={`font-semibold ${textClass}`}>{student.student_name}</span>
+                                                                <span className={secondaryTextClass}>
+                                                                    {t.dashboardStats.alerts.absenceCount(numberFormat.format(student.absence_count))}
+                                                                    {student.room_name ? ` · ${student.room_name}` : ''}
+                                                                </span>
+                                                                <span className="font-semibold text-primary dark:text-primary-fixed-dim">
+                                                                    {t.secretaryDashboard.viewAttendance}
+                                                                </span>
+                                                            </a>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </li>
+                                        );
+                                    }
+
+                                    return (
+                                        <li key={category} className={`${cardClass} flex items-center gap-3`}>
+                                            <Icon name="warning" className="shrink-0 text-[18px] text-secondary dark:text-secondary-fixed-dim" />
+                                            <p className={`text-[13px] leading-5 font-medium ${textClass}`}>{alertLabel}</p>
+                                        </li>
+                                    );
+                                })}
                         </ul>
                     ) : (
                         <p className={`${cardClass} text-[13px] leading-5 ${secondaryTextClass}`}>{t.secretaryDashboard.alertsEmpty}</p>

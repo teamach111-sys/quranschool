@@ -23,7 +23,7 @@ function alertRecordUrl(category, item) {
 
     const target = {
         late_payments: { page: 'paiements-finances', parameter: 'payment_id', id: item.id },
-        repeated_absences: { page: 'eleves', parameter: 'student_id', id: item.student_id },
+        repeated_absences: { page: 'presences', parameter: 'student_id', id: item.student_id },
         rooms_without_active_teacher: { page: 'groupes-attribution', parameter: 'room_id', id: item.room_id },
         inactive_users_with_pending_items: { page: 'utilisateurs-roles', parameter: 'user_id', id: item.user_id },
     }[category];

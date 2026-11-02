@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\GetRepeatedAbsenceAlerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request, GetRepeatedAbsenceAlerts $getRepeatedAbsenceAlerts)
     {
         $validated = $request->validate([
             'year_id' => ['required', 'integer', 'min:1'],
@@ -96,32 +97,7 @@ class AdminDashboardController extends Controller
                 'payments.currency',
             ]);
 
-        $repeatedAbsences = DB::table('attendance')
-            ->join('students', function ($join) {
-                $join->on('students.id', '=', 'attendance.student_id')
-                    ->on('students.school_id', '=', 'attendance.school_id')
-                    ->on('students.year_id', '=', 'attendance.year_id');
-            })
-            ->leftJoin('rooms', function ($join) {
-                $join->on('rooms.id', '=', 'students.room_id')
-                    ->on('rooms.school_id', '=', 'students.school_id')
-                    ->on('rooms.year_id', '=', 'students.year_id');
-            })
-            ->where('attendance.school_id', $schoolId)
-            ->where('attendance.year_id', $yearId)
-            ->where('attendance.status', 'absent')
-            ->where('students.status', 'active')
-            ->groupBy('students.id', 'students.full_name', 'students.student_number', 'rooms.name')
-            ->havingRaw('COUNT(*) >= ?', [3])
-            ->orderByDesc('absence_count')
-            ->orderBy('students.full_name')
-            ->get([
-                'students.id as student_id',
-                'students.full_name as student_name',
-                'students.student_number',
-                'rooms.name as room_name',
-                DB::raw('COUNT(*) AS absence_count'),
-            ]);
+        $repeatedAbsences = $getRepeatedAbsenceAlerts((int) $schoolId, $yearId);
 
         $roomsWithoutActiveTeacher = DB::table('rooms')
             ->where('rooms.school_id', $schoolId)

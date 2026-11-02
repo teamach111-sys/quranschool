@@ -36,6 +36,7 @@ export default function AttendanceTable({ routeParams = {} }) {
     const [filters, setFilters] = useState(() => ({
         ...emptyFilters(),
         room_id: routeParams.room_id ?? '',
+        student_id: routeParams.student_id ?? '',
         attendance_date: routeParams.attendance_date ?? '',
     }));
     const [rosterOpen, setRosterOpen] = useState(false);
@@ -67,15 +68,20 @@ export default function AttendanceTable({ routeParams = {} }) {
     useEffect(() => {
         setFilters((current) => {
             const roomId = routeParams.room_id ?? '';
+            const studentId = routeParams.student_id ?? '';
             const attendanceDate = routeParams.attendance_date ?? '';
 
-            if (current.room_id === roomId && current.attendance_date === attendanceDate) {
+            if (
+                current.room_id === roomId
+                && current.student_id === studentId
+                && current.attendance_date === attendanceDate
+            ) {
                 return current;
             }
 
-            return { ...current, room_id: roomId, attendance_date: attendanceDate };
+            return { ...current, room_id: roomId, student_id: studentId, attendance_date: attendanceDate };
         });
-    }, [routeParams.attendance_date, routeParams.room_id]);
+    }, [routeParams.attendance_date, routeParams.room_id, routeParams.student_id]);
 
     const loadAttendance = useCallback(async (signal) => {
         setLoading(true);

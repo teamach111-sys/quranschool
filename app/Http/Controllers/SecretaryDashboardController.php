@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\GetRepeatedAbsenceAlerts;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class SecretaryDashboardController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, GetRepeatedAbsenceAlerts $getRepeatedAbsenceAlerts): JsonResponse
     {
         $user = Auth::user();
         $schoolId = data_get($user, 'school_id');
@@ -172,20 +173,7 @@ class SecretaryDashboardController extends Controller
             ];
         }
 
-        $repeatedAbsenceCount = DB::table('attendance')
-            ->join('students', function (JoinClause $join) {
-                $join->on('students.id', '=', 'attendance.student_id')
-                    ->on('students.school_id', '=', 'attendance.school_id')
-                    ->on('students.year_id', '=', 'attendance.year_id');
-            })
-            ->where('attendance.school_id', $schoolId)
-            ->where('attendance.year_id', $yearId)
-            ->where('attendance.status', 'absent')
-            ->where('students.status', 'active')
-            ->groupBy('students.id')
-            ->havingRaw('COUNT(*) >= ?', [3])
-            ->get(['students.id'])
-            ->count();
+        $repeatedAbsenceItems = $getRepeatedAbsenceAlerts($schoolId, $yearId);
 
         return response()->json([
             'year_id' => $yearId,
@@ -203,9 +191,10 @@ class SecretaryDashboardController extends Controller
             'new_or_incomplete_students' => $studentsToReview,
             'attendance_follow_up_items' => $attendanceFollowUpItems,
             'recent_payments' => $recentPayments,
+            'repeated_absence_items' => $repeatedAbsenceItems,
             'alerts' => [
                 'late_payments' => $paymentBalances['late']['count'],
-                'repeated_absences' => $repeatedAbsenceCount,
+                'repeated_absences' => $repeatedAbsenceItems->count(),
                 'incomplete_student_records' => $incompleteStudentCount,
             ],
         ]);
