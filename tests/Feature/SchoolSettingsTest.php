@@ -22,6 +22,7 @@ class SchoolSettingsTest extends TestCase
             $table->string('phone', 30)->nullable();
             $table->string('email', 190)->nullable();
             $table->char('currency', 3)->default('MAD');
+            $table->decimal('monthly_fee', 10, 2)->nullable();
             $table->timestamps();
         });
 
@@ -66,15 +67,18 @@ class SchoolSettingsTest extends TestCase
             'phone' => '+212 600 000 000',
             'email' => 'contact@example.test',
             'currency' => 'eur',
+            'monthly_fee' => '125.50',
         ])
             ->assertOk()
             ->assertJsonPath('school.name_fr', 'Nouvelle école')
-            ->assertJsonPath('school.currency', 'EUR');
+            ->assertJsonPath('school.currency', 'EUR')
+            ->assertJsonPath('school.monthly_fee', '125.50');
 
         $this->assertDatabaseHas('schools', [
             'id' => 1,
             'name_fr' => 'Nouvelle école',
             'currency' => 'EUR',
+            'monthly_fee' => '125.50',
         ]);
         $this->assertDatabaseHas('schools', [
             'id' => 2,
@@ -92,5 +96,29 @@ class SchoolSettingsTest extends TestCase
         ]));
 
         $this->getJson('/admin/school-settings')->assertForbidden();
+    }
+
+    public function test_admin_cannot_save_a_negative_monthly_fee(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/admin/school-settings', [
+            'name_fr' => 'École 1',
+            'name_ar' => 'مدرسة ١',
+            'address' => null,
+            'phone' => null,
+            'email' => null,
+            'currency' => 'MAD',
+            'monthly_fee' => '-1.00',
+        ])->assertUnprocessable()->assertJsonValidationErrors('monthly_fee');
+
+        $this->assertDatabaseHas('schools', [
+            'id' => 1,
+            'monthly_fee' => null,
+        ]);
     }
 }

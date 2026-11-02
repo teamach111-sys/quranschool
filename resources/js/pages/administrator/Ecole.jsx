@@ -10,6 +10,7 @@ const emptySchool = {
     phone: '',
     email: '',
     currency: 'MAD',
+    monthly_fee: '',
 };
 
 export default function Ecole() {
@@ -84,6 +85,7 @@ export default function Ecole() {
         { name: 'phone', label: t.schoolSettings.phone, type: 'tel' },
         { name: 'email', label: t.schoolSettings.email, type: 'email' },
         { name: 'currency', label: t.schoolSettings.currency, type: 'text', required: true, maxLength: 3 },
+        { name: 'monthly_fee', label: t.schoolSettings.monthlyFee, type: 'number', min: 0, max: 99999999.99, step: '0.01' },
     ];
 
     const inputClassName = 'w-full rounded-md border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
@@ -115,6 +117,9 @@ export default function Ecole() {
                                     type={field.type}
                                     required={field.required}
                                     maxLength={field.maxLength}
+                                    min={field.min}
+                                    max={field.max}
+                                    step={field.step}
                                     dir={field.dir}
                                     value={school[field.name] ?? ''}
                                     onChange={handleChange}

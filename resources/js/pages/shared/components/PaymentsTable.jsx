@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
 import PaymentFormModal from './PaymentFormModal';
+import PaymentPeriodGeneratorModal from './PaymentPeriodGeneratorModal';
 import {
     ACADEMIC_YEAR_CHANGED_EVENT,
     getSelectedAcademicYearId,
@@ -37,9 +38,11 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [currency, setCurrency] = useState('MAD');
     const [canManage, setCanManage] = useState(false);
     const [canRecord, setCanRecord] = useState(false);
+    const [canGenerate, setCanGenerate] = useState(false);
     const [isSecretary, setIsSecretary] = useState(false);
     const [copyFeedback, setCopyFeedback] = useState(null);
     const [entry, setEntry] = useState(null);
+    const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
     const [focusedAlertPaymentId, setFocusedAlertPaymentId] = useState('');
     const openedAlertPaymentId = useRef(null);
     const [loading, setLoading] = useState(true);
@@ -51,6 +54,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             setYearId(nextYearId ? Number(nextYearId) : null);
             setFilters(emptyFilters());
             setEntry(null);
+            setIsGeneratorOpen(false);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -78,6 +82,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             setCurrency(data.currency ?? 'MAD');
             setCanManage(Boolean(data.can_manage));
             setCanRecord(Boolean(data.can_record));
+            setCanGenerate(Boolean(data.year_is_active && data.year_is_current && data.can_record));
             setIsSecretary(Boolean(data.is_secretary));
         } catch (error) {
             if (error.name !== 'AbortError') setLoadError(true);
@@ -128,6 +133,9 @@ export default function PaymentsTable({ routeParams = {} }) {
 
     const handlePaymentSaved = async () => {
         setEntry(null);
+        await loadPayments();
+    };
+    const handlePeriodsGenerated = async () => {
         await loadPayments();
     };
 
@@ -328,16 +336,28 @@ export default function PaymentsTable({ routeParams = {} }) {
                     ))}
                 </div>
             )}
-            {canManage && (
-                <div className="flex justify-end">
-                    <button
-                        type="button"
-                        onClick={() => setEntry({ payment: null })}
-                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
-                    >
-                        <Icon name="add" className="text-[17px]" />
-                        {t.payments.create}
-                    </button>
+            {(canManage || canGenerate) && (
+                <div className="flex flex-wrap justify-end gap-2">
+                    {canGenerate && (
+                        <button
+                            type="button"
+                            onClick={() => setIsGeneratorOpen(true)}
+                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                        >
+                            <Icon name="autorenew" className="text-[17px]" />
+                            {t.payments.generate}
+                        </button>
+                    )}
+                    {canManage && (
+                        <button
+                            type="button"
+                            onClick={() => setEntry({ payment: null })}
+                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                        >
+                            <Icon name="add" className="text-[17px]" />
+                            {t.payments.create}
+                        </button>
+                    )}
                 </div>
             )}
             <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
@@ -449,6 +469,13 @@ export default function PaymentsTable({ routeParams = {} }) {
                     canManage={canManage}
                     onClose={() => setEntry(null)}
                     onSaved={handlePaymentSaved}
+                />
+            )}
+            {isGeneratorOpen && (
+                <PaymentPeriodGeneratorModal
+                    yearId={yearId}
+                    onClose={() => setIsGeneratorOpen(false)}
+                    onGenerated={handlePeriodsGenerated}
                 />
             )}
         </section>

@@ -139,6 +139,18 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('payments.table');
 
+    Route::get('/payments/generation-options', [PaymentsController::class, 'generationOptions'])
+        ->middleware('can:access-dashboard')
+        ->name('payments.generation-options');
+
+    Route::post('/payments/generation-preview', [PaymentsController::class, 'previewGeneration'])
+        ->middleware('can:access-dashboard')
+        ->name('payments.generation-preview');
+
+    Route::post('/payments/generate', [PaymentsController::class, 'generatePeriods'])
+        ->middleware('can:access-dashboard')
+        ->name('payments.generate');
+
     Route::post('/payments', [PaymentsController::class, 'store'])
         ->middleware('can:access-dashboard')
         ->name('payments.store');

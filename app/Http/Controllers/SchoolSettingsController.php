@@ -2,24 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class SchoolSettingsController extends Controller
 {
-    public function show()
+    public function show(): JsonResponse
     {
         $school = DB::table('schools')
             ->where('id', $this->schoolId())
-            ->first(['name_fr', 'name_ar', 'address', 'phone', 'email', 'currency']);
+            ->first(['name_fr', 'name_ar', 'address', 'phone', 'email', 'currency', 'monthly_fee']);
 
         abort_unless($school, 404);
+
+        if ($school->monthly_fee !== null) {
+            $school->monthly_fee = number_format((float) $school->monthly_fee, 2, '.', '');
+        }
 
         return response()->json(['school' => $school]);
     }
 
-    public function update(Request $request)
+    public function update(Request $request): JsonResponse
     {
         $request->merge([
             'currency' => strtoupper((string) $request->input('currency')),
@@ -32,6 +37,7 @@ class SchoolSettingsController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:190'],
             'currency' => ['required', 'string', 'size:3', 'alpha'],
+            'monthly_fee' => ['nullable', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
         ]);
 
         DB::table('schools')

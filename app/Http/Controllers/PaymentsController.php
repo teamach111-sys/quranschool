@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use DateTimeImmutable;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -127,6 +128,148 @@ class PaymentsController extends Controller
             'payments' => $payments,
             'students' => $students,
         ]);
+    }
+
+    public function generationOptions(Request $request): JsonResponse
+    {
+        [, $schoolId] = $this->staffContext();
+        $year = $this->resolveGenerationYear($request, $schoolId);
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->first(['monthly_fee', 'currency']);
+        abort_unless($school, 404);
+
+        $yearId = (int) $year->id;
+        $students = DB::table('students')
+            ->leftJoin('rooms', function (JoinClause $join) {
+                $join->on('rooms.id', '=', 'students.room_id')
+                    ->on('rooms.school_id', '=', 'students.school_id')
+                    ->on('rooms.year_id', '=', 'students.year_id')
+                    ->where('rooms.is_active', true);
+            })
+            ->where('students.school_id', $schoolId)
+            ->where('students.year_id', $yearId)
+            ->where('status', 'active')
+            ->orderBy('students.full_name')
+            ->orderBy('students.id')
+            ->get([
+                'students.id',
+                'students.full_name',
+                'students.student_number',
+                'students.room_id',
+                'rooms.name as room_name',
+                'rooms.level',
+            ])
+            ->map(fn ($student) => [
+                'id' => (int) $student->id,
+                'name' => $student->full_name,
+                'student_number' => $student->student_number,
+                'room_id' => $student->room_id === null ? null : (int) $student->room_id,
+                'room_name' => $student->room_name,
+                'level' => $student->level,
+            ])
+            ->values();
+        $rooms = DB::table('rooms')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'level'])
+            ->map(fn ($room) => [
+                'id' => (int) $room->id,
+                'name' => $room->name,
+                'level' => $room->level,
+            ])
+            ->values();
+        $levels = $rooms->pluck('level')->unique()->values();
+
+        return response()->json([
+            'year_id' => (int) $year->id,
+            'year_label' => $year->year_label,
+            'start_date' => $year->start_date,
+            'end_date' => $year->end_date,
+            'monthly_fee' => $school->monthly_fee === null
+                ? null
+                : $this->decimalAmount((string) $school->monthly_fee),
+            'currency' => $school->currency,
+            'students' => $students,
+            'rooms' => $rooms,
+            'levels' => $levels,
+        ]);
+    }
+
+    public function previewGeneration(Request $request): JsonResponse
+    {
+        [, $schoolId] = $this->staffContext();
+        $year = $this->resolveGenerationYear($request, $schoolId);
+        $validated = $this->validatedGenerationInput($request, $schoolId, $year);
+        $preview = $this->buildGenerationPreview($schoolId, $year, $validated);
+        $publicPreview = $this->publicGenerationPreview($preview);
+
+        return response()->json([
+            ...$publicPreview,
+            'preview_token' => $this->generationPreviewToken($publicPreview),
+        ]);
+    }
+
+    public function generatePeriods(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        $year = $this->resolveGenerationYear($request, $schoolId);
+        $validated = $this->validatedGenerationInput($request, $schoolId, $year);
+        $previewToken = $request->validate([
+            'preview_token' => ['required', 'string', 'size:64'],
+        ])['preview_token'];
+
+        $result = DB::transaction(function () use ($validated, $previewToken, $user, $schoolId, $year) {
+            $this->lockGenerationYear($schoolId, (int) $year->id);
+            $studentIds = array_map('intval', $validated['student_ids']);
+            $this->lockStudentsForPayment($studentIds, $schoolId, (int) $year->id);
+            $preview = $this->buildGenerationPreview($schoolId, $year, $validated, true);
+            $publicPreview = $this->publicGenerationPreview($preview);
+
+            if (! hash_equals($this->generationPreviewToken($publicPreview), $previewToken)) {
+                throw ValidationException::withMessages([
+                    'preview_token' => 'The billing preview changed. Review it again before generating payments.',
+                ]);
+            }
+
+            $rowsToInsert = array_values(array_filter(
+                $preview['rows'],
+                fn (array $row) => $row['status'] === 'create',
+            ));
+
+            if ($rowsToInsert !== []) {
+                $timestamp = now();
+                DB::table('payments')->insert(array_map(
+                    fn (array $row) => [
+                        'student_id' => $row['student_id'],
+                        'school_id' => $schoolId,
+                        'year_id' => (int) $year->id,
+                        'recorded_by' => (int) $user->id,
+                        'period_start' => $row['period_start'],
+                        'period_end' => $row['period_end'],
+                        'amount' => $preview['monthly_fee'],
+                        'currency' => $preview['currency'],
+                        'status' => 'due',
+                        'paid_at' => null,
+                        'payment_method' => null,
+                        'reference' => null,
+                        'notes' => null,
+                        'created_at' => $timestamp,
+                        'updated_at' => $timestamp,
+                    ],
+                    $rowsToInsert,
+                ));
+            }
+
+            return [
+                ...$publicPreview,
+                'created_count' => count($rowsToInsert),
+            ];
+        });
+
+        return response()->json($result);
     }
 
     public function store(Request $request): JsonResponse
@@ -305,6 +448,280 @@ class PaymentsController extends Controller
         }
 
         return $year;
+    }
+
+    private function resolveGenerationYear(Request $request, int $schoolId): stdClass
+    {
+        $yearId = $request->validate([
+            'year_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_years', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('is_current', true)
+                    ->where('is_active', true),
+            ],
+        ])['year_id'];
+
+        $year = DB::table('academic_years')
+            ->where('id', $yearId)
+            ->where('school_id', $schoolId)
+            ->where('is_current', true)
+            ->where('is_active', true)
+            ->first(['id', 'year_label', 'start_date', 'end_date']);
+        abort_unless($year, 404);
+
+        return $year;
+    }
+
+    private function lockGenerationYear(int $schoolId, int $yearId): void
+    {
+        $year = DB::table('academic_years')
+            ->where('id', $yearId)
+            ->where('school_id', $schoolId)
+            ->lockForUpdate()
+            ->first(['is_current', 'is_active']);
+
+        if (! $year || ! $year->is_current || ! $year->is_active) {
+            throw ValidationException::withMessages([
+                'year_id' => 'Payment periods can only be generated for the current active academic year.',
+            ]);
+        }
+    }
+
+    /**
+     * @return array{from_month: string, to_month: string, student_ids: array<int, int|string>}
+     */
+    private function validatedGenerationInput(Request $request, int $schoolId, stdClass $year): array
+    {
+        $validated = $request->validate([
+            'from_month' => ['required', 'date_format:Y-m'],
+            'to_month' => ['required', 'date_format:Y-m'],
+            'student_ids' => ['required', 'array', 'min:1'],
+            'student_ids.*' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists('students', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', (int) $year->id)
+                    ->where('status', 'active'),
+            ],
+        ]);
+
+        $startMonth = $validated['from_month'];
+        $endMonth = $validated['to_month'];
+        $firstYearMonth = substr((string) $year->start_date, 0, 7);
+        $lastYearMonth = substr((string) $year->end_date, 0, 7);
+        $errors = [];
+
+        if ($startMonth > $endMonth) {
+            $errors['from_month'] = 'The first month must not be after the last month.';
+        }
+        if ($startMonth < $firstYearMonth) {
+            $errors['from_month'] = 'The billing range must be within the current academic year.';
+        }
+        if ($endMonth > $lastYearMonth) {
+            $errors['to_month'] = 'The billing range must be within the current academic year.';
+        }
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $validated;
+    }
+
+    /**
+     * @param  array{from_month: string, to_month: string, student_ids: array<int, int|string>}  $validated
+     * @return array<string, mixed>
+     */
+    private function buildGenerationPreview(
+        int $schoolId,
+        stdClass $year,
+        array $validated,
+        bool $lockPayments = false,
+    ): array {
+        $schoolQuery = DB::table('schools')->where('id', $schoolId);
+        if ($lockPayments) {
+            $schoolQuery->lockForUpdate();
+        }
+        $school = $schoolQuery->first(['monthly_fee', 'currency']);
+        abort_unless($school, 404);
+
+        if ($school->monthly_fee === null) {
+            throw ValidationException::withMessages([
+                'monthly_fee' => 'Configure a monthly fee before generating payment periods.',
+            ]);
+        }
+
+        $monthlyFee = $this->decimalAmount((string) $school->monthly_fee);
+        $feeCents = $this->decimalToCents($monthlyFee);
+        $periods = $this->generationPeriods($year, $validated['from_month'], $validated['to_month']);
+        $studentIds = array_map('intval', $validated['student_ids']);
+        $students = DB::table('students')
+            ->whereIn('id', $studentIds)
+            ->where('school_id', $schoolId)
+            ->where('year_id', (int) $year->id)
+            ->where('status', 'active')
+            ->orderBy('full_name')
+            ->orderBy('id')
+            ->get(['id', 'full_name', 'student_number', 'enrollment_date']);
+
+        if ($students->count() !== count(array_unique($studentIds))) {
+            abort(404);
+        }
+
+        $existingPaymentsQuery = DB::table('payments')
+            ->whereIn('student_id', $studentIds)
+            ->where('school_id', $schoolId)
+            ->where('year_id', (int) $year->id)
+            ->where('period_start', '<=', $periods[array_key_last($periods)]['period_end'])
+            ->where('period_end', '>=', $periods[0]['period_start']);
+        if ($lockPayments) {
+            $existingPaymentsQuery->lockForUpdate();
+        }
+        $existingPayments = $existingPaymentsQuery
+            ->get(['student_id', 'period_start', 'period_end'])
+            ->groupBy('student_id');
+
+        $studentSummaries = [];
+        $rows = [];
+        $counts = [
+            'create' => 0,
+            'exists' => 0,
+            'overlap' => 0,
+            'not_enrolled' => 0,
+        ];
+
+        foreach ($students as $student) {
+            $studentId = (int) $student->id;
+            $studentPayments = $existingPayments->get($studentId, collect());
+            $studentSummary = [
+                'id' => $studentId,
+                'name' => $student->full_name,
+                'student_number' => $student->student_number,
+                'create_count' => 0,
+                'existing_count' => 0,
+                'overlap_count' => 0,
+                'not_enrolled_count' => 0,
+            ];
+
+            foreach ($periods as $period) {
+                $status = 'create';
+                if ($period['period_end'] < $student->enrollment_date) {
+                    $status = 'not_enrolled';
+                } else {
+                    foreach ($studentPayments as $payment) {
+                        if (
+                            $payment->period_start === $period['period_start']
+                            && $payment->period_end === $period['period_end']
+                        ) {
+                            $status = 'exists';
+                            break;
+                        }
+                        if (
+                            $payment->period_start <= $period['period_end']
+                            && $payment->period_end >= $period['period_start']
+                        ) {
+                            $status = 'overlap';
+                        }
+                    }
+                }
+
+                $counts[$status]++;
+                $summaryKey = [
+                    'create' => 'create_count',
+                    'exists' => 'existing_count',
+                    'overlap' => 'overlap_count',
+                    'not_enrolled' => 'not_enrolled_count',
+                ][$status];
+                $studentSummary[$summaryKey]++;
+                $rows[] = [
+                    'student_id' => $studentId,
+                    'period_start' => $period['period_start'],
+                    'period_end' => $period['period_end'],
+                    'status' => $status,
+                ];
+            }
+
+            $studentSummaries[] = $studentSummary;
+        }
+
+        return [
+            'year_id' => (int) $year->id,
+            'year_label' => $year->year_label,
+            'from_month' => $validated['from_month'],
+            'to_month' => $validated['to_month'],
+            'monthly_fee' => $monthlyFee,
+            'currency' => $school->currency,
+            'period_count' => count($periods),
+            'students' => $studentSummaries,
+            'rows' => $rows,
+            'create_count' => $counts['create'],
+            'existing_count' => $counts['exists'],
+            'overlap_count' => $counts['overlap'],
+            'not_enrolled_count' => $counts['not_enrolled'],
+            'total_amount' => $this->centsToDecimal($counts['create'] * $feeCents),
+        ];
+    }
+
+    /**
+     * @return array<int, array{period_start: string, period_end: string}>
+     */
+    private function generationPeriods(stdClass $year, string $fromMonth, string $toMonth): array
+    {
+        $yearStart = new DateTimeImmutable((string) $year->start_date);
+        $yearEnd = new DateTimeImmutable((string) $year->end_date);
+        $lastMonth = new DateTimeImmutable($toMonth.'-01');
+        $periods = [];
+
+        for ($month = new DateTimeImmutable($fromMonth.'-01'); $month <= $lastMonth; $month = $month->modify('+1 month')) {
+            $monthStart = $month->modify('first day of this month');
+            $monthEnd = $month->modify('last day of this month');
+            $periodStart = $monthStart < $yearStart ? $yearStart : $monthStart;
+            $periodEnd = $monthEnd > $yearEnd ? $yearEnd : $monthEnd;
+            $periods[] = [
+                'period_start' => $periodStart->format('Y-m-d'),
+                'period_end' => $periodEnd->format('Y-m-d'),
+            ];
+        }
+
+        return $periods;
+    }
+
+    /**
+     * @param  array<string, mixed>  $preview
+     * @return array<string, mixed>
+     */
+    private function publicGenerationPreview(array $preview): array
+    {
+        unset($preview['rows']);
+
+        return $preview;
+    }
+
+    /**
+     * @param  array<string, mixed>  $preview
+     */
+    private function generationPreviewToken(array $preview): string
+    {
+        return hash_hmac(
+            'sha256',
+            json_encode($preview, JSON_THROW_ON_ERROR),
+            (string) config('app.key'),
+        );
+    }
+
+    private function decimalToCents(string $amount): int
+    {
+        [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '');
+
+        return ((int) $whole * 100) + (int) str_pad(substr($fraction, 0, 2), 2, '0');
+    }
+
+    private function centsToDecimal(int $cents): string
+    {
+        return intdiv($cents, 100).'.'.str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
     }
 
     /**
