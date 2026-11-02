@@ -12,7 +12,7 @@ function localDateTime() {
 }
 
 function initialValues(payment, currency, canManage) {
-    const defaultStatus = !canManage && payment?.status === 'due'
+    const defaultStatus = !canManage && ['due', 'late'].includes(payment?.status)
         ? 'paid'
         : payment?.status ?? 'due';
 

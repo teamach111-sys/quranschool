@@ -113,7 +113,7 @@ export default function MobileTable({
                                                     disabled={action.disabled?.(row)}
                                                     aria-label={action.label}
                                                     title={action.label}
-                                                    className={`flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-low text-primary transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#273831] dark:text-[#9fd1bd] dark:hover:bg-[#34483f] ${action.className ?? ''}`}
+                                                    className={`flex h-11 w-11 items-center justify-center rounded-lg bg-surface-container-low text-primary transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#273831] dark:text-[#9fd1bd] dark:hover:bg-[#34483f] ${action.className ?? ''}`}
                                                 >
                                                     <Icon name={action.icon} className="text-[17px]" />
                                                 </button>
@@ -144,7 +144,7 @@ export default function MobileTable({
                                         {detailColumns.map((column) => (
                                             <div key={column.key} className={`min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
                                                 <dt className="text-[10px] uppercase tracking-wide text-outline dark:text-[#9fd1bd]/60">{column.label}</dt>
-                                                <dd className="truncate text-[12px] font-medium text-on-surface-variant dark:text-[#c2d1c8]">
+                                                <dd className={`${column.wrap ? 'break-words' : 'truncate'} text-[12px] font-medium text-on-surface-variant dark:text-[#c2d1c8]`}>
                                                     {column.render
                                                         ? column.render(getValue(row, column), row)
                                                         : getValue(row, column) ?? '—'}

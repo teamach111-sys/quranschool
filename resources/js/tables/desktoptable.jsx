@@ -194,7 +194,7 @@ export default function DesktopTable({
                                                         disabled={action.disabled?.(row)}
                                                         aria-label={action.label}
                                                         title={action.label}
-                                                        className={`flex h-8 w-8 items-center justify-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#9fd1bd]/70 dark:hover:bg-[#273831] dark:hover:text-[#baeed9] ${action.className ?? ''}`}
+                                                        className={`flex h-11 w-11 items-center justify-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#9fd1bd]/70 dark:hover:bg-[#273831] dark:hover:text-[#baeed9] ${action.className ?? ''}`}
                                                     >
                                                         <Icon name={action.icon} className="text-[18px]" />
                                                     </button>

@@ -267,6 +267,34 @@ class PaymentFormTest extends TestCase
         ]);
     }
 
+    public function test_secretary_can_record_a_late_payment_without_changing_its_billing_period(): void
+    {
+        $this->seedPaymentData();
+        DB::table('payments')->where('id', 2)->update(['status' => 'late']);
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->putJson('/payments/2', [
+            'year_id' => 1,
+            'status' => 'paid',
+            'paid_at' => '2026-11-02 10:30:00',
+            'payment_method' => 'cash',
+            'reference' => 'REC-LATE',
+        ])->assertOk()->assertJsonPath('updated', true);
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'student_id' => 1,
+            'period_start' => '2026-11-01',
+            'period_end' => '2026-11-30',
+            'amount' => '125.50',
+            'status' => 'paid',
+            'paid_at' => '2026-11-02 10:30:00',
+            'payment_method' => 'cash',
+            'reference' => 'REC-LATE',
+            'recorded_by' => 12,
+        ]);
+    }
+
     public function test_secretary_cannot_waive_a_due_payment_without_a_note(): void
     {
         $this->seedPaymentData();
@@ -291,7 +319,7 @@ class PaymentFormTest extends TestCase
         $this->assertDatabaseCount('payments', 3);
     }
 
-    public function test_secretary_cannot_update_a_payment_that_is_not_due(): void
+    public function test_secretary_cannot_update_a_paid_payment(): void
     {
         $this->seedPaymentData();
         $this->actingAs($this->user(12, 1, 'secretary'));

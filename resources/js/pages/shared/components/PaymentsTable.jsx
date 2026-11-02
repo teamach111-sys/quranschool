@@ -37,6 +37,8 @@ export default function PaymentsTable() {
     const [currency, setCurrency] = useState('MAD');
     const [canManage, setCanManage] = useState(false);
     const [canRecord, setCanRecord] = useState(false);
+    const [isSecretary, setIsSecretary] = useState(false);
+    const [copyFeedback, setCopyFeedback] = useState(null);
     const [entry, setEntry] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
@@ -75,6 +77,7 @@ export default function PaymentsTable() {
             setCurrency(data.currency ?? 'MAD');
             setCanManage(Boolean(data.can_manage));
             setCanRecord(Boolean(data.can_record));
+            setIsSecretary(Boolean(data.is_secretary));
         } catch (error) {
             if (error.name !== 'AbortError') setLoadError(true);
         } finally {
@@ -124,13 +127,39 @@ export default function PaymentsTable() {
         await loadPayments();
     };
 
-    const locale = lang === 'ar' ? 'ar' : 'fr';
+    const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-FR';
     const formatAmount = (payment) => (
         `${new Intl.NumberFormat(locale, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         }).format(Number(payment.amount))} ${payment.currency}`
     );
+    const collectionPayments = isSecretary
+        ? filteredPayments.filter((payment) => ['due', 'late'].includes(payment.status))
+        : filteredPayments;
+    const collectionTotals = isSecretary
+        ? Object.values(collectionPayments.reduce((totals, payment) => {
+            const key = `${payment.currency}:${payment.status}`;
+            totals[key] ??= {
+                currency: payment.currency,
+                status: payment.status,
+                count: 0,
+                amount: 0,
+            };
+            totals[key].count += 1;
+            totals[key].amount += Number(payment.amount);
+            return totals;
+        }, {}))
+        : [];
+    const copyGuardianPhone = async (payment) => {
+        try {
+            if (!navigator.clipboard?.writeText) throw new Error('Clipboard access is unavailable');
+            await navigator.clipboard.writeText(payment.guardian_phone);
+            setCopyFeedback({ paymentId: payment.id, copied: true });
+        } catch {
+            setCopyFeedback({ paymentId: payment.id, copied: false });
+        }
+    };
     const columns = [
         {
             key: 'student_name',
@@ -138,6 +167,37 @@ export default function PaymentsTable() {
             sortable: true,
             mobile: 'title',
         },
+        ...(isSecretary ? [{
+            key: 'guardian_phone',
+            label: t.payments.columns.guardianPhone,
+            mobile: 'detail',
+            wrap: true,
+            value: (payment) => payment.guardian_phone || t.payments.emptyValue,
+            render: (phone, payment) => (
+                <div className="flex flex-wrap items-center gap-2">
+                    {phone
+                        ? <a href={`tel:${phone.replace(/[^\d+]/g, '')}`} className="min-h-11 inline-flex items-center text-primary underline-offset-2 hover:underline dark:text-primary-fixed-dim">{phone}</a>
+                        : <span>{t.payments.noGuardianPhone}</span>}
+                    {phone && (
+                        <button
+                            type="button"
+                            onClick={() => copyGuardianPhone(payment)}
+                            aria-label={t.payments.copyGuardianPhone(payment.student_name)}
+                            title={t.payments.copyGuardianPhone(payment.student_name)}
+                            className="inline-flex min-h-11 items-center gap-1 rounded-md bg-surface-container px-2 text-[11px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-inverse-on-surface dark:hover:bg-[#344a41]"
+                        >
+                            <Icon name="content_copy" className="text-[16px]" />
+                            {t.payments.copyPhone}
+                        </button>
+                    )}
+                    {copyFeedback?.paymentId === payment.id && (
+                        <span role={copyFeedback.copied ? 'status' : 'alert'} className={`text-[11px] ${copyFeedback.copied ? 'text-primary dark:text-primary-fixed-dim' : 'text-error dark:text-error-container'}`}>
+                            {copyFeedback.copied ? t.payments.phoneCopied : t.payments.phoneCopyError}
+                        </span>
+                    )}
+                </div>
+            ),
+        }] : []),
         {
             key: 'period_start',
             label: t.payments.columns.period,
@@ -224,7 +284,7 @@ export default function PaymentsTable() {
                 key: 'record',
                 icon: 'payments',
                 label: t.payments.record,
-                hidden: (payment) => payment.status !== 'due',
+                hidden: (payment) => !['due', 'late'].includes(payment.status),
                 onClick: (payment) => setEntry({ payment }),
             }]
             : [];
@@ -232,6 +292,33 @@ export default function PaymentsTable() {
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
         <form onSubmit={applyFilters} className="flex flex-col gap-3">
+            {isSecretary && (
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                        {t.payments.collectionsTitle}
+                    </h2>
+                    <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                        {t.payments.collectionsDescription}
+                    </p>
+                </div>
+            )}
+            {isSecretary && collectionTotals.length > 0 && (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label={t.payments.collectionSummary}>
+                    {collectionTotals.map((total) => (
+                        <div key={`${total.currency}:${total.status}`} className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 dark:border-[#384d43] dark:bg-[#182620]">
+                            <div>
+                                <p className="text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                    {t.payments.collectionTotal(t.payments.statuses[total.status], total.count)}
+                                </p>
+                                <p className="text-[16px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                                    {formatAmount({ amount: total.amount, currency: total.currency })}
+                                </p>
+                            </div>
+                            <Icon name={total.status === 'late' ? 'schedule' : 'receipt_long'} className="text-[20px] text-primary dark:text-primary-fixed-dim" />
+                        </div>
+                    ))}
+                </div>
+            )}
             {canManage && (
                 <div className="flex justify-end">
                     <button
@@ -269,7 +356,9 @@ export default function PaymentsTable() {
                     {t.payments.filters.status}
                     <select name="status" value={filters.status} onChange={handleFilterChange} className={controlClass}>
                         <option value="">{t.payments.filters.allStatuses}</option>
-                        {Object.entries(t.payments.statuses).map(([status, label]) => (
+                        {Object.entries(isSecretary
+                            ? { due: t.payments.statuses.due, late: t.payments.statuses.late }
+                            : t.payments.statuses).map(([status, label]) => (
                             <option key={status} value={status}>{label}</option>
                         ))}
                     </select>
@@ -322,10 +411,10 @@ export default function PaymentsTable() {
                 <DesktopTable
                     ariaLabel={t.payments.listLabel}
                     columns={columns}
-                    emptyState={t.payments.empty}
+                    emptyState={isSecretary ? t.payments.noOutstanding : t.payments.empty}
                     isRTL={isRTL}
                     labels={labels}
-                    rows={filteredPayments}
+                    rows={collectionPayments}
                     toolbar={toolbar}
                     actions={actions}
                 />
@@ -334,10 +423,10 @@ export default function PaymentsTable() {
                 <MobileTable
                     ariaLabel={t.payments.listLabel}
                     columns={columns}
-                    emptyState={t.payments.empty}
+                    emptyState={isSecretary ? t.payments.noOutstanding : t.payments.empty}
                     isRTL={isRTL}
                     labels={labels}
-                    rows={filteredPayments}
+                    rows={collectionPayments}
                     toolbar={toolbar}
                     actions={actions}
                 />

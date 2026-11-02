@@ -55,27 +55,32 @@ class PaymentsController extends Controller
                 ->where('payments.period_end', '>=', $filters['period_date']);
         }
 
+        $paymentColumns = [
+            'payments.id',
+            'payments.student_id',
+            'students.full_name as student_name',
+            'students.student_number',
+            'payments.period_start',
+            'payments.period_end',
+            'payments.amount',
+            'payments.currency',
+            'payments.status',
+            'payments.paid_at',
+            'payments.payment_method',
+            'payments.reference',
+            'payments.notes',
+            'payments.recorded_by',
+            'recorders.full_name as recorded_by_name',
+        ];
+        if ($user->role === 'secretary') {
+            $paymentColumns[] = 'students.guardian_phone';
+        }
+
         $payments = $paymentsQuery
             ->orderByDesc('payments.period_start')
             ->orderBy('students.full_name')
             ->orderByDesc('payments.id')
-            ->get([
-                'payments.id',
-                'payments.student_id',
-                'students.full_name as student_name',
-                'students.student_number',
-                'payments.period_start',
-                'payments.period_end',
-                'payments.amount',
-                'payments.currency',
-                'payments.status',
-                'payments.paid_at',
-                'payments.payment_method',
-                'payments.reference',
-                'payments.notes',
-                'payments.recorded_by',
-                'recorders.full_name as recorded_by_name',
-            ])
+            ->get($paymentColumns)
             ->map(fn ($payment) => [
                 'id' => (int) $payment->id,
                 'student_id' => (int) $payment->student_id,
@@ -92,6 +97,7 @@ class PaymentsController extends Controller
                 'notes' => $payment->notes,
                 'recorded_by' => $payment->recorded_by === null ? null : (int) $payment->recorded_by,
                 'recorded_by_name' => $payment->recorded_by_name,
+                ...($user->role === 'secretary' ? ['guardian_phone' => $payment->guardian_phone] : []),
             ])
             ->values();
 
@@ -118,6 +124,7 @@ class PaymentsController extends Controller
             'can_record' => in_array($user->role, ['admin', 'secretary'], true)
                 && (bool) $year->is_active
                 && (bool) $year->is_current,
+            'is_secretary' => $user->role === 'secretary',
             'payments' => $payments,
             'students' => $students,
         ]);
@@ -175,7 +182,7 @@ class PaymentsController extends Controller
                     ->where('year_id', $yearId)
                     ->lockForUpdate()
                     ->first(['status', 'payment_method', 'reference', 'notes']);
-                abort_unless($payment && $payment->status === 'due', 404);
+                abort_unless($payment && in_array($payment->status, ['due', 'late'], true), 404);
 
                 DB::table('payments')
                     ->where('id', $paymentId)
@@ -338,7 +345,7 @@ class PaymentsController extends Controller
      */
     private function validatedSecretaryPaymentUpdate(Request $request, string $currentStatus): array
     {
-        abort_unless($currentStatus === 'due', 404);
+        abort_unless(in_array($currentStatus, ['due', 'late'], true), 404);
 
         return $request->validate([
             'status' => ['required', Rule::in(['paid', 'late', 'waived'])],

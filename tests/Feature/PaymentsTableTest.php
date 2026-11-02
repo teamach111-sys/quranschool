@@ -40,6 +40,7 @@ class PaymentsTableTest extends TestCase
             $table->unsignedBigInteger('year_id');
             $table->string('student_number')->nullable();
             $table->string('full_name');
+            $table->string('guardian_phone')->nullable();
         });
 
         Schema::create('payments', function (Blueprint $table) {
@@ -72,6 +73,7 @@ class PaymentsTableTest extends TestCase
             ->assertJsonPath('currency', 'MAD')
             ->assertJsonPath('can_manage', true)
             ->assertJsonPath('can_record', true)
+            ->assertJsonPath('is_secretary', false)
             ->assertJsonCount(1, 'payments')
             ->assertJsonPath('payments.0.id', 1)
             ->assertJsonPath('payments.0.student_name', 'Mariam Ali')
@@ -79,6 +81,7 @@ class PaymentsTableTest extends TestCase
             ->assertJsonPath('payments.0.recorded_by_name', 'Secretary User')
             ->assertJsonPath('payments.0.amount', '125.50')
             ->assertJsonPath('payments.0.status', 'paid')
+            ->assertJsonMissingPath('payments.0.guardian_phone')
             ->assertJsonCount(2, 'students')
             ->assertJsonMissing(['student_name' => 'Other School Student']);
     }
@@ -107,7 +110,13 @@ class PaymentsTableTest extends TestCase
             ->assertJsonPath('year_id', 1)
             ->assertJsonPath('can_manage', false)
             ->assertJsonPath('can_record', true)
+            ->assertJsonPath('is_secretary', true)
             ->assertJsonCount(3, 'payments');
+
+        $this->getJson('/payments/table?status=late')
+            ->assertOk()
+            ->assertJsonCount(1, 'payments')
+            ->assertJsonPath('payments.0.guardian_phone', '0600000002');
 
         $this->getJson('/payments/table?year_id=2')->assertNotFound();
     }
@@ -153,10 +162,10 @@ class PaymentsTableTest extends TestCase
             ['id' => 30, 'school_id' => 2, 'full_name' => 'Other School Admin'],
         ]);
         DB::table('students')->insert([
-            ['id' => 1, 'school_id' => 1, 'year_id' => 1, 'student_number' => 'S-001', 'full_name' => 'Mariam Ali'],
-            ['id' => 2, 'school_id' => 1, 'year_id' => 1, 'student_number' => 'S-002', 'full_name' => 'Zayd Ali'],
-            ['id' => 3, 'school_id' => 1, 'year_id' => 2, 'student_number' => 'S-003', 'full_name' => 'Former Student'],
-            ['id' => 4, 'school_id' => 2, 'year_id' => 3, 'student_number' => 'S-004', 'full_name' => 'Other School Student'],
+            ['id' => 1, 'school_id' => 1, 'year_id' => 1, 'student_number' => 'S-001', 'full_name' => 'Mariam Ali', 'guardian_phone' => '0600000001'],
+            ['id' => 2, 'school_id' => 1, 'year_id' => 1, 'student_number' => 'S-002', 'full_name' => 'Zayd Ali', 'guardian_phone' => '0600000002'],
+            ['id' => 3, 'school_id' => 1, 'year_id' => 2, 'student_number' => 'S-003', 'full_name' => 'Former Student', 'guardian_phone' => '0600000003'],
+            ['id' => 4, 'school_id' => 2, 'year_id' => 3, 'student_number' => 'S-004', 'full_name' => 'Other School Student', 'guardian_phone' => '0600000004'],
         ]);
         $paymentDefaults = [
             'recorded_by' => null,
