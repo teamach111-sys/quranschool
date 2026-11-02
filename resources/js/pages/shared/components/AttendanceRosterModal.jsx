@@ -119,7 +119,8 @@ export default function AttendanceRosterModal({ open, yearId, onClose, onSaved }
             }
 
             const undoEntries = entries.map((entry) => ({
-                ...entry,
+                student_id: entry.student_id,
+                saved_status: entry.status,
                 previous_status: originalStatuses[entry.student_id] ?? null,
             }));
             await onSaved(data.saved_count, undoEntries);

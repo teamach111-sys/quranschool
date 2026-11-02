@@ -601,14 +601,14 @@ class AttendanceController extends Controller
                     'school_id' => $schoolId,
                     'room_id' => $roomId,
                     'year_id' => $yearId,
-                    'recorded_by' => $existing?->recorded_by ?? $user->id,
+                    'recorded_by' => $user->id,
                     'attendance_date' => $validated['attendance_date'],
                     'status' => $validated['status'],
                     'note' => $validated['note'] ?? null,
                     'created_at' => $existing ? null : $now,
                 ]],
                 ['student_id', 'year_id', 'attendance_date'],
-                ['room_id', 'status', 'note'],
+                ['room_id', 'recorded_by', 'status', 'note'],
             );
 
             $attendanceId = DB::table('attendance')

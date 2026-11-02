@@ -166,6 +166,104 @@ class AttendanceTableTest extends TestCase
         ]);
     }
 
+    public function test_saving_the_same_attendance_day_twice_updates_existing_rows_without_duplicates(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 1,
+            'student_number' => 'S-102',
+            'full_name' => 'Adam Active',
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'late'],
+                ['student_id' => 5, 'status' => 'absent'],
+            ],
+        ])->assertOk();
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'excused'],
+                ['student_id' => 5, 'status' => 'present'],
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('saved_count', 2);
+
+        $this->assertDatabaseCount('attendance', 6);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 1,
+            'school_id' => 1,
+            'year_id' => 1,
+            'attendance_date' => '2026-10-10',
+            'status' => 'excused',
+            'recorded_by' => 20,
+        ]);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'attendance_date' => '2026-10-10',
+            'status' => 'present',
+            'recorded_by' => 20,
+        ]);
+    }
+
+    public function test_partial_bulk_save_keeps_attendance_rows_omitted_from_the_request(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 1,
+            'student_number' => 'S-102',
+            'full_name' => 'Adam Active',
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'late'],
+                ['student_id' => 5, 'status' => 'absent'],
+            ],
+        ])->assertOk();
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'excused'],
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('saved_count', 1);
+
+        $this->assertDatabaseCount('attendance', 6);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 1,
+            'attendance_date' => '2026-10-10',
+            'status' => 'excused',
+            'recorded_by' => 20,
+        ]);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 5,
+            'attendance_date' => '2026-10-10',
+            'status' => 'absent',
+            'recorded_by' => 20,
+        ]);
+    }
+
     public function test_bulk_attendance_rejects_a_room_outside_the_teacher_assignment_without_partial_writes(): void
     {
         $this->seedAttendance();
@@ -625,7 +723,7 @@ class AttendanceTableTest extends TestCase
         $this->getJson('/attendance/table?year_id=2')->assertNotFound();
     }
 
-    public function test_admin_correction_updates_the_existing_attendance_record(): void
+    public function test_admin_correction_updates_existing_record_and_records_the_correcting_admin(): void
     {
         $this->seedAttendance();
         $this->actingAs($this->user(10, 1, 'admin'));
@@ -644,7 +742,7 @@ class AttendanceTableTest extends TestCase
         $this->assertDatabaseCount('attendance', 5);
         $this->assertDatabaseHas('attendance', [
             'id' => 2,
-            'recorded_by' => 21,
+            'recorded_by' => 10,
             'status' => 'late',
             'note' => 'Arrived after class started',
         ]);
