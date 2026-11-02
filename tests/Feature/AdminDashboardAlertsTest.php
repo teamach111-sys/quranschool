@@ -23,6 +23,8 @@ class AdminDashboardAlertsTest extends TestCase
             $table->id();
             $table->unsignedBigInteger('school_id');
             $table->string('year_label');
+            $table->date('start_date');
+            $table->date('end_date');
         });
 
         Schema::create('roles', function (Blueprint $table) {
@@ -69,6 +71,7 @@ class AdminDashboardAlertsTest extends TestCase
             $table->id();
             $table->unsignedBigInteger('student_id');
             $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('room_id')->nullable();
             $table->unsignedBigInteger('year_id');
             $table->date('attendance_date');
             $table->string('status');
@@ -129,6 +132,80 @@ class AdminDashboardAlertsTest extends TestCase
             ->assertJsonPath('alerts.inactive_users_with_pending_items.0.future_schedules', 2);
     }
 
+    public function test_admin_sees_unmarked_schedule_dates_only_after_the_session_ends(): void
+    {
+        $this->seedDashboardData();
+        DB::table('schedules')->delete();
+        DB::table('schedules')->insert([
+            [
+                'id' => 10,
+                'room_id' => 1,
+                'teacher_id' => 20,
+                'school_id' => 1,
+                'year_id' => 1,
+                'day_of_week' => 5,
+                'starts_at' => '16:00:00',
+                'ends_at' => '17:00:00',
+                'valid_from' => '2026-10-02',
+                'valid_until' => null,
+            ],
+            [
+                'id' => 11,
+                'room_id' => 2,
+                'teacher_id' => 21,
+                'school_id' => 1,
+                'year_id' => 1,
+                'day_of_week' => 6,
+                'starts_at' => '10:00:00',
+                'ends_at' => '11:00:00',
+                'valid_from' => '2026-10-10',
+                'valid_until' => null,
+            ],
+            [
+                'id' => 12,
+                'room_id' => 3,
+                'teacher_id' => 20,
+                'school_id' => 1,
+                'year_id' => 1,
+                'day_of_week' => 6,
+                'starts_at' => '13:00:00',
+                'ends_at' => '14:00:00',
+                'valid_from' => '2026-10-10',
+                'valid_until' => null,
+            ],
+            [
+                'id' => 13,
+                'room_id' => 5,
+                'teacher_id' => 30,
+                'school_id' => 2,
+                'year_id' => 2,
+                'day_of_week' => 5,
+                'starts_at' => '16:00:00',
+                'ends_at' => '17:00:00',
+                'valid_from' => '2026-10-02',
+                'valid_until' => null,
+            ],
+        ]);
+        DB::table('attendance')->insert([
+            'student_id' => 1,
+            'school_id' => 1,
+            'room_id' => 1,
+            'year_id' => 1,
+            'attendance_date' => '2026-10-02',
+            'status' => 'present',
+        ]);
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/admin/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(2, 'alerts.missed_attendance')
+            ->assertJsonPath('alerts.missed_attendance.0.room_name', 'Alpha')
+            ->assertJsonPath('alerts.missed_attendance.0.attendance_date', '2026-10-09')
+            ->assertJsonPath('alerts.missed_attendance.1.room_name', 'Beta')
+            ->assertJsonPath('alerts.missed_attendance.1.attendance_date', '2026-10-10');
+    }
+
     public function test_non_admin_cannot_access_dashboard_alerts(): void
     {
         $this->actingAs($this->user(20, 1, 'teacher'));
@@ -147,6 +224,8 @@ class AdminDashboardAlertsTest extends TestCase
             'id' => 2,
             'school_id' => 2,
             'year_label' => '2026-2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-06-30',
         ]);
         $this->actingAs($this->user(10, 1, 'admin'));
 
@@ -160,9 +239,9 @@ class AdminDashboardAlertsTest extends TestCase
             ['id' => 2, 'currency' => 'EUR'],
         ]);
         DB::table('academic_years')->insert([
-            ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027'],
-            ['id' => 2, 'school_id' => 2, 'year_label' => '2026-2027'],
-            ['id' => 3, 'school_id' => 1, 'year_label' => '2025-2026'],
+            ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30'],
+            ['id' => 2, 'school_id' => 2, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30'],
+            ['id' => 3, 'school_id' => 1, 'year_label' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-06-30'],
         ]);
         DB::table('roles')->insert([
             ['id' => 1, 'role_key' => 'admin'],

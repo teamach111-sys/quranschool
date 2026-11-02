@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -23,11 +24,19 @@ class AdminDashboardController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['year_label']);
+            ->first(['year_label', 'start_date', 'end_date']);
 
         abort_unless($year, 404);
 
-        $today = now()->toDateString();
+        $now = now();
+        $today = $now->toDateString();
+        $missedAttendance = $this->missedAttendanceSessions(
+            (int) $schoolId,
+            $yearId,
+            $year->start_date,
+            $year->end_date,
+            $now,
+        );
         $attendanceStatuses = ['present', 'absent', 'late', 'excused'];
         $attendanceTotals = array_fill_keys($attendanceStatuses, 0);
         $attendanceRows = DB::table('attendance')
@@ -219,6 +228,7 @@ class AdminDashboardController extends Controller
             'alerts' => [
                 'late_payments' => $latePayments,
                 'repeated_absences' => $repeatedAbsences,
+                'missed_attendance' => $missedAttendance,
                 'rooms_without_active_teacher' => $roomsWithoutActiveTeacher,
                 'inactive_users_with_pending_items' => $inactiveUsersWithPendingItems,
             ],
@@ -241,5 +251,100 @@ class AdminDashboardController extends Controller
                 'payments' => $payments,
             ],
         ]);
+    }
+
+    /**
+     * @return array<int, array{room_id: int, room_name: string, attendance_date: string, starts_at: string, ends_at: string}>
+     */
+    private function missedAttendanceSessions(
+        int $schoolId,
+        int $yearId,
+        string $yearStart,
+        string $yearEnd,
+        Carbon $now,
+    ): array {
+        $today = $now->toDateString();
+        $lastDate = min($today, $yearEnd);
+
+        if ($yearStart > $lastDate) {
+            return [];
+        }
+
+        $schedules = DB::table('schedules')
+            ->join('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'schedules.room_id')
+                    ->on('rooms.school_id', '=', 'schedules.school_id')
+                    ->on('rooms.year_id', '=', 'schedules.year_id');
+            })
+            ->where('schedules.school_id', $schoolId)
+            ->where('schedules.year_id', $yearId)
+            ->where('schedules.valid_from', '<=', $lastDate)
+            ->where(function ($dates) use ($yearStart) {
+                $dates->whereNull('schedules.valid_until')
+                    ->orWhere('schedules.valid_until', '>=', $yearStart);
+            })
+            ->orderBy('rooms.name')
+            ->orderBy('schedules.starts_at')
+            ->get([
+                'schedules.room_id',
+                'schedules.day_of_week',
+                'schedules.starts_at',
+                'schedules.ends_at',
+                'schedules.valid_from',
+                'schedules.valid_until',
+                'rooms.name as room_name',
+            ]);
+
+        $recordedRoomDates = DB::table('attendance')
+            ->join('students', function ($join) {
+                $join->on('students.id', '=', 'attendance.student_id')
+                    ->on('students.school_id', '=', 'attendance.school_id')
+                    ->on('students.year_id', '=', 'attendance.year_id');
+            })
+            ->where('attendance.school_id', $schoolId)
+            ->where('attendance.year_id', $yearId)
+            ->whereBetween('attendance.attendance_date', [$yearStart, $lastDate])
+            ->selectRaw('DISTINCT COALESCE(attendance.room_id, students.room_id) AS room_id, attendance.attendance_date')
+            ->get()
+            ->mapWithKeys(fn ($row) => [(int) $row->room_id.'|'.$row->attendance_date => true])
+            ->all();
+
+        $missedAttendance = [];
+        $currentTime = $now->format('H:i:s');
+
+        foreach ($schedules as $schedule) {
+            $firstDate = max($yearStart, $schedule->valid_from);
+            $finalDate = min($lastDate, $schedule->valid_until ?? $lastDate);
+            $date = Carbon::parse($firstDate);
+            $scheduleEndDate = Carbon::parse($finalDate);
+
+            while ($date->lte($scheduleEndDate)) {
+                $attendanceDate = $date->toDateString();
+                $sessionHasEnded = $attendanceDate !== $today
+                    || substr($schedule->ends_at, 0, 8) <= $currentTime;
+
+                if ((int) $date->dayOfWeekIso === (int) $schedule->day_of_week && $sessionHasEnded) {
+                    $key = (int) $schedule->room_id.'|'.$attendanceDate;
+
+                    if (! isset($recordedRoomDates[$key]) && ! isset($missedAttendance[$key])) {
+                        $missedAttendance[$key] = [
+                            'room_id' => (int) $schedule->room_id,
+                            'room_name' => $schedule->room_name,
+                            'attendance_date' => $attendanceDate,
+                            'starts_at' => substr($schedule->starts_at, 0, 5),
+                            'ends_at' => substr($schedule->ends_at, 0, 5),
+                        ];
+                    }
+                }
+
+                $date->addDay();
+            }
+        }
+
+        $missedAttendance = array_values($missedAttendance);
+        usort($missedAttendance, fn (array $first, array $second) => strcmp($first['attendance_date'], $second['attendance_date'])
+            ?: strcmp($first['room_name'], $second['room_name']));
+
+        return $missedAttendance;
     }
 }

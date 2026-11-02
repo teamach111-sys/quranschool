@@ -3,6 +3,7 @@ import Icon from '../../../components/Icon';
 import { useLanguage } from '../../../hooks/useLanguage';
 
 const alertCategories = [
+    { key: 'missed_attendance', title: 'missedAttendance', icon: 'fact_check', tone: 'text-error dark:text-error-container' },
     { key: 'late_payments', title: 'latePayments', icon: 'payments', tone: 'text-error dark:text-error-container' },
     { key: 'repeated_absences', title: 'repeatedAbsences', icon: 'event_busy', tone: 'text-error dark:text-error-container' },
     { key: 'rooms_without_active_teacher', title: 'roomsWithoutActiveTeacher', icon: 'door_front', tone: 'text-secondary dark:text-secondary-fixed-dim' },
@@ -10,6 +11,16 @@ const alertCategories = [
 ];
 
 function alertRecordUrl(category, item) {
+    if (category === 'missed_attendance') {
+        if (!item.room_id || !item.attendance_date) return null;
+
+        const query = new URLSearchParams({
+            room_id: String(item.room_id),
+            attendance_date: item.attendance_date,
+        });
+        return `#/presences?${query.toString()}`;
+    }
+
     const target = {
         late_payments: { page: 'paiements-finances', parameter: 'payment_id', id: item.id },
         repeated_absences: { page: 'eleves', parameter: 'student_id', id: item.student_id },
@@ -61,6 +72,19 @@ export default function AdminDashboardAlerts({ alerts }) {
             );
         }
 
+        if (category === 'missed_attendance') {
+            return (
+                <>
+                    <p className="font-medium text-on-surface dark:text-inverse-on-surface">
+                        {item.room_name} · {dateFormat.format(new Date(`${item.attendance_date}T00:00:00Z`))}
+                    </p>
+                    <p className="text-on-surface-variant dark:text-tertiary-fixed-dim">
+                        {item.starts_at}–{item.ends_at}
+                    </p>
+                </>
+            );
+        }
+
         if (category === 'rooms_without_active_teacher') {
             return <p className="font-medium text-on-surface dark:text-inverse-on-surface">{item.room_name}</p>;
         }
@@ -102,7 +126,9 @@ export default function AdminDashboardAlerts({ alerts }) {
                                 <ul className="mt-3 flex flex-col gap-2">
                                     {items.map((item) => {
                                         const href = alertRecordUrl(category.key, item);
-                                        const itemKey = item.id ?? item.student_id ?? item.room_id ?? item.user_id;
+                                        const itemKey = category.key === 'missed_attendance'
+                                            ? `${item.room_id}-${item.attendance_date}`
+                                            : item.id ?? item.student_id ?? item.room_id ?? item.user_id;
 
                                         return (
                                             <li

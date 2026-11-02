@@ -149,6 +149,36 @@ class TeacherDashboardController extends Controller
             ])
             ->values();
 
+        $todayAttendanceRoomIds = $todayLessonRoomIds === []
+            ? []
+            : DB::table('attendance')
+                ->join('students', function (JoinClause $join) {
+                    $join->on('students.id', '=', 'attendance.student_id')
+                        ->on('students.school_id', '=', 'attendance.school_id')
+                        ->on('students.year_id', '=', 'attendance.year_id');
+                })
+                ->where('attendance.school_id', $schoolId)
+                ->where('attendance.year_id', $yearId)
+                ->where('attendance.attendance_date', $today)
+                ->whereIn(DB::raw('COALESCE(attendance.room_id, students.room_id)'), $todayLessonRoomIds)
+                ->distinct()
+                ->get([
+                    DB::raw('COALESCE(attendance.room_id, students.room_id) AS room_id'),
+                ])
+                ->map(fn ($attendance) => (int) $attendance->room_id)
+                ->all();
+        $pendingAttendanceSlots = $todayLessons
+            ->reject(fn (array $lesson) => in_array($lesson['room_id'], $todayAttendanceRoomIds, true))
+            ->map(fn (array $lesson) => [
+                'id' => $lesson['id'],
+                'room_id' => $lesson['room_id'],
+                'room_name' => $lesson['room_name'],
+                'label' => $lesson['label'],
+                'starts_at' => $lesson['starts_at'],
+                'ends_at' => $lesson['ends_at'],
+            ])
+            ->values();
+
         $currentTime = $now->format('H:i');
         $attendanceFocusLesson = $todayLessons->first(
             fn (array $lesson) => $lesson['starts_at'] <= $currentTime && $lesson['ends_at'] > $currentTime,
@@ -320,6 +350,7 @@ class TeacherDashboardController extends Controller
             'attendance_tasks' => [
                 'count' => $pendingAttendanceCount,
                 'students' => $attendanceTasks,
+                'slots' => $pendingAttendanceSlots,
             ],
             'recent_sessions' => $recentSessions,
         ]);

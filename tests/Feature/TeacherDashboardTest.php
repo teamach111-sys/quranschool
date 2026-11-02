@@ -124,10 +124,39 @@ class TeacherDashboardTest extends TestCase
             ->assertJsonPath('upcoming_lessons.2.lesson_date', '2026-11-09')
             ->assertJsonPath('attendance_tasks.count', 2)
             ->assertJsonCount(2, 'attendance_tasks.students')
+            ->assertJsonCount(0, 'attendance_tasks.slots')
             ->assertJsonPath('attendance_tasks.students.0.student_name', 'Bilal Ali')
             ->assertJsonPath('recent_sessions.0.portion_label', 'Al-Baqarah, verses 6-10')
             ->assertJsonPath('recent_sessions.0.student_name', 'Mariam Ali')
             ->assertJsonCount(2, 'recent_sessions');
+    }
+
+    public function test_teacher_sees_unmarked_slots_scheduled_for_today(): void
+    {
+        $this->seedDashboardData();
+        DB::table('schedules')->insert([
+            'id' => 10,
+            'room_id' => 2,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 1,
+            'day_of_week' => 1,
+            'starts_at' => '18:00:00',
+            'ends_at' => '19:00:00',
+            'valid_from' => '2026-11-02',
+            'valid_until' => null,
+            'label' => 'Revision',
+        ]);
+        $this->travelTo('2026-11-02 12:00:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'attendance_tasks.slots')
+            ->assertJsonPath('attendance_tasks.slots.0.id', 10)
+            ->assertJsonPath('attendance_tasks.slots.0.room_id', 2)
+            ->assertJsonPath('attendance_tasks.slots.0.room_name', 'Beta')
+            ->assertJsonPath('attendance_tasks.slots.0.label', 'Revision');
     }
 
     public function test_running_lesson_is_prioritized_over_a_later_slot_for_attendance(): void

@@ -81,6 +81,9 @@ export default function TableauDeBordEnseignant() {
     const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
     const timeFormat = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
     const dayNames = dayKeys.map((day) => t.schedules.days[day]);
+    const pendingAttendanceSlotIds = new Set(
+        dashboard?.attendance_tasks?.slots?.map((slot) => slot.id) ?? [],
+    );
     const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00Z`));
     const refreshDashboard = () => setRefreshCount((current) => current + 1);
 
@@ -235,11 +238,13 @@ export default function TableauDeBordEnseignant() {
                                     <span className="hidden shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container sm:inline-flex">
                                         {lesson.starts_at} – {lesson.ends_at}
                                     </span>
-                                    {lesson.id === dashboard.today_focus_lesson_id && (
+                                    {(lesson.id === dashboard.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id)) && (
                                         <button
-                                            ref={attendanceTriggerRef}
                                             type="button"
-                                            onClick={() => setActiveLesson(lesson)}
+                                            onClick={(event) => {
+                                                attendanceTriggerRef.current = event.currentTarget;
+                                                setActiveLesson(lesson);
+                                            }}
                                             className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-primary-container dark:text-on-primary-container"
                                         >
                                             <Icon name="fact_check" className="text-[18px]" />

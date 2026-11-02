@@ -76,6 +76,7 @@ export const translations = {
             alerts: {
                 title: 'Alertes importantes',
                 empty: 'Aucune alerte.',
+                missedAttendance: 'Appels non effectués',
                 latePayments: 'Paiements en retard',
                 repeatedAbsences: 'Absences répétées',
                 roomsWithoutActiveTeacher: 'Groupes sans enseignant actif',
@@ -953,6 +954,7 @@ export const translations = {
             alerts: {
                 title: 'تنبيهات مهمة',
                 empty: 'لا توجد تنبيهات.',
+                missedAttendance: 'تسجيلات حضور غير مكتملة',
                 latePayments: 'مدفوعات متأخرة',
                 repeatedAbsences: 'غياب متكرر',
                 roomsWithoutActiveTeacher: 'مجموعات بدون معلم نشط',

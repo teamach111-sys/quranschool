@@ -21,7 +21,7 @@ function emptyFilters() {
     };
 }
 
-export default function AttendanceTable() {
+export default function AttendanceTable({ routeParams = {} }) {
     const { isRTL, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [attendance, setAttendance] = useState([]);
@@ -33,7 +33,11 @@ export default function AttendanceTable() {
     const [canCorrect, setCanCorrect] = useState(false);
     const [canMark, setCanMark] = useState(false);
     const [canFollowUp, setCanFollowUp] = useState(false);
-    const [filters, setFilters] = useState(emptyFilters);
+    const [filters, setFilters] = useState(() => ({
+        ...emptyFilters(),
+        room_id: routeParams.room_id ?? '',
+        attendance_date: routeParams.attendance_date ?? '',
+    }));
     const [rosterOpen, setRosterOpen] = useState(false);
     const [entry, setEntry] = useState(null);
     const [bulkNotice, setBulkNotice] = useState(null);
@@ -59,6 +63,19 @@ export default function AttendanceTable() {
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
         return () => window.removeEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
     }, []);
+
+    useEffect(() => {
+        setFilters((current) => {
+            const roomId = routeParams.room_id ?? '';
+            const attendanceDate = routeParams.attendance_date ?? '';
+
+            if (current.room_id === roomId && current.attendance_date === attendanceDate) {
+                return current;
+            }
+
+            return { ...current, room_id: roomId, attendance_date: attendanceDate };
+        });
+    }, [routeParams.attendance_date, routeParams.room_id]);
 
     const loadAttendance = useCallback(async (signal) => {
         setLoading(true);
