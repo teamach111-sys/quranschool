@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Icon from '../components/Icon';
 import Logo from '../components/Logo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -21,12 +21,22 @@ const yearScopedPageKeys = new Set([
     'seances-memorisation',
     'paiements-finances',
 ]);
+const desktopMediaQuery = '(min-width: 1086px)';
 
 export default function Dashboard({ user }) {
     const { theme, toggleTheme } = useTheme();
     const { isRTL, t } = useLanguage();
     const { route, routeParams, navigate } = useHashRoute();
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(() => window.matchMedia(desktopMediaQuery).matches);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia(desktopMediaQuery);
+        const syncLayout = (event) => setIsDesktop(event.matches);
+
+        mediaQuery.addEventListener('change', syncLayout);
+        return () => mediaQuery.removeEventListener('change', syncLayout);
+    }, []);
 
     const activePage = findPage(route);
     const role = user?.role;
@@ -63,7 +73,8 @@ export default function Dashboard({ user }) {
     return (
         <div className={`bg-surface dark:bg-[#182620] ${fontClass} text-on-surface dark:text-[#ecf3ef] antialiased transition-colors duration-200`}>
             {/* ==================== DESKTOP LAYOUT (>1085px) ==================== */}
-            <div className="hidden desktop:block">
+            {isDesktop && (
+            <div className="block">
                 {/* Sidebar */}
                 <aside className={`fixed ${sidebarSide} top-0 bottom-0 w-64 bg-surface-container-low dark:bg-[#202f29] border-outline-variant dark:border-[#2f4239] z-50 flex flex-col justify-between select-none transition-colors duration-200`}>
                     <div className="flex flex-col flex-1 min-h-0">
@@ -142,9 +153,11 @@ export default function Dashboard({ user }) {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* ==================== MOBILE/TABLET LAYOUT (≤1085px) ==================== */}
-            <div className="desktop:hidden flex flex-col min-h-screen bg-surface dark:bg-[#182620]">
+            {!isDesktop && (
+            <div className="flex flex-col min-h-screen bg-surface dark:bg-[#182620]">
                 <header className="sticky top-0 z-40 bg-surface-container-lowest/90 dark:bg-[#202f29]/90 backdrop-blur border-b border-outline-variant dark:border-[#2f4239] select-none transition-colors duration-200">
                     {/* Primary Mobile App Bar */}
                     <div className="h-14 px-[10px] flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] transition-colors duration-200">
@@ -229,6 +242,7 @@ export default function Dashboard({ user }) {
                     </div>
                 </main>
             </div>
+            )}
         </div>
     );
 }
