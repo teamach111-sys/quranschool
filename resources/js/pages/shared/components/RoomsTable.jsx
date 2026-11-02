@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
@@ -14,7 +14,7 @@ import {
 import DesktopTable from '../../../tables/desktoptable';
 import MobileTable from '../../../tables/mobiletable';
 
-export default function RoomsTable() {
+export default function RoomsTable({ routeParams = {} }) {
     const { isRTL, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [rooms, setRooms] = useState([]);
@@ -33,6 +33,8 @@ export default function RoomsTable() {
     const [archiveRoom, setArchiveRoom] = useState(null);
     const [savingArchive, setSavingArchive] = useState(false);
     const [assignmentRoom, setAssignmentRoom] = useState(null);
+    const [focusedAlertRoomId, setFocusedAlertRoomId] = useState('');
+    const openedAlertRoomId = useRef(null);
     const [placementOpen, setPlacementOpen] = useState(false);
     const [placementForm, setPlacementForm] = useState({ student_id: '', room_id: '' });
     const [savingPlacement, setSavingPlacement] = useState(false);
@@ -79,6 +81,22 @@ export default function RoomsTable() {
         loadRooms(controller.signal);
         return () => controller.abort();
     }, [loadRooms]);
+
+    useEffect(() => {
+        const alertRoomId = String(routeParams.room_id ?? '');
+        if (!alertRoomId || loading || openedAlertRoomId.current === alertRoomId) return;
+
+        const room = rooms.find((item) => String(item.id) === alertRoomId);
+        if (!room) return;
+
+        openedAlertRoomId.current = alertRoomId;
+        if (canManage && yearIsActive && room.is_active) {
+            setFocusedAlertRoomId('');
+            setAssignmentRoom(room);
+        } else {
+            setFocusedAlertRoomId(alertRoomId);
+        }
+    }, [canManage, loading, rooms, routeParams.room_id, yearIsActive]);
 
     const runRequest = async (endpoint, method, body, errorMessage) => {
         setError(null);
@@ -166,6 +184,10 @@ export default function RoomsTable() {
     };
 
     const activeRooms = useMemo(() => rooms.filter((room) => room.is_active), [rooms]);
+    const focusedAlertRoom = focusedAlertRoomId
+        ? rooms.find((room) => String(room.id) === focusedAlertRoomId)
+        : null;
+    const displayedRooms = focusedAlertRoom ? [focusedAlertRoom] : rooms;
     const selectedStudent = students.find((student) => String(student.id) === placementForm.student_id);
     const isPlacementTargetFull = activeRooms.some((room) => String(room.id) === placementForm.room_id
         && room.student_count >= room.capacity
@@ -379,6 +401,11 @@ export default function RoomsTable() {
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {error && !archiveRoom && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
+            {focusedAlertRoom && (
+                <p role="status" className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
+                    {t.rooms.alertRecordFocus(focusedAlertRoom.name)}
+                </p>
+            )}
             {isTeacherView ? (
                 rooms.length > 0 ? teacherRooms : (
                     <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
@@ -394,7 +421,7 @@ export default function RoomsTable() {
                             emptyState={t.rooms.empty}
                             isRTL={isRTL}
                             labels={labels}
-                            rows={rooms}
+                            rows={displayedRooms}
                             actions={actions}
                             toolbar={toolbar}
                         />
@@ -406,7 +433,7 @@ export default function RoomsTable() {
                             emptyState={t.rooms.empty}
                             isRTL={isRTL}
                             labels={labels}
-                            rows={rooms}
+                            rows={displayedRooms}
                             actions={actions}
                             toolbar={toolbar}
                         />

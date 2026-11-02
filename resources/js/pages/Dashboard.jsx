@@ -14,7 +14,7 @@ import { findPage, canSeePage, ROLE_DEFAULT_PAGE } from './registry';
 export default function Dashboard({ user }) {
     const { theme, toggleTheme } = useTheme();
     const { isRTL, t } = useLanguage();
-    const { route, navigate } = useHashRoute();
+    const { route, routeParams, navigate } = useHashRoute();
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     const activePage = findPage(route);
@@ -114,7 +114,7 @@ export default function Dashboard({ user }) {
                         <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200" style={{ padding: '10px' }}>
                             <div className="flex flex-col w-full p-[10px] gap-3">
                                 <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-outline-variant dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center select-none'}`}>
-                                    {ActivePageComponent ? <ActivePageComponent /> : (
+                                    {ActivePageComponent ? <ActivePageComponent routeParams={routeParams} /> : (
                                         <div className="flex flex-col items-center justify-center">
                                             <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
                                                 <Icon name="dashboard_customize" className="text-[24px]" />
@@ -202,7 +202,7 @@ export default function Dashboard({ user }) {
                 <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200 p-[10px]">
                     <div className="flex flex-col w-full h-full min-h-[70vh]">
                         <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-[#c0ccc2] dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center text-center select-none'}`}>
-                            {ActivePageComponent ? <ActivePageComponent /> : (
+                            {ActivePageComponent ? <ActivePageComponent routeParams={routeParams} /> : (
                                 <div className="flex flex-col items-center justify-center">
                                     <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
                                         <Icon name="dashboard_customize" className="text-[24px]" />

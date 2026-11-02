@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
-function readRoute() {
-    return window.location.hash.replace(/^#\/?/, '');
+function readRouteState() {
+    const [route = '', query = ''] = window.location.hash.replace(/^#\/?/, '').split('?');
+
+    return {
+        route,
+        params: Object.fromEntries(new URLSearchParams(query)),
+    };
 }
 
 /**
@@ -9,10 +14,10 @@ function readRoute() {
  * Routes look like `/dashboard#/eleves`.
  */
 export default function useHashRoute() {
-    const [route, setRoute] = useState(readRoute);
+    const [routeState, setRouteState] = useState(readRouteState);
 
     useEffect(() => {
-        const onHashChange = () => setRoute(readRoute());
+        const onHashChange = () => setRouteState(readRouteState());
         window.addEventListener('hashchange', onHashChange);
         return () => window.removeEventListener('hashchange', onHashChange);
     }, []);
@@ -21,5 +26,5 @@ export default function useHashRoute() {
         window.location.hash = key ? `/${key}` : '/';
     }, []);
 
-    return { route, navigate };
+    return { route: routeState.route, routeParams: routeState.params, navigate };
 }

@@ -79,6 +79,8 @@ export const translations = {
                 inactiveUsersWithPendingItems: 'Comptes inactifs avec éléments en attente',
                 absenceCount: (count) => `${count} absences cette année`,
                 pendingItems: (assignments, schedules) => `${assignments} affectations actives · ${schedules} cours à venir`,
+                openRecord: 'Ouvrir la fiche concernée',
+                recordUnavailable: 'La fiche concernée est indisponible.',
             },
         },
         teacherDashboard: {
@@ -442,6 +444,7 @@ export const translations = {
         },
         payments: {
             listLabel: 'Liste des paiements',
+            alertRecordFocus: (studentName) => `Fiche liée à l’alerte : ${studentName}`,
             search: 'Rechercher par élève, référence ou mode de paiement',
             loading: 'Chargement des paiements…',
             loadError: 'Impossible de charger les paiements.',
@@ -726,6 +729,7 @@ export const translations = {
         },
         rooms: {
             listLabel: 'Liste des groupes',
+            alertRecordFocus: (roomName) => `Groupe lié à l’alerte : ${roomName}`,
             loading: 'Chargement des groupes…',
             loadError: 'Impossible de charger les groupes.',
             empty: 'Aucun groupe pour cette année scolaire.',
@@ -920,6 +924,8 @@ export const translations = {
                 inactiveUsersWithPendingItems: 'حسابات غير نشطة لديها مهام معلقة',
                 absenceCount: (count) => `${count} حالات غياب خلال هذه السنة`,
                 pendingItems: (assignments, schedules) => `${assignments} تكليفات نشطة · ${schedules} حصص قادمة`,
+                openRecord: 'فتح السجل المعني',
+                recordUnavailable: 'السجل المعني غير متاح.',
             },
         },
         teacherDashboard: {
@@ -1283,6 +1289,7 @@ export const translations = {
         },
         payments: {
             listLabel: 'قائمة المدفوعات',
+            alertRecordFocus: (studentName) => `السجل المرتبط بالتنبيه: ${studentName}`,
             search: 'البحث حسب الطالب أو المرجع أو طريقة الدفع',
             loading: 'جارٍ تحميل المدفوعات…',
             loadError: 'تعذر تحميل المدفوعات.',
@@ -1567,6 +1574,7 @@ export const translations = {
         },
         rooms: {
             listLabel: 'قائمة المجموعات',
+            alertRecordFocus: (roomName) => `المجموعة المرتبطة بالتنبيه: ${roomName}`,
             loading: 'جارٍ تحميل المجموعات…',
             loadError: 'تعذر تحميل المجموعات.',
             empty: 'لا توجد مجموعات في هذه السنة الدراسية.',

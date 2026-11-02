@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../components/Icon';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
@@ -11,7 +11,7 @@ import StudentFormModal from '../shared/components/StudentFormModal';
 import DesktopTable from '../../tables/desktoptable';
 import MobileTable from '../../tables/mobiletable';
 
-export default function Eleves() {
+export default function Eleves({ routeParams = {} }) {
     const { isRTL, t } = useLanguage();
     const [students, setStudents] = useState([]);
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
@@ -24,6 +24,7 @@ export default function Eleves() {
     const [yearIsActive, setYearIsActive] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
+    const openedAlertStudentId = useRef(null);
     const [formReadOnly, setFormReadOnly] = useState(false);
     const [archiveTarget, setArchiveTarget] = useState(null);
     const [archiveError, setArchiveError] = useState(null);
@@ -100,6 +101,16 @@ export default function Eleves() {
         setFormReadOnly(readOnly || !yearIsActive);
         setFormOpen(true);
     }, [yearIsActive]);
+    useEffect(() => {
+        const alertStudentId = String(routeParams.student_id ?? '');
+        if (!alertStudentId || loading || openedAlertStudentId.current === alertStudentId) return;
+
+        const student = students.find((item) => String(item.id) === alertStudentId);
+        if (!student) return;
+
+        openedAlertStudentId.current = alertStudentId;
+        openForm(student, true);
+    }, [loading, openForm, routeParams.student_id, students]);
     const closeForm = useCallback(() => {
         setFormOpen(false);
         setEditingStudent(null);

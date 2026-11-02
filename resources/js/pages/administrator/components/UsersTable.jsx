@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
@@ -8,7 +8,7 @@ import DesktopTable from '../../../tables/desktoptable';
 import MobileTable from '../../../tables/mobiletable';
 import UserFormModal from './UserFormModal';
 
-export default function UsersTable() {
+export default function UsersTable({ routeParams = {} }) {
     const { isRTL, lang, t } = useLanguage();
     const [users, setUsers] = useState([]);
     const [roles, setRoles] = useState([]);
@@ -20,6 +20,7 @@ export default function UsersTable() {
     const [action, setAction] = useState(null);
     const [pendingStatus, setPendingStatus] = useState(null);
     const [formState, setFormState] = useState(null);
+    const openedAlertUserId = useRef(null);
     const [roleForm, setRoleForm] = useState({ role_id: '', reason: '' });
     const [passwordForm, setPasswordForm] = useState({ password: '', password_confirmation: '' });
     const [saving, setSaving] = useState(false);
@@ -50,6 +51,17 @@ export default function UsersTable() {
 
         return () => controller.abort();
     }, [loadUsers]);
+
+    useEffect(() => {
+        const alertUserId = String(routeParams.user_id ?? '');
+        if (!alertUserId || loading || openedAlertUserId.current === alertUserId) return;
+
+        const user = users.find((item) => String(item.id) === alertUserId);
+        if (!user) return;
+
+        openedAlertUserId.current = alertUserId;
+        setFormState({ user });
+    }, [loading, routeParams.user_id, users]);
 
     const filteredUsers = useMemo(() => {
         const normalizedSearch = search.trim().toLocaleLowerCase();

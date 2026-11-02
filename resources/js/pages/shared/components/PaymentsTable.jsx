@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
 import PaymentFormModal from './PaymentFormModal';
 import {
@@ -26,7 +26,7 @@ function displayDate(value, locale, withTime = false) {
         : { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(value));
 }
 
-export default function PaymentsTable() {
+export default function PaymentsTable({ routeParams = {} }) {
     const { isRTL, lang, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [payments, setPayments] = useState([]);
@@ -40,6 +40,8 @@ export default function PaymentsTable() {
     const [isSecretary, setIsSecretary] = useState(false);
     const [copyFeedback, setCopyFeedback] = useState(null);
     const [entry, setEntry] = useState(null);
+    const [focusedAlertPaymentId, setFocusedAlertPaymentId] = useState('');
+    const openedAlertPaymentId = useRef(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
@@ -91,6 +93,21 @@ export default function PaymentsTable() {
         return () => controller.abort();
     }, [loadPayments]);
 
+    useEffect(() => {
+        const alertPaymentId = String(routeParams.payment_id ?? '');
+        if (!alertPaymentId || loading || openedAlertPaymentId.current === alertPaymentId) return;
+
+        const payment = payments.find((item) => String(item.id) === alertPaymentId);
+        if (!payment) return;
+
+        openedAlertPaymentId.current = alertPaymentId;
+        if (canManage) {
+            setEntry({ payment });
+        } else {
+            setFocusedAlertPaymentId(alertPaymentId);
+        }
+    }, [canManage, loading, payments, routeParams.payment_id]);
+
     const filteredPayments = useMemo(() => {
         const query = search.trim().toLocaleLowerCase();
 
@@ -137,6 +154,12 @@ export default function PaymentsTable() {
     const collectionPayments = isSecretary
         ? filteredPayments.filter((payment) => ['due', 'late'].includes(payment.status))
         : filteredPayments;
+    const focusedAlertPayment = focusedAlertPaymentId
+        ? payments.find((payment) => String(payment.id) === focusedAlertPaymentId)
+        : null;
+    const displayedPayments = focusedAlertPayment
+        ? collectionPayments.filter((payment) => String(payment.id) === focusedAlertPaymentId)
+        : collectionPayments;
     const collectionTotals = isSecretary
         ? Object.values(collectionPayments.reduce((totals, payment) => {
             const key = `${payment.currency}:${payment.status}`;
@@ -407,6 +430,11 @@ export default function PaymentsTable() {
                     {t.payments.readOnly}
                 </p>
             )}
+            {focusedAlertPayment && (
+                <p role="status" className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
+                    {t.payments.alertRecordFocus(focusedAlertPayment.student_name)}
+                </p>
+            )}
             <div className="hidden md:block">
                 <DesktopTable
                     ariaLabel={t.payments.listLabel}
@@ -414,7 +442,7 @@ export default function PaymentsTable() {
                     emptyState={isSecretary ? t.payments.noOutstanding : t.payments.empty}
                     isRTL={isRTL}
                     labels={labels}
-                    rows={collectionPayments}
+                    rows={displayedPayments}
                     toolbar={toolbar}
                     actions={actions}
                 />
@@ -426,7 +454,7 @@ export default function PaymentsTable() {
                     emptyState={isSecretary ? t.payments.noOutstanding : t.payments.empty}
                     isRTL={isRTL}
                     labels={labels}
-                    rows={collectionPayments}
+                    rows={displayedPayments}
                     toolbar={toolbar}
                     actions={actions}
                 />
