@@ -364,6 +364,83 @@ class AttendanceTableTest extends TestCase
         ]);
     }
 
+    public function test_unauthenticated_request_cannot_undo_attendance(): void
+    {
+        $this->deleteJson('/attendance/1')->assertUnauthorized();
+    }
+
+    public function test_teacher_can_undo_their_own_attendance_for_today(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->deleteJson('/attendance/1')
+            ->assertOk()
+            ->assertJsonPath('deleted', true);
+
+        $this->assertDatabaseMissing('attendance', [
+            'id' => 1,
+        ]);
+    }
+
+    public function test_teacher_cannot_undo_another_teachers_attendance(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->deleteJson('/attendance/2')->assertForbidden();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 2,
+            'recorded_by' => 21,
+            'status' => 'absent',
+        ]);
+    }
+
+    public function test_teacher_cannot_undo_another_schools_attendance(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->deleteJson('/attendance/4')->assertNotFound();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 4,
+            'school_id' => 2,
+        ]);
+    }
+
+    public function test_teacher_cannot_undo_attendance_after_today(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-11 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->deleteJson('/attendance/1')->assertNotFound();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 1,
+            'status' => 'present',
+        ]);
+    }
+
+    public function test_non_teacher_cannot_undo_attendance(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->deleteJson('/attendance/1')->assertForbidden();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 1,
+            'status' => 'present',
+        ]);
+    }
+
     public function test_secretary_can_change_a_follow_up_note_without_changing_status(): void
     {
         $this->seedAttendance();

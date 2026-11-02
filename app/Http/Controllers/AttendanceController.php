@@ -320,6 +320,54 @@ class AttendanceController extends Controller
         return response()->json($result, $result['created'] ? 201 : 200);
     }
 
+    public function destroy(int $attendanceId): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        abort_unless($user->role === 'teacher', 403);
+
+        $yearId = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('is_current', true)
+            ->where('is_active', true)
+            ->value('id');
+        abort_unless($yearId, 404);
+
+        $attendanceDate = now()->toDateString();
+
+        DB::transaction(function () use ($attendanceId, $attendanceDate, $schoolId, $user, $yearId) {
+            $attendance = DB::table('attendance')
+                ->where('id', $attendanceId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('attendance_date', $attendanceDate)
+                ->lockForUpdate()
+                ->first(['room_id', 'recorded_by']);
+            abort_unless($attendance, 404);
+
+            abort_unless((int) $attendance->recorded_by === (int) $user->id, 403);
+            abort_unless(
+                $attendance->room_id !== null
+                    && $this->teacherOwnsActiveRoom(
+                        (int) $user->id,
+                        (int) $attendance->room_id,
+                        $schoolId,
+                        (int) $yearId,
+                        $attendanceDate,
+                    ),
+                403,
+            );
+
+            DB::table('attendance')
+                ->where('id', $attendanceId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('attendance_date', $attendanceDate)
+                ->delete();
+        });
+
+        return response()->json(['deleted' => true]);
+    }
+
     private function roomsForYear(int $schoolId, int $yearId, string $role, int $userId, stdClass $year): Collection
     {
         return DB::table('rooms')

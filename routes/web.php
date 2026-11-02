@@ -153,6 +153,11 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('attendance.store');
 
+    Route::delete('/attendance/{attendanceId}', [AttendanceController::class, 'destroy'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('attendanceId')
+        ->name('attendance.destroy');
+
     Route::post('/schedules', [SchedulesController::class, 'store'])
         ->middleware('can:access-dashboard')
         ->name('schedules.store');

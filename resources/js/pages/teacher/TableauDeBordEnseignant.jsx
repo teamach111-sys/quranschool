@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Icon from '../../components/Icon';
 import StatCard from '../../components/StatCard';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
+import TodayAttendance from './components/TodayAttendance';
 import {
     ACADEMIC_YEAR_CHANGED_EVENT,
     getSelectedAcademicYearId,
@@ -14,16 +15,23 @@ const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim
 const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export default function TableauDeBordEnseignant() {
-    const { lang, t } = useLanguage();
+    const { isRTL, lang, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [dashboard, setDashboard] = useState(null);
+    const [activeLesson, setActiveLesson] = useState(null);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const [refreshCount, setRefreshCount] = useState(0);
+    const [refreshedAt, setRefreshedAt] = useState(null);
+    const attendanceTriggerRef = useRef(null);
 
     useEffect(() => {
         const syncYear = (event) => {
             const nextId = Number(event?.detail?.id ?? getSelectedAcademicYearId());
             setYearId(Number.isInteger(nextId) && nextId > 0 ? nextId : null);
+            setActiveLesson(null);
+            setDashboard(null);
+            setRefreshedAt(null);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -43,11 +51,11 @@ export default function TableauDeBordEnseignant() {
             .then((data) => {
                 if (!cancelled) {
                     setDashboard(data);
+                    setRefreshedAt(new Date());
                 }
             })
             .catch((error) => {
                 if (!cancelled && error.name !== 'AbortError') {
-                    setDashboard(null);
                     setHasError(true);
                 }
             })
@@ -59,26 +67,116 @@ export default function TableauDeBordEnseignant() {
             cancelled = true;
             controller.abort();
         };
-    }, [yearId]);
+    }, [refreshCount, yearId]);
 
-    const locale = lang === 'ar' ? 'ar-MA' : 'fr-MA';
+    useEffect(() => {
+        if (!activeLesson && attendanceTriggerRef.current) {
+            attendanceTriggerRef.current.focus();
+            attendanceTriggerRef.current = null;
+        }
+    }, [activeLesson]);
+
+    const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
     const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
+    const timeFormat = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
     const dayNames = dayKeys.map((day) => t.schedules.days[day]);
     const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00Z`));
+    const refreshDashboard = () => setRefreshCount((current) => current + 1);
 
-    if (hasError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>;
+    if (activeLesson) {
+        return (
+            <TodayAttendance
+                key={`${activeLesson.id}-${dashboard.today}`}
+                lesson={activeLesson}
+                todayDate={dashboard.today}
+                yearId={dashboard.year_id}
+                onBack={() => {
+                    setActiveLesson(null);
+                    refreshDashboard();
+                }}
+            />
+        );
     }
 
     if (loading && !dashboard) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.teacherDashboard.loading}</p>;
+        return (
+            <div role="status" aria-label={t.teacherDashboard.loading} className="flex w-full flex-col gap-5">
+                <div className="flex min-h-11 items-center justify-between gap-3">
+                    <div className="h-4 w-28 animate-pulse rounded bg-surface-container dark:bg-tertiary-container" />
+                    <div className="h-11 w-36 animate-pulse rounded-lg bg-surface-container dark:bg-tertiary-container" />
+                </div>
+                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {dayKeys.slice(0, 4).map((day) => (
+                        <div key={day} className={`${cardClass} h-24 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                    ))}
+                </div>
+                <div className="flex flex-col gap-3">
+                    <div className="h-6 w-32 animate-pulse rounded bg-surface-container dark:bg-tertiary-container" />
+                    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {dayKeys.slice(0, 3).map((day) => (
+                            <div key={day} className={`${cardClass} h-16 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                        ))}
+                    </div>
+                </div>
+                <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
+                    {dayKeys.slice(0, 2).map((day) => (
+                        <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                    ))}
+                </div>
+                <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
+                    {dayKeys.slice(2, 4).map((day) => (
+                        <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                    ))}
+                </div>
+            </div>
+        );
     }
 
-    if (!dashboard) return null;
+    if (!dashboard) {
+        return (
+            <div className="flex flex-col items-start gap-3">
+                <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>
+                <button
+                    type="button"
+                    onClick={refreshDashboard}
+                    className="min-h-11 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-on-primary-container"
+                >
+                    {t.teacherDashboard.retryDashboard}
+                </button>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex w-full flex-col gap-5">
+        <div dir={isRTL ? 'rtl' : 'ltr'} className="flex w-full flex-col gap-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim" aria-live="polite">
+                    {refreshedAt && t.teacherDashboard.dashboardUpdatedAt(timeFormat.format(refreshedAt))}
+                </p>
+                <button
+                    type="button"
+                    onClick={refreshDashboard}
+                    disabled={loading}
+                    aria-label={loading ? t.teacherDashboard.refreshingDashboard : t.teacherDashboard.refreshDashboard}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-[12px] font-semibold text-primary transition-colors hover:bg-surface-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-60 dark:text-primary-fixed-dim dark:hover:bg-tertiary-container"
+                >
+                    <Icon name="refresh" className={`text-[18px] ${loading ? 'animate-spin' : ''}`} />
+                    {loading ? t.teacherDashboard.refreshingDashboard : t.teacherDashboard.refreshDashboard}
+                </button>
+            </div>
+            {hasError && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-error/40 bg-error-container/40 p-3">
+                    <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>
+                    <button
+                        type="button"
+                        onClick={refreshDashboard}
+                        className="min-h-11 rounded-lg px-3 text-[12px] font-semibold text-primary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-primary dark:text-primary-fixed-dim"
+                    >
+                        {t.teacherDashboard.retryDashboard}
+                    </button>
+                </div>
+            )}
             <section aria-label={t.teacherDashboard.overview} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard label={t.teacherDashboard.groups} value={numberFormat.format(dashboard.groups.length)} icon="groups" />
                 <StatCard label={t.teacherDashboard.todayLessons} value={numberFormat.format(dashboard.today_lessons.length)} icon="event" />
@@ -124,14 +222,30 @@ export default function TableauDeBordEnseignant() {
                     {dashboard.today_lessons.length > 0 ? (
                         <ul className="flex flex-col gap-2">
                             {dashboard.today_lessons.map((lesson) => (
-                                <li key={lesson.id} className={`${cardClass} flex items-center justify-between gap-3`}>
-                                    <div className="min-w-0">
-                                        <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{lesson.label}</p>
-                                        <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>{lesson.room_name}</p>
+                                <li key={lesson.id} className={`${cardClass} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
+                                    <div className="flex min-w-0 items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{lesson.label}</p>
+                                            <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>{lesson.room_name}</p>
+                                        </div>
+                                        <span className="shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container sm:hidden">
+                                            {lesson.starts_at} – {lesson.ends_at}
+                                        </span>
                                     </div>
-                                    <span className="shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container">
+                                    <span className="hidden shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container sm:inline-flex">
                                         {lesson.starts_at} – {lesson.ends_at}
                                     </span>
+                                    {lesson.id === dashboard.today_focus_lesson_id && (
+                                        <button
+                                            ref={attendanceTriggerRef}
+                                            type="button"
+                                            onClick={() => setActiveLesson(lesson)}
+                                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-primary-container dark:text-on-primary-container"
+                                        >
+                                            <Icon name="fact_check" className="text-[18px]" />
+                                            {t.teacherDashboard.startTodayAttendance}
+                                        </button>
+                                    )}
                                 </li>
                             ))}
                         </ul>

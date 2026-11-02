@@ -68,9 +68,12 @@ class TeacherDashboardTest extends TestCase
             $table->id();
             $table->unsignedBigInteger('student_id');
             $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('room_id')->nullable();
             $table->unsignedBigInteger('year_id');
+            $table->unsignedBigInteger('recorded_by')->nullable();
             $table->date('attendance_date');
             $table->string('status');
+            $table->string('note', 500)->nullable();
         });
 
         Schema::create('memorization_sessions', function (Blueprint $table) {
@@ -105,6 +108,14 @@ class TeacherDashboardTest extends TestCase
             ->assertJsonCount(1, 'today_lessons')
             ->assertJsonPath('today_lessons.0.room_name', 'Alpha')
             ->assertJsonPath('today_lessons.0.starts_at', '16:00')
+            ->assertJsonPath('today_focus_lesson_id', 1)
+            ->assertJsonCount(2, 'today_lessons.0.students')
+            ->assertJsonPath('today_lessons.0.students.0.student_name', 'Bilal Ali')
+            ->assertJsonPath('today_lessons.0.students.0.status', null)
+            ->assertJsonPath('today_lessons.0.students.0.can_edit', true)
+            ->assertJsonPath('today_lessons.0.students.1.student_name', 'Mariam Ali')
+            ->assertJsonPath('today_lessons.0.students.1.status', 'present')
+            ->assertJsonPath('today_lessons.0.students.1.can_edit', true)
             ->assertJsonCount(3, 'upcoming_lessons')
             ->assertJsonPath('upcoming_lessons.0.lesson_date', '2026-11-03')
             ->assertJsonPath('upcoming_lessons.0.room_name', 'Alpha')
@@ -117,6 +128,55 @@ class TeacherDashboardTest extends TestCase
             ->assertJsonPath('recent_sessions.0.portion_label', 'Al-Baqarah, verses 6-10')
             ->assertJsonPath('recent_sessions.0.student_name', 'Mariam Ali')
             ->assertJsonCount(2, 'recent_sessions');
+    }
+
+    public function test_running_lesson_is_prioritized_over_a_later_slot_for_attendance(): void
+    {
+        $this->seedDashboardData();
+        DB::table('schedules')->insert([
+            'id' => 10,
+            'room_id' => 2,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 1,
+            'day_of_week' => 1,
+            'starts_at' => '17:00:00',
+            'ends_at' => '18:00:00',
+            'valid_from' => '2026-09-01',
+            'valid_until' => null,
+            'label' => 'Revision',
+        ]);
+        $this->travelTo('2026-11-02 16:30:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(2, 'today_lessons')
+            ->assertJsonPath('today_focus_lesson_id', 1);
+    }
+
+    public function test_dashboard_uses_an_unmarked_lesson_after_all_slots_have_ended(): void
+    {
+        $this->seedDashboardData();
+        $this->travelTo('2026-11-02 18:00:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('today_focus_lesson_id', 1);
+    }
+
+    public function test_dashboard_marks_another_teachers_attendance_as_read_only(): void
+    {
+        $this->seedDashboardData();
+        DB::table('attendance')->where('id', 1)->update(['recorded_by' => 21]);
+        $this->travelTo('2026-11-02 12:00:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('today_lessons.0.students.1.status', 'present')
+            ->assertJsonPath('today_lessons.0.students.1.can_edit', false);
     }
 
     public function test_teacher_dashboard_requires_authentication(): void
@@ -199,7 +259,7 @@ class TeacherDashboardTest extends TestCase
             ['id' => 9, 'room_id' => 1, 'teacher_id' => 20, 'school_id' => 1, 'year_id' => 1, 'day_of_week' => 1, 'starts_at' => '15:00:00', 'ends_at' => '16:00:00', 'valid_from' => '2026-09-01', 'valid_until' => '2026-11-01', 'label' => 'Expired today'],
         ]);
         DB::table('attendance')->insert([
-            ['id' => 1, 'student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-11-02', 'status' => 'present'],
+            ['id' => 1, 'student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'recorded_by' => 20, 'attendance_date' => '2026-11-02', 'status' => 'present', 'note' => null],
         ]);
         DB::table('memorization_sessions')->insert([
             ['id' => 1, 'student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'teacher_id' => 20, 'year_id' => 1, 'session_date' => '2026-11-01', 'portion_label' => 'Al-Baqarah, verses 6-10', 'evaluation' => 'excellent', 'created_at' => '2026-11-01 10:00:00'],

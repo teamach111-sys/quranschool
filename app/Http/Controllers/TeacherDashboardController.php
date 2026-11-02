@@ -98,6 +98,68 @@ class TeacherDashboardController extends Controller
                 ->map(fn ($lesson) => $this->formatLesson($lesson))
                 ->values();
 
+        $todayLessonRoomIds = $todayLessons->pluck('room_id')->unique()->all();
+        $todayLessonStudents = $todayLessonRoomIds === []
+            ? collect()
+            : DB::table('students')
+                ->leftJoin('attendance', function (JoinClause $join) use ($schoolId, $yearId, $today) {
+                    $join->on('attendance.student_id', '=', 'students.id')
+                        ->where('attendance.school_id', $schoolId)
+                        ->where('attendance.year_id', $yearId)
+                        ->where('attendance.attendance_date', $today);
+                })
+                ->where('students.school_id', $schoolId)
+                ->where('students.year_id', $yearId)
+                ->whereIn('students.room_id', $todayLessonRoomIds)
+                ->where('students.status', 'active')
+                ->orderBy('students.full_name')
+                ->get([
+                    'students.id as student_id',
+                    'students.full_name as student_name',
+                    'students.student_number',
+                    'students.room_id',
+                    'attendance.id as attendance_id',
+                    'attendance.room_id as attendance_room_id',
+                    'attendance.status as attendance_status',
+                    'attendance.note as attendance_note',
+                    'attendance.recorded_by',
+                ])
+                ->map(fn ($student) => [
+                    'student_id' => (int) $student->student_id,
+                    'student_name' => $student->student_name,
+                    'student_number' => $student->student_number,
+                    'status' => $student->attendance_status,
+                    'note' => $student->attendance_note,
+                    'attendance_id' => $student->attendance_id === null
+                        ? null
+                        : (int) $student->attendance_id,
+                    'can_edit' => $student->attendance_id === null
+                        || (
+                            (int) $student->recorded_by === $teacherId
+                            && (int) $student->attendance_room_id === (int) $student->room_id
+                        ),
+                    'room_id' => (int) $student->room_id,
+                ])
+                ->groupBy('room_id');
+
+        $todayLessons = $todayLessons
+            ->map(fn (array $lesson) => [
+                ...$lesson,
+                'students' => $todayLessonStudents->get($lesson['room_id'], collect())->values(),
+            ])
+            ->values();
+
+        $currentTime = $now->format('H:i');
+        $attendanceFocusLesson = $todayLessons->first(
+            fn (array $lesson) => $lesson['starts_at'] <= $currentTime && $lesson['ends_at'] > $currentTime,
+        ) ?? $todayLessons->first(
+            fn (array $lesson) => $lesson['starts_at'] > $currentTime,
+        ) ?? $todayLessons->first(
+            fn (array $lesson) => collect($lesson['students'])->contains(
+                fn (array $student) => $student['status'] === null && $student['can_edit'],
+            ),
+        );
+
         $upcomingStart = $now->copy()->addDay();
         $upcomingEnd = $now->copy()->addDays(7);
         $upcomingDates = [];
@@ -253,6 +315,7 @@ class TeacherDashboardController extends Controller
             'today' => $today,
             'groups' => $rooms,
             'today_lessons' => $todayLessons,
+            'today_focus_lesson_id' => $attendanceFocusLesson['id'] ?? null,
             'upcoming_lessons' => $upcomingLessons,
             'attendance_tasks' => [
                 'count' => $pendingAttendanceCount,
