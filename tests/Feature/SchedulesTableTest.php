@@ -295,6 +295,67 @@ class SchedulesTableTest extends TestCase
         $this->assertDatabaseCount('schedules', 1);
     }
 
+    public function test_schedule_update_rejects_an_overlapping_teacher_slot_without_changing_the_existing_schedule(): void
+    {
+        $this->seedScheduleData();
+        DB::table('schedules')->insert([
+            [
+                'id' => 1,
+                'room_id' => 1,
+                'teacher_id' => 20,
+                'school_id' => 1,
+                'year_id' => 1,
+                'day_of_week' => 1,
+                'starts_at' => '09:00:00',
+                'ends_at' => '10:00:00',
+                'valid_from' => '2026-09-01',
+                'valid_until' => null,
+                'label' => 'Existing',
+            ],
+            [
+                'id' => 2,
+                'room_id' => 2,
+                'teacher_id' => 21,
+                'school_id' => 1,
+                'year_id' => 1,
+                'day_of_week' => 1,
+                'starts_at' => '11:00:00',
+                'ends_at' => '12:00:00',
+                'valid_from' => '2026-09-01',
+                'valid_until' => null,
+                'label' => 'Editable',
+            ],
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/schedules/2', [
+            'year_id' => 1,
+            'room_id' => 2,
+            'teacher_id' => 20,
+            'day_of_week' => 1,
+            'starts_at' => '09:30',
+            'ends_at' => '10:30',
+            'valid_from' => '2026-09-01',
+            'valid_until' => null,
+            'label' => 'Conflicting update',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('schedule');
+
+        $this->assertDatabaseHas('schedules', [
+            'id' => 2,
+            'room_id' => 2,
+            'teacher_id' => 21,
+            'starts_at' => '11:00:00',
+            'ends_at' => '12:00:00',
+            'label' => 'Editable',
+        ]);
+    }
+
     public function test_schedule_slots_can_reuse_a_room_and_teacher_after_validity_ends(): void
     {
         $this->seedScheduleData();
