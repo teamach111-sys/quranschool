@@ -66,6 +66,42 @@ class StudentsTableTest extends TestCase
             $table->timestamps();
         });
 
+        Schema::create('attendance', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('room_id')->nullable();
+            $table->unsignedBigInteger('year_id');
+            $table->date('attendance_date');
+            $table->string('status');
+        });
+
+        Schema::create('memorization_sessions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('room_id')->nullable();
+            $table->unsignedBigInteger('teacher_id')->nullable();
+            $table->unsignedBigInteger('year_id');
+            $table->date('session_date');
+            $table->unsignedTinyInteger('surah_start')->nullable();
+            $table->unsignedSmallInteger('ayah_start')->nullable();
+            $table->unsignedTinyInteger('surah_end')->nullable();
+            $table->unsignedSmallInteger('ayah_end')->nullable();
+            $table->string('portion_label');
+            $table->string('evaluation');
+        });
+
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id');
+            $table->string('currency', 3);
+            $table->decimal('amount', 10, 2);
+            $table->string('status');
+        });
+
         DB::table('schools')->insert([
             ['id' => 1, 'name_fr' => 'School A', 'name_ar' => 'مدرسة أ'],
             ['id' => 2, 'name_fr' => 'School B', 'name_ar' => 'مدرسة ب'],
@@ -470,9 +506,83 @@ class StudentsTableTest extends TestCase
             ->assertJsonMissingPath('student.student_number')
             ->assertJsonMissingPath('student.status')
             ->assertJsonMissingPath('student.enrollment_date')
-            ->assertJsonMissingPath('student.guardian_phone');
+            ->assertJsonMissingPath('student.guardian_phone')
+            ->assertJsonMissingPath('student.payment_summary')
+            ->assertJsonCount(30, 'student.attendance_last_30_days')
+            ->assertJsonCount(0, 'student.memorization_sessions');
 
         $this->getJson('/students/5?year_id=1')->assertNotFound();
+    }
+
+    public function test_student_profile_returns_year_scoped_attendance_memorization_and_payment_summaries(): void
+    {
+        $this->travelTo('2026-11-02 12:00:00');
+        DB::table('attendance')->insert([
+            ['student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-04', 'status' => 'late'],
+            ['student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-11-02', 'status' => 'present'],
+            ['student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-03', 'status' => 'absent'],
+            ['student_id' => 2, 'school_id' => 1, 'room_id' => 2, 'year_id' => 1, 'attendance_date' => '2026-11-02', 'status' => 'absent'],
+        ]);
+        DB::table('memorization_sessions')->insert([
+            [
+                'id' => 1,
+                'student_id' => 1,
+                'school_id' => 1,
+                'room_id' => 1,
+                'teacher_id' => 20,
+                'year_id' => 1,
+                'session_date' => '2026-10-12',
+                'surah_start' => 1,
+                'ayah_start' => 1,
+                'surah_end' => 1,
+                'ayah_end' => 7,
+                'portion_label' => 'Al-Fatiha',
+                'evaluation' => 'excellent',
+            ],
+            [
+                'id' => 2,
+                'student_id' => 1,
+                'school_id' => 1,
+                'room_id' => 1,
+                'teacher_id' => 20,
+                'year_id' => 2,
+                'session_date' => '2026-10-13',
+                'surah_start' => 2,
+                'ayah_start' => 1,
+                'surah_end' => 2,
+                'ayah_end' => 5,
+                'portion_label' => 'Al-Baqarah',
+                'evaluation' => 'good',
+            ],
+        ]);
+        DB::table('payments')->insert([
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'currency' => 'MAD', 'amount' => 75, 'status' => 'due'],
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'currency' => 'MAD', 'amount' => 50, 'status' => 'late'],
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'currency' => 'MAD', 'amount' => 100, 'status' => 'paid'],
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'currency' => 'MAD', 'amount' => 25, 'status' => 'waived'],
+            ['student_id' => 1, 'school_id' => 2, 'year_id' => 2, 'currency' => 'MAD', 'amount' => 500, 'status' => 'late'],
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/students/1?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(30, 'student.attendance_last_30_days')
+            ->assertJsonPath('student.attendance_last_30_days.0.date', '2026-10-04')
+            ->assertJsonPath('student.attendance_last_30_days.0.status', 'late')
+            ->assertJsonPath('student.attendance_last_30_days.29.status', 'present')
+            ->assertJsonCount(1, 'student.memorization_sessions')
+            ->assertJsonPath('student.memorization_sessions.0.id', 1)
+            ->assertJsonPath('student.payment_summary.0.currency', 'MAD')
+            ->assertJsonPath('student.payment_summary.0.outstanding_amount', '125')
+            ->assertJsonPath('student.payment_summary.0.due_amount', '75')
+            ->assertJsonPath('student.payment_summary.0.late_amount', '50')
+            ->assertJsonPath('student.payment_summary.0.due_count', 1)
+            ->assertJsonPath('student.payment_summary.0.late_count', 1);
     }
 
     public function test_student_options_are_limited_to_active_rooms_in_the_selected_school_and_year(): void

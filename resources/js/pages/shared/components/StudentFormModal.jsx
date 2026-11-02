@@ -4,12 +4,63 @@ import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
+import {
+    getProgressPreview,
+    quranMetadata,
+    surahDisplayName,
+} from '../../../lib/quranProgress';
 
 function today() {
     const date = new Date();
     date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
     return date.toISOString().slice(0, 10);
 }
+
+function formatNumber(value, language) {
+    return new Intl.NumberFormat(language === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-FR').format(Number(value));
+}
+
+function formatProfileDate(value, language) {
+    if (!value) return '—';
+
+    return new Intl.DateTimeFormat(language === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-FR', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    }).format(new Date(`${value}T00:00:00`));
+}
+
+function formatCurrency(value, currency, language) {
+    return new Intl.NumberFormat(language === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(Number(value));
+}
+
+const attendanceStyles = {
+    present: {
+        icon: 'check',
+        className: 'border-primary/30 bg-primary-fixed text-primary dark:bg-primary-container dark:text-on-primary-container',
+    },
+    absent: {
+        icon: 'close',
+        className: 'border-error/30 bg-error-container text-on-error-container dark:bg-[#4a2626]/50 dark:text-[#ffdad6]',
+    },
+    late: {
+        icon: 'schedule',
+        className: 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]',
+    },
+    excused: {
+        icon: 'event_available',
+        className: 'border-outline-variant bg-surface-container text-on-surface-variant dark:border-[#384d43] dark:bg-[#2c3d36] dark:text-[#c2d1c8]',
+    },
+    none: {
+        icon: 'remove',
+        className: 'border-outline-variant bg-surface-container-low text-outline dark:border-[#384d43] dark:bg-[#182620] dark:text-[#9bb2a8]',
+    },
+};
 
 function initialValues(student) {
     return {
@@ -34,7 +85,7 @@ export default function StudentFormModal({
     onClose,
     onSaved,
 }) {
-    const { isRTL, t } = useLanguage();
+    const { isRTL, lang, t } = useLanguage();
     const [form, setForm] = useState(() => initialValues(student));
     const [rooms, setRooms] = useState([]);
     const [detail, setDetail] = useState(null);
@@ -43,6 +94,8 @@ export default function StudentFormModal({
     const [confirmingStatus, setConfirmingStatus] = useState(null);
     const [canEditYear, setCanEditYear] = useState(false);
     const [error, setError] = useState(null);
+    const [retryKey, setRetryKey] = useState(0);
+    const [selectedSurahId, setSelectedSurahId] = useState(null);
     const formId = useId();
     const isEditing = Boolean(student?.id);
 
@@ -56,6 +109,7 @@ export default function StudentFormModal({
         setRooms([]);
         setCanEditYear(false);
         setError(null);
+        setSelectedSurahId(null);
         setLoading(true);
 
         const query = yearId ? `?year_id=${encodeURIComponent(yearId)}` : '';
@@ -83,7 +137,7 @@ export default function StudentFormModal({
             });
 
         return () => controller.abort();
-    }, [open, student, yearId, readOnly, t.students.form.loadError]);
+    }, [open, student, yearId, readOnly, retryKey, t.students.form.loadError]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -139,46 +193,294 @@ export default function StudentFormModal({
     const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:focus:border-primary-fixed-dim dark:focus:bg-[#202f29] dark:focus:ring-primary-fixed-dim';
     const labelClass = 'text-[12px] leading-4 font-semibold text-on-surface dark:text-inverse-on-surface';
 
-    const field = (name, label, value, type = 'text') => (
-        <div key={name} className="flex min-w-0 flex-col gap-1.5">
-            <label htmlFor={`${formId}-${name}`} className={labelClass}>{label}</label>
-            <input
-                id={`${formId}-${name}`}
-                name={name}
-                type={type}
-                value={value ?? ''}
-                disabled
-                className={inputClass}
-            />
-        </div>
-    );
-
     let content;
-    if (error && !detail && readOnly && !student) {
-        content = <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>;
+    if (readOnly && loading && !detail) {
+        content = (
+            <div className="flex flex-col gap-4" aria-busy="true">
+                <span role="status" className="sr-only">{t.students.form.loading}</span>
+                <div className="h-24 animate-pulse rounded-lg bg-surface-container dark:bg-[#2c3d36]" />
+                <div className="h-36 animate-pulse rounded-lg bg-surface-container dark:bg-[#2c3d36]" />
+                <div className="h-48 animate-pulse rounded-lg bg-surface-container dark:bg-[#2c3d36]" />
+            </div>
+        );
+    } else if (readOnly && error && !detail) {
+        content = (
+            <div className="flex flex-col gap-3">
+                <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>
+                <button
+                    type="button"
+                    onClick={() => setRetryKey((current) => current + 1)}
+                    className="min-h-11 self-start rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
+                >
+                    {t.students.profile.retry}
+                </button>
+            </div>
+        );
     } else if (readOnly) {
         const profile = detail ?? student;
         const teachingProfile = Boolean(profile?.is_read_only);
+        const attendanceDays = Array.isArray(profile?.attendance_last_30_days)
+            ? profile.attendance_last_30_days
+            : [];
+        const memorizationSessions = Array.isArray(profile?.memorization_sessions)
+            ? profile.memorization_sessions
+            : [];
+        const progress = getProgressPreview(memorizationSessions);
+        const progressBySurah = new Map(
+            progress.surahProgress.map((surahProgress) => [surahProgress.surah.id, surahProgress]),
+        );
+        const selectedSurah = progressBySurah.get(selectedSurahId) ?? null;
+        const selectedJuz = progress.currentJuz
+            ? (lang === 'ar' ? progress.currentJuz.label_ar : progress.currentJuz.label)
+                .replace(/\d+/g, (number) => formatNumber(number, lang))
+            : null;
+        const guardianPhone = profile?.guardian_phone;
+        const guardianEmail = profile?.guardian_email;
+        const profileField = (label, value) => (
+            <div className="flex min-w-0 flex-col gap-1">
+                <dt className={labelClass}>{label}</dt>
+                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                    {value || '—'}
+                </dd>
+            </div>
+        );
+        const attendanceLabel = (day) => {
+            const date = formatProfileDate(day.date, lang);
+            const status = day.status
+                ? t.students.profile.attendanceStatuses[day.status] ?? day.status
+                : t.students.profile.noAttendance;
+
+            return t.students.profile.attendanceDay(date, status);
+        };
+        const surahStateLabel = (surahProgress) => (
+            surahProgress.isComplete
+                ? t.students.profile.surahStates.complete
+                : surahProgress.coveredAyahs > 0
+                    ? t.students.profile.surahStates.inProgress
+                    : t.students.profile.surahStates.untouched
+        );
+
         content = (
-            <div className="flex flex-col gap-4">
-                {error && <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {field('full_name', t.students.columns.name, profile?.full_name)}
-                    {!teachingProfile && field('student_number', t.students.columns.number, profile?.student_number || '—')}
-                    {field('birth_date', t.students.form.birthDate, profile?.birth_date || '—')}
-                    {field('room_name', t.students.columns.room, profile?.room_name || t.students.unassigned)}
-                    {!teachingProfile && field('enrollment_date', t.students.form.enrollmentDate, profile?.enrollment_date || '—')}
-                    {!teachingProfile && field('status', t.students.columns.status, t.students.statuses[profile?.status] ?? profile?.status)}
-                </div>
-                {!teachingProfile && profile?.guardian_name && field('guardian_name', t.students.form.guardianName, profile.guardian_name)}
-                {!teachingProfile && profile?.guardian_phone && field('guardian_phone', t.students.form.guardianPhone, profile.guardian_phone)}
-                {!teachingProfile && profile?.guardian_email && field('guardian_email', t.students.form.guardianEmail, profile.guardian_email)}
-                <div className="flex flex-col gap-1.5">
-                    <span className={labelClass}>{t.students.form.notes}</span>
-                    <p className="min-h-16 whitespace-pre-wrap rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[13px] leading-5 text-on-surface-variant dark:border-[#384d43] dark:bg-[#182620] dark:text-[#c2d1c8]">
-                        {profile?.notes || '—'}
-                    </p>
-                </div>
+            <div className="flex flex-col gap-5">
+                <section className="rounded-lg border border-outline-variant bg-surface-container-low p-4 dark:border-[#384d43] dark:bg-[#182620]">
+                    <h3 className="mb-3 text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                        {t.students.profile.identity}
+                    </h3>
+                    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {profileField(t.students.columns.name, profile?.full_name)}
+                        {!teachingProfile && profileField(t.students.columns.number, profile?.student_number)}
+                        {profileField(t.students.form.birthDate, profile?.birth_date
+                            ? formatProfileDate(profile.birth_date, lang)
+                            : null)}
+                        {profileField(t.students.columns.room, profile?.room_name || t.students.unassigned)}
+                        {!teachingProfile && profileField(t.students.form.enrollmentDate, profile?.enrollment_date
+                            ? formatProfileDate(profile.enrollment_date, lang)
+                            : null)}
+                        {!teachingProfile && profileField(
+                            t.students.columns.status,
+                            <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold ${
+                                profile?.status === 'active'
+                                    ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#1e4f40]/50 dark:text-[#baeed9]'
+                                    : profile?.status === 'paused'
+                                        ? 'bg-secondary-fixed/60 text-on-secondary-fixed-variant dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]'
+                                        : 'bg-error-container text-on-error-container dark:bg-[#4a2626]/50 dark:text-[#ffdad6]'
+                            }`}>
+                                <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+                                {t.students.statuses[profile?.status] ?? profile?.status}
+                            </span>,
+                        )}
+                    </dl>
+                    {!teachingProfile && (
+                        <dl className="mt-4 grid grid-cols-1 gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:grid-cols-2">
+                            {profileField(t.students.form.guardianName, profile?.guardian_name)}
+                            <div className="flex min-w-0 flex-col gap-1">
+                                <dt className={labelClass}>{t.students.form.guardianPhone}</dt>
+                                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                                    {guardianPhone
+                                        ? <a className="min-h-11 inline-flex items-center text-primary underline-offset-2 hover:underline dark:text-primary-fixed-dim" href={`tel:${guardianPhone.replace(/[^\d+]/g, '')}`}>{guardianPhone}</a>
+                                        : '—'}
+                                </dd>
+                            </div>
+                            <div className="flex min-w-0 flex-col gap-1 sm:col-span-2">
+                                <dt className={labelClass}>{t.students.form.guardianEmail}</dt>
+                                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                                    {guardianEmail
+                                        ? <a className="min-h-11 inline-flex items-center text-primary underline-offset-2 hover:underline dark:text-primary-fixed-dim" href={`mailto:${guardianEmail}`}>{guardianEmail}</a>
+                                        : '—'}
+                                </dd>
+                            </div>
+                        </dl>
+                    )}
+                    <div className="mt-4 border-t border-outline-variant pt-4 dark:border-[#384d43]">
+                        <span className={labelClass}>{t.students.form.notes}</span>
+                        <p className="mt-1 whitespace-pre-wrap text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                            {profile?.notes || '—'}
+                        </p>
+                    </div>
+                </section>
+
+                <section className="flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                    <div>
+                        <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                            {t.students.profile.attendance}
+                        </h3>
+                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                            {t.students.profile.last30Days}
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-10 gap-2" aria-label={t.students.profile.attendance}>
+                        {attendanceDays.map((day) => {
+                            const style = attendanceStyles[day.status] ?? attendanceStyles.none;
+
+                            return (
+                                <span
+                                    key={day.date}
+                                    role="img"
+                                    aria-label={attendanceLabel(day)}
+                                    title={attendanceLabel(day)}
+                                    className={`flex size-6 items-center justify-center rounded-full border ${style.className}`}
+                                >
+                                    <Icon name={style.icon} className="text-[14px]" />
+                                </span>
+                            );
+                        })}
+                    </div>
+                    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c2d1c8]">
+                        {Object.entries(t.students.profile.attendanceStatuses).map(([status, label]) => (
+                            <li key={status} className="inline-flex items-center gap-1.5">
+                                <span className={`flex size-5 items-center justify-center rounded-full border ${attendanceStyles[status].className}`}>
+                                    <Icon name={attendanceStyles[status].icon} className="text-[12px]" />
+                                </span>
+                                {label}
+                            </li>
+                        ))}
+                        <li className="inline-flex items-center gap-1.5">
+                            <span className={`flex size-5 items-center justify-center rounded-full border ${attendanceStyles.none.className}`}>
+                                <Icon name={attendanceStyles.none.icon} className="text-[12px]" />
+                            </span>
+                            {t.students.profile.noAttendance}
+                        </li>
+                    </ul>
+                </section>
+
+                <section className="flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                    <div>
+                        <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                            {t.students.profile.memorization}
+                        </h3>
+                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                            {progress.hasCoverage
+                                ? t.students.profile.progressSummary(
+                                    formatNumber(progress.coveredAyahs, lang),
+                                    formatNumber(progress.totalAyahs, lang),
+                                    formatNumber(progress.percentage, lang),
+                                )
+                                : t.students.profile.noMemorization}
+                            {selectedJuz && ` · ${t.students.profile.currentJuz(selectedJuz)}`}
+                        </p>
+                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                            {t.students.profile.surahCounts(
+                                formatNumber(progress.completeSurahCount, lang),
+                                formatNumber(progress.inProgressSurahs.length, lang),
+                                formatNumber(quranMetadata.surahs.length, lang),
+                            )}
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-6 gap-1 sm:grid-cols-10" role="group" aria-label={t.students.profile.surahMap}>
+                        {progress.surahProgress.map((surahProgress) => {
+                            const { surah } = surahProgress;
+                            const stateLabel = surahStateLabel(surahProgress);
+                            const mapLabel = t.students.profile.surahMapCell(
+                                formatNumber(surah.id, lang),
+                                `${surah.name_fr} — ${surah.name_ar}`,
+                                stateLabel,
+                            );
+                            const cellClass = surahProgress.isComplete
+                                ? 'border-primary/30 bg-primary-container text-on-primary-container dark:bg-[#2e5e4e] dark:text-[#f0fcf3]'
+                                : surahProgress.coveredAyahs > 0
+                                    ? 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]'
+                                    : 'border-outline-variant bg-surface-container-low text-on-surface-variant dark:border-[#384d43] dark:bg-[#182620] dark:text-[#c2d1c8]';
+
+                            return (
+                                <button
+                                    key={surah.id}
+                                    type="button"
+                                    aria-label={mapLabel}
+                                    aria-pressed={selectedSurahId === surah.id}
+                                    title={mapLabel}
+                                    onClick={() => setSelectedSurahId(surah.id)}
+                                    className={`flex min-h-11 min-w-0 items-center justify-center gap-0.5 rounded-md border px-1 text-[11px] font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary ${cellClass} ${selectedSurahId === surah.id ? 'ring-2 ring-primary' : ''}`}
+                                >
+                                    {formatNumber(surah.id, lang)}
+                                    {surahProgress.isComplete && <Icon name="check" className="text-[12px]" />}
+                                    {!surahProgress.isComplete && surahProgress.coveredAyahs > 0 && <Icon name="schedule" className="text-[12px]" />}
+                                    {surahProgress.coveredAyahs === 0 && <Icon name="remove" className="text-[12px]" />}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c2d1c8]">
+                        {[
+                            ['complete', t.students.profile.surahStates.complete],
+                            ['inProgress', t.students.profile.surahStates.inProgress],
+                            ['untouched', t.students.profile.surahStates.untouched],
+                        ].map(([state, label]) => (
+                            <li key={state} className="inline-flex items-center gap-1.5">
+                                <span className={`flex size-5 items-center justify-center rounded-full border ${
+                                    state === 'complete'
+                                        ? 'border-primary/30 bg-primary-container text-on-primary-container dark:bg-[#2e5e4e] dark:text-[#f0fcf3]'
+                                        : state === 'inProgress'
+                                            ? 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]'
+                                            : 'border-outline-variant bg-surface-container-low text-outline dark:border-[#384d43] dark:bg-[#182620] dark:text-[#9bb2a8]'
+                                }`}>
+                                    <Icon
+                                        name={state === 'complete' ? 'check' : state === 'inProgress' ? 'schedule' : 'remove'}
+                                        className="text-[12px]"
+                                    />
+                                </span>
+                                {label}
+                            </li>
+                        ))}
+                    </ul>
+                    {selectedSurah && (
+                        <p role="status" className="rounded-md bg-surface-container-low px-3 py-2 text-[12px] leading-5 text-on-surface-variant dark:bg-[#182620] dark:text-[#c2d1c8]">
+                            {surahDisplayName(selectedSurah.surah, lang)} — {surahStateLabel(selectedSurah)} · {t.students.profile.surahCoverage(
+                                formatNumber(selectedSurah.coveredAyahs, lang),
+                                formatNumber(selectedSurah.surah.ayah_count, lang),
+                            )}
+                        </p>
+                    )}
+                </section>
+
+                {!teachingProfile && (
+                    <section className="flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                        <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                            {t.students.profile.payments}
+                        </h3>
+                        {profile?.payment_summary?.length
+                            ? profile.payment_summary.map((summary) => (
+                                <div key={summary.currency} className="flex flex-col gap-2 rounded-md bg-surface-container-low p-3 dark:bg-[#182620] sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-[12px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                            {t.students.profile.outstanding}
+                                        </p>
+                                        <p className="text-[20px] leading-7 font-semibold text-on-surface dark:text-inverse-on-surface">
+                                            {formatCurrency(summary.outstanding_amount, summary.currency, lang)}
+                                        </p>
+                                    </div>
+                                    <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                                        {t.students.profile.paymentBreakdown(
+                                            formatCurrency(summary.due_amount, summary.currency, lang),
+                                            formatNumber(summary.due_count, lang),
+                                            formatCurrency(summary.late_amount, summary.currency, lang),
+                                            formatNumber(summary.late_count, lang),
+                                        )}
+                                    </p>
+                                </div>
+                            ))
+                            : <p className="text-[13px] text-on-surface-variant dark:text-[#c2d1c8]">{t.students.profile.noPayments}</p>}
+                    </section>
+                )}
             </div>
         );
     } else if (error && !loading) {
@@ -263,7 +565,7 @@ export default function StudentFormModal({
     return (
         <Modal
             open={open}
-            title={title}
+            title={readOnly && detail?.full_name ? detail.full_name : title}
             icon={readOnly ? 'person' : isEditing ? 'edit' : 'person_add'}
             onClose={onClose}
             footer={footer}

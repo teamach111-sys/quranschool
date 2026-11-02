@@ -175,6 +175,7 @@ export function getProgressPreview(sessions, proposedRange = null, excludeSessio
         percentage: Math.round((coveredAyahs / totalAyahs) * 100),
         currentJuz: contiguousAyahs > 0 ? currentJuz : null,
         completeSurahCount: surahProgress.filter((progress) => progress.isComplete).length,
+        surahProgress,
         inProgressSurahs: surahProgress.filter((progress) => (
             progress.coveredAyahs > 0 && !progress.isComplete
         )),

@@ -157,6 +157,58 @@ class StudentsController extends Controller
         ]);
         abort_unless($student, 404);
 
+        $today = now()->startOfDay();
+        $attendanceByDate = DB::table('attendance')
+            ->where('student_id', $studentId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->whereBetween('attendance_date', [
+                $today->copy()->subDays(29)->toDateString(),
+                $today->toDateString(),
+            ])
+            ->get(['attendance_date', 'status'])
+            ->keyBy('attendance_date');
+        $attendanceDays = collect(range(29, 0))
+            ->map(function (int $daysAgo) use ($today, $attendanceByDate): array {
+                $date = $today->copy()->subDays($daysAgo)->toDateString();
+
+                return [
+                    'date' => $date,
+                    'status' => $attendanceByDate->get($date)?->status,
+                ];
+            });
+        $memorizationSessions = DB::table('memorization_sessions')
+            ->where('student_id', $studentId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->orderByDesc('session_date')
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'session_date',
+                'surah_start',
+                'ayah_start',
+                'surah_end',
+                'ayah_end',
+                'portion_label',
+                'evaluation',
+            ])
+            ->map(fn ($session): array => [
+                'id' => (int) $session->id,
+                'session_date' => $session->session_date,
+                'surah_start' => $session->surah_start === null ? null : (int) $session->surah_start,
+                'ayah_start' => $session->ayah_start === null ? null : (int) $session->ayah_start,
+                'surah_end' => $session->surah_end === null ? null : (int) $session->surah_end,
+                'ayah_end' => $session->ayah_end === null ? null : (int) $session->ayah_end,
+                'portion_label' => $session->portion_label,
+                'evaluation' => $session->evaluation,
+            ])
+            ->values();
+        $profileData = [
+            'attendance_last_30_days' => $attendanceDays,
+            'memorization_sessions' => $memorizationSessions,
+        ];
+
         if ($role === 'teacher') {
             return response()->json([
                 'student' => [
@@ -166,11 +218,43 @@ class StudentsController extends Controller
                     'notes' => $student->notes,
                     'room_name' => $student->room_name,
                     'is_read_only' => true,
+                    ...$profileData,
                 ],
             ]);
         }
 
-        return response()->json(['student' => $this->studentPayload($student)]);
+        $profileData['payment_summary'] = DB::table('payments')
+            ->where('student_id', $studentId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->select('currency')
+            ->selectRaw(
+                'SUM(CASE WHEN status IN (?, ?) THEN amount ELSE 0 END) as outstanding_amount',
+                ['due', 'late'],
+            )
+            ->selectRaw('SUM(CASE WHEN status = ? THEN amount ELSE 0 END) as due_amount', ['due'])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN amount ELSE 0 END) as late_amount', ['late'])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as due_count', ['due'])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as late_count', ['late'])
+            ->groupBy('currency')
+            ->orderBy('currency')
+            ->get()
+            ->map(fn ($payment): array => [
+                'currency' => $payment->currency,
+                'outstanding_amount' => (string) $payment->outstanding_amount,
+                'due_amount' => (string) $payment->due_amount,
+                'late_amount' => (string) $payment->late_amount,
+                'due_count' => (int) $payment->due_count,
+                'late_count' => (int) $payment->late_count,
+            ])
+            ->values();
+
+        return response()->json([
+            'student' => [
+                ...$this->studentPayload($student),
+                ...$profileData,
+            ],
+        ]);
     }
 
     public function store(Request $request)
