@@ -35,7 +35,6 @@ export default function MemorizationSessionsTable() {
     const [yearEnd, setYearEnd] = useState('');
     const [todayDate, setTodayDate] = useState('');
     const [filters, setFilters] = useState(emptyFilters);
-    const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
     const [entry, setEntry] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
@@ -45,7 +44,6 @@ export default function MemorizationSessionsTable() {
             const nextYearId = event?.detail?.id ?? getSelectedAcademicYearId();
             setYearId(nextYearId ? Number(nextYearId) : null);
             setFilters(emptyFilters());
-            setAppliedFilters(emptyFilters());
             setEntry(null);
         };
 
@@ -60,7 +58,7 @@ export default function MemorizationSessionsTable() {
         try {
             const query = new URLSearchParams();
             if (yearId) query.set('year_id', String(yearId));
-            Object.entries(appliedFilters).forEach(([key, value]) => {
+            Object.entries(filters).forEach(([key, value]) => {
                 if (value) query.set(key, value);
             });
 
@@ -86,7 +84,7 @@ export default function MemorizationSessionsTable() {
         } finally {
             if (!signal?.aborted) setLoading(false);
         }
-    }, [appliedFilters, yearId]);
+    }, [filters, yearId]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -97,17 +95,6 @@ export default function MemorizationSessionsTable() {
     const handleFilterChange = (event) => {
         const { name, value } = event.target;
         setFilters((current) => ({ ...current, [name]: value }));
-    };
-
-    const handleFilterSubmit = (event) => {
-        event.preventDefault();
-        setAppliedFilters({ ...filters });
-    };
-
-    const clearFilters = () => {
-        const clearedFilters = emptyFilters();
-        setFilters(clearedFilters);
-        setAppliedFilters(clearedFilters);
     };
 
     const openEntry = (session = null) => {
@@ -214,22 +201,22 @@ export default function MemorizationSessionsTable() {
                     </button>
                 </div>
             )}
-            <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="min-w-0">
+            <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
+                <div className="min-w-0 xl:flex-1">
                     <select name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.memorization.filters.room} className={inputClass}>
                         <option value="">{t.memorization.filters.allRooms}</option>
                         {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
                     </select>
                 </div>
                 {canFilterTeacher && (
-                    <div className="min-w-0">
+                    <div className="min-w-0 xl:flex-1">
                         <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} aria-label={t.memorization.filters.teacher} className={inputClass}>
                             <option value="">{t.memorization.filters.allTeachers}</option>
                             {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
                         </select>
                     </div>
                 )}
-                <div className="min-w-0">
+                <div className="min-w-0 xl:flex-1">
                     <select name="student_id" value={filters.student_id} onChange={handleFilterChange} aria-label={t.memorization.filters.student} className={inputClass}>
                         <option value="">{t.memorization.filters.allStudents}</option>
                         {students.map((student) => (
@@ -239,7 +226,7 @@ export default function MemorizationSessionsTable() {
                         ))}
                     </select>
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 xl:flex-1">
                     <input
                         type="date"
                         name="session_date"
@@ -249,22 +236,7 @@ export default function MemorizationSessionsTable() {
                         className={inputClass}
                     />
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                    <button
-                        type="submit"
-                        className="min-h-10 rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary sm:flex-1 lg:flex-none"
-                    >
-                        {t.memorization.filters.apply}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="min-h-10 rounded-lg bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-inverse-surface dark:text-inverse-on-surface dark:hover:bg-tertiary-container sm:flex-1 lg:flex-none"
-                    >
-                        {t.memorization.filters.clear}
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     );
 

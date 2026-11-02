@@ -33,7 +33,6 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [payments, setPayments] = useState([]);
     const [students, setStudents] = useState([]);
     const [filters, setFilters] = useState(emptyFilters);
-    const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
     const [search, setSearch] = useState('');
     const [currency, setCurrency] = useState('MAD');
     const [canManage, setCanManage] = useState(false);
@@ -51,7 +50,6 @@ export default function PaymentsTable({ routeParams = {} }) {
             const nextYearId = event?.detail?.id ?? getSelectedAcademicYearId();
             setYearId(nextYearId ? Number(nextYearId) : null);
             setFilters(emptyFilters());
-            setAppliedFilters(emptyFilters());
             setEntry(null);
         };
 
@@ -64,7 +62,7 @@ export default function PaymentsTable({ routeParams = {} }) {
         setLoadError(false);
         const query = new URLSearchParams();
         if (yearId) query.set('year_id', String(yearId));
-        Object.entries(appliedFilters).forEach(([key, value]) => {
+        Object.entries(filters).forEach(([key, value]) => {
             if (value) query.set(key, value);
         });
 
@@ -86,7 +84,7 @@ export default function PaymentsTable({ routeParams = {} }) {
         } finally {
             if (!signal?.aborted) setLoading(false);
         }
-    }, [appliedFilters, yearId]);
+    }, [filters, yearId]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -126,18 +124,6 @@ export default function PaymentsTable({ routeParams = {} }) {
     const handleFilterChange = (event) => {
         const { name, value } = event.target;
         setFilters((current) => ({ ...current, [name]: value }));
-    };
-
-    const applyFilters = (event) => {
-        event.preventDefault();
-        setAppliedFilters({ ...filters });
-    };
-
-    const clearFilters = () => {
-        const clearedFilters = emptyFilters();
-        setFilters(clearedFilters);
-        setAppliedFilters(clearedFilters);
-        setSearch('');
     };
 
     const handlePaymentSaved = async () => {
@@ -314,7 +300,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             : [];
     const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
     const toolbar = (
-        <form onSubmit={applyFilters} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
             {isSecretary && (
                 <div className="flex flex-col gap-1">
                     <h2 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
@@ -354,17 +340,17 @@ export default function PaymentsTable({ routeParams = {} }) {
                     </button>
                 </div>
             )}
-            <div className="min-w-0">
-                <SearchInput
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    isRTL={isRTL}
-                    placeholder={t.payments.search}
-                    ariaLabel={t.payments.search}
-                />
-            </div>
-            <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="min-w-0">
+            <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
+                <div className="min-w-0 xl:flex-1">
+                    <SearchInput
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        isRTL={isRTL}
+                        placeholder={t.payments.search}
+                        ariaLabel={t.payments.search}
+                    />
+                </div>
+                <div className="min-w-0 xl:flex-1">
                     <select
                         name="student_id"
                         value={filters.student_id}
@@ -380,7 +366,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                         ))}
                     </select>
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 xl:flex-1">
                     <select
                         name="status"
                         value={filters.status}
@@ -396,7 +382,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                         ))}
                     </select>
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 xl:flex-1">
                     <input
                         type="date"
                         name="period_date"
@@ -406,23 +392,8 @@ export default function PaymentsTable({ routeParams = {} }) {
                         className={controlClass}
                     />
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                    <button
-                        type="submit"
-                        className="min-h-11 flex-1 rounded-md bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
-                    >
-                        {t.payments.filters.apply}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="min-h-11 flex-1 rounded-md bg-surface-container px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-inverse-surface dark:text-inverse-on-surface dark:hover:bg-tertiary-container"
-                    >
-                        {t.payments.filters.clear}
-                    </button>
-                </div>
             </div>
-        </form>
+        </div>
     );
 
     if (loadError) {

@@ -273,8 +273,8 @@ export default function UsersTable({ routeParams = {} }) {
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="min-w-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1 sm:max-w-sm">
                 <SearchInput
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -283,7 +283,7 @@ export default function UsersTable({ routeParams = {} }) {
                     ariaLabel={t.users.search}
                 />
             </div>
-            <div className="min-w-0">
+            <div className="flex flex-col gap-2 sm:flex-row">
                 <select
                     value={roleFilter}
                     onChange={(event) => setRoleFilter(event.target.value)}
@@ -293,8 +293,6 @@ export default function UsersTable({ routeParams = {} }) {
                     <option value="">{t.users.allRoles}</option>
                     {roles.map((role) => <option key={role.id} value={role.id}>{roleLabel(role)}</option>)}
                 </select>
-            </div>
-            <div className="min-w-0">
                 <select
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value)}
@@ -305,6 +303,14 @@ export default function UsersTable({ routeParams = {} }) {
                     <option value="active">{t.users.active}</option>
                     <option value="inactive">{t.users.inactive}</option>
                 </select>
+                <button
+                    type="button"
+                    onClick={() => openUserForm()}
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                >
+                    <Icon name="add" className="text-[17px]" />
+                    {t.users.create}
+                </button>
             </div>
         </div>
     );
@@ -324,16 +330,6 @@ export default function UsersTable({ routeParams = {} }) {
 
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
-            <div className="flex justify-end">
-                <button
-                    type="button"
-                    onClick={() => openUserForm()}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
-                >
-                    <Icon name="add" className="text-[17px]" />
-                    {t.users.create}
-                </button>
-            </div>
             <div className="hidden md:block">
                 <DesktopTable
                     ariaLabel={t.users.listLabel}
