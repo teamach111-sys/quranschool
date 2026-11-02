@@ -274,7 +274,7 @@ class TeacherDashboardController extends Controller
             ->where('students.year_id', $yearId)
             ->where('students.status', 'active')
             ->where('rooms.is_active', true)
-            ->whereIn('students.room_id', $roomIds)
+            ->whereIn('students.room_id', $todayLessonRoomIds)
             ->whereNotExists(function (Builder $attendance) use ($schoolId, $yearId, $today) {
                 $attendance->selectRaw('1')
                     ->from('attendance')

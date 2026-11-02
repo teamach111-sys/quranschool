@@ -123,8 +123,8 @@ class TeacherDashboardTest extends TestCase
             ->assertJsonPath('upcoming_lessons.1.lesson_date', '2026-11-05')
             ->assertJsonPath('upcoming_lessons.1.label', 'Hifz')
             ->assertJsonPath('upcoming_lessons.2.lesson_date', '2026-11-09')
-            ->assertJsonPath('attendance_tasks.count', 2)
-            ->assertJsonCount(2, 'attendance_tasks.students')
+            ->assertJsonPath('attendance_tasks.count', 1)
+            ->assertJsonCount(1, 'attendance_tasks.students')
             ->assertJsonCount(0, 'attendance_tasks.slots')
             ->assertJsonPath('attendance_tasks.students.0.student_name', 'Bilal Ali')
             ->assertJsonPath('recent_sessions.0.portion_label', 'Al-Baqarah, verses 6-10')
@@ -158,6 +158,58 @@ class TeacherDashboardTest extends TestCase
             ->assertJsonPath('attendance_tasks.slots.0.room_id', 2)
             ->assertJsonPath('attendance_tasks.slots.0.room_name', 'Beta')
             ->assertJsonPath('attendance_tasks.slots.0.label', 'Revision');
+    }
+
+    public function test_new_wednesday_schedule_appears_with_its_students_in_attendance_on_that_wednesday(): void
+    {
+        $this->seedDashboardData();
+        DB::table('schedules')->insert([
+            'id' => 10,
+            'room_id' => 2,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 1,
+            'day_of_week' => 3,
+            'starts_at' => '16:00:00',
+            'ends_at' => '17:00:00',
+            'valid_from' => '2026-11-04',
+            'valid_until' => null,
+            'label' => 'Wednesday Revision',
+        ]);
+        $this->travelTo('2026-11-04 12:00:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('today', '2026-11-04')
+            ->assertJsonCount(1, 'today_lessons')
+            ->assertJsonPath('today_lessons.0.id', 10)
+            ->assertJsonPath('today_lessons.0.room_id', 2)
+            ->assertJsonPath('today_lessons.0.label', 'Wednesday Revision')
+            ->assertJsonPath('today_focus_lesson_id', 10)
+            ->assertJsonCount(1, 'today_lessons.0.students')
+            ->assertJsonPath('today_lessons.0.students.0.student_name', 'Zayd Ali')
+            ->assertJsonPath('today_lessons.0.students.0.status', null)
+            ->assertJsonPath('attendance_tasks.count', 1)
+            ->assertJsonPath('attendance_tasks.students.0.student_name', 'Zayd Ali')
+            ->assertJsonCount(1, 'attendance_tasks.slots')
+            ->assertJsonPath('attendance_tasks.slots.0.id', 10);
+
+        $this->assertDatabaseCount('attendance', 1);
+    }
+
+    public function test_teacher_has_no_pending_attendance_tasks_when_no_session_is_scheduled_today(): void
+    {
+        $this->seedDashboardData();
+        $this->travelTo('2026-11-06 12:00:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(0, 'today_lessons')
+            ->assertJsonPath('attendance_tasks.count', 0)
+            ->assertJsonCount(0, 'attendance_tasks.students')
+            ->assertJsonCount(0, 'attendance_tasks.slots');
     }
 
     public function test_running_lesson_is_prioritized_over_a_later_slot_for_attendance(): void
