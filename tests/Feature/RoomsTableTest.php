@@ -96,7 +96,7 @@ class RoomsTableTest extends TestCase
             ->assertJsonPath('can_manage', true)
             ->assertJsonCount(2, 'rooms')
             ->assertJsonPath('rooms.0.name', 'Alpha')
-            ->assertJsonPath('rooms.0.student_count', 1)
+            ->assertJsonPath('rooms.0.student_count', 2)
             ->assertJsonPath('rooms.0.assigned_teachers.0.name', 'Teacher One')
             ->assertJsonPath('rooms.1.student_count', 1)
             ->assertJsonCount(2, 'teachers');
@@ -115,7 +115,7 @@ class RoomsTableTest extends TestCase
             ->assertOk()
             ->assertJsonPath('can_manage', false)
             ->assertJsonPath('can_place', true)
-            ->assertJsonCount(3, 'students')
+            ->assertJsonCount(4, 'students')
             ->assertJsonMissingPath('teachers')
             ->assertJsonMissingPath('assignments');
 
@@ -132,7 +132,13 @@ class RoomsTableTest extends TestCase
             ->assertJsonCount(1, 'rooms')
             ->assertJsonPath('rooms.0.name', 'Alpha')
             ->assertJsonPath('rooms.0.assigned_teachers.0.assigned_from', '2020-01-01')
-            ->assertJsonMissingPath('students')
+            ->assertJsonPath('rooms.0.student_count', 2)
+            ->assertJsonCount(2, 'students')
+            ->assertJsonPath('students.0.full_name', 'Paused Student')
+            ->assertJsonPath('students.0.status', 'paused')
+            ->assertJsonPath('students.1.full_name', 'Student One')
+            ->assertJsonMissing(['full_name' => 'Student Two'])
+            ->assertJsonMissing(['full_name' => 'Student Three'])
             ->assertJsonMissingPath('teachers')
             ->assertJsonMissingPath('assignments');
     }
@@ -335,7 +341,7 @@ class RoomsTableTest extends TestCase
             'is_active' => true,
         ]);
         DB::table('students')->insert([
-            'id' => 5,
+            'id' => 6,
             'school_id' => 1,
             'year_id' => 3,
             'room_id' => 4,
@@ -354,11 +360,11 @@ class RoomsTableTest extends TestCase
 
         $this->assertDatabaseHas('rooms', ['id' => 4, 'is_active' => true]);
 
-        $this->patchJson('/students/5/room', ['year_id' => 3, 'room_id' => null])
+        $this->patchJson('/students/6/room', ['year_id' => 3, 'room_id' => null])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('year_id');
 
-        $this->assertDatabaseHas('students', ['id' => 5, 'room_id' => 4]);
+        $this->assertDatabaseHas('students', ['id' => 6, 'room_id' => 4]);
     }
 
     public function test_admin_assignment_requires_active_teacher_and_rejects_overlapping_ranges(): void
@@ -590,6 +596,7 @@ class RoomsTableTest extends TestCase
             ['id' => 2, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-101', 'full_name' => 'Student Two', 'status' => 'withdrawn'],
             ['id' => 3, 'school_id' => 1, 'year_id' => 1, 'room_id' => null, 'student_number' => 'S-102', 'full_name' => 'Unassigned Student', 'status' => 'paused'],
             ['id' => 4, 'school_id' => 1, 'year_id' => 1, 'room_id' => 2, 'student_number' => 'S-103', 'full_name' => 'Student Three', 'status' => 'active'],
+            ['id' => 5, 'school_id' => 1, 'year_id' => 1, 'room_id' => 1, 'student_number' => 'S-104', 'full_name' => 'Paused Student', 'status' => 'paused'],
         ]);
         DB::table('room_teachers')->insert([
             ['room_id' => 1, 'teacher_id' => 20, 'school_id' => 1, 'year_id' => 1, 'assigned_from' => '2020-01-01', 'assigned_until' => null],

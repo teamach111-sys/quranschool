@@ -136,6 +136,24 @@ class RoomsController extends Controller
             'is_teacher_view' => $role === 'teacher',
         ];
 
+        if ($role === 'teacher') {
+            $response['students'] = DB::table('students')
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->whereIn('room_id', $roomIds ?: [0])
+                ->whereIn('status', ['active', 'paused'])
+                ->orderBy('full_name')
+                ->get(['id', 'full_name', 'student_number', 'room_id', 'status'])
+                ->map(fn ($student) => [
+                    'id' => (int) $student->id,
+                    'full_name' => $student->full_name,
+                    'student_number' => $student->student_number,
+                    'room_id' => (int) $student->room_id,
+                    'status' => $student->status,
+                ])
+                ->values();
+        }
+
         if ($role === 'admin') {
             $response['assignments'] = DB::table('room_teachers')
                 ->join('rooms', function ($join) {

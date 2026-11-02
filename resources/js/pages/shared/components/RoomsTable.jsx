@@ -23,6 +23,7 @@ export default function RoomsTable() {
     const [teachers, setTeachers] = useState([]);
     const [canManage, setCanManage] = useState(false);
     const [canPlace, setCanPlace] = useState(false);
+    const [isTeacherView, setIsTeacherView] = useState(false);
     const [yearIsActive, setYearIsActive] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
@@ -64,6 +65,7 @@ export default function RoomsTable() {
             setTeachers(Array.isArray(data.teachers) ? data.teachers : []);
             setCanManage(Boolean(data.can_manage));
             setCanPlace(Boolean(data.can_place));
+            setIsTeacherView(Boolean(data.is_teacher_view));
             setYearIsActive(Boolean(data.year_is_active));
         } catch (requestError) {
             if (requestError.name !== 'AbortError') setLoadError(true);
@@ -272,6 +274,61 @@ export default function RoomsTable() {
         range: (first, last, total) => t.rooms.table.range(first, last, total),
     };
     const controlClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
+    const teacherRooms = (
+        <ul aria-label={t.rooms.listLabel} className="grid w-full grid-cols-1 gap-3 xl:grid-cols-2">
+            {rooms.map((room) => {
+                const roomStudents = students.filter((student) => student.room_id === room.id);
+
+                return (
+                    <li key={room.id} className="flex min-w-0 flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-tertiary-container dark:bg-inverse-surface">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                                <Icon name="groups" className="shrink-0 text-[20px] text-primary dark:text-primary-fixed-dim" />
+                                <h2 className="truncate text-[15px] leading-5 font-semibold text-on-surface dark:text-inverse-on-surface">{room.name}</h2>
+                            </div>
+                            <span className="text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                                {t.rooms.studentListCount(roomStudents.length)}
+                            </span>
+                        </div>
+                        {roomStudents.length > 0 ? (
+                            <ul className="flex flex-col gap-2 border-t border-outline-variant pt-3 dark:border-tertiary-container">
+                                {roomStudents.map((student) => (
+                                    <li key={student.id} className="flex min-w-0 items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-[13px] leading-5 font-medium text-on-surface dark:text-inverse-on-surface">{student.full_name}</p>
+                                            {student.student_number && (
+                                                <p className="text-[11px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim">{student.student_number}</p>
+                                            )}
+                                        </div>
+                                        <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] leading-4 font-semibold ${student.status === 'active'
+                                            ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container'
+                                            : 'bg-surface-container text-on-surface-variant dark:bg-tertiary-container dark:text-on-tertiary-container'}`}
+                                        >
+                                            {t.students.statuses[student.status]}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="border-t border-outline-variant pt-3 text-[12px] leading-5 text-on-surface-variant dark:border-tertiary-container dark:text-tertiary-fixed-dim">
+                                {t.rooms.noAssignedStudents}
+                            </p>
+                        )}
+                        <div className="flex flex-wrap gap-2 border-t border-outline-variant pt-3 dark:border-tertiary-container">
+                            <a href="#/presences" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary-container px-3 py-2 text-[12px] leading-4 font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary">
+                                <Icon name="fact_check" className="text-[16px]" />
+                                {t.rooms.takeAttendance}
+                            </a>
+                            <a href="#/seances-memorisation" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] leading-4 font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface">
+                                <Icon name="menu_book" className="text-[16px]" />
+                                {t.rooms.enterMemorizationSession}
+                            </a>
+                        </div>
+                    </li>
+                );
+            })}
+        </ul>
+    );
 
     if (loadError) {
         return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.rooms.loadError}</p>;
@@ -322,30 +379,40 @@ export default function RoomsTable() {
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {error && !archiveRoom && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
-            <div className="hidden md:block">
-                <DesktopTable
-                    ariaLabel={t.rooms.listLabel}
-                    columns={columns}
-                    emptyState={t.rooms.empty}
-                    isRTL={isRTL}
-                    labels={labels}
-                    rows={rooms}
-                    actions={actions}
-                    toolbar={toolbar}
-                />
-            </div>
-            <div className="md:hidden">
-                <MobileTable
-                    ariaLabel={t.rooms.listLabel}
-                    columns={columns}
-                    emptyState={t.rooms.empty}
-                    isRTL={isRTL}
-                    labels={labels}
-                    rows={rooms}
-                    actions={actions}
-                    toolbar={toolbar}
-                />
-            </div>
+            {isTeacherView ? (
+                rooms.length > 0 ? teacherRooms : (
+                    <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
+                        {t.rooms.empty}
+                    </p>
+                )
+            ) : (
+                <>
+                    <div className="hidden md:block">
+                        <DesktopTable
+                            ariaLabel={t.rooms.listLabel}
+                            columns={columns}
+                            emptyState={t.rooms.empty}
+                            isRTL={isRTL}
+                            labels={labels}
+                            rows={rooms}
+                            actions={actions}
+                            toolbar={toolbar}
+                        />
+                    </div>
+                    <div className="md:hidden">
+                        <MobileTable
+                            ariaLabel={t.rooms.listLabel}
+                            columns={columns}
+                            emptyState={t.rooms.empty}
+                            isRTL={isRTL}
+                            labels={labels}
+                            rows={rooms}
+                            actions={actions}
+                            toolbar={toolbar}
+                        />
+                    </div>
+                </>
+            )}
             {canManage && (
                 <RoomTeacherAssignmentTable
                     assignments={assignments}
