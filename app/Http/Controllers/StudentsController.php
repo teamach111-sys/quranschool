@@ -70,8 +70,8 @@ class StudentsController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['is_active', 'is_current']);
-        $yearIsWritable = (bool) $year?->is_active && (bool) $year?->is_current;
+            ->first(['is_active']);
+        $yearIsWritable = (bool) $year?->is_active;
 
         return response()->json([
             'year_id' => $yearId,
@@ -90,11 +90,11 @@ class StudentsController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['is_active', 'is_current']);
+            ->first(['is_active']);
 
         return response()->json([
             'year_id' => $yearId,
-            'is_editable' => (bool) $year?->is_active && (bool) $year?->is_current,
+            'is_editable' => (bool) $year?->is_active,
             'rooms' => DB::table('rooms')
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
@@ -387,9 +387,9 @@ class StudentsController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['is_active', 'is_current']);
+            ->first(['is_active']);
 
-        if (! $year || ! $year->is_active || ! $year->is_current) {
+        if (! $year || ! $year->is_active) {
             throw ValidationException::withMessages([
                 'year_id' => 'Students in a read-only academic year cannot be changed.',
             ]);

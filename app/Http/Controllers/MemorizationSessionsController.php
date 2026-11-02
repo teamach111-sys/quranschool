@@ -120,7 +120,6 @@ class MemorizationSessionsController extends Controller
                 'evaluation' => $session->evaluation,
                 'notes' => $session->notes,
                 'can_edit' => (bool) $year->is_active
-                    && (bool) $year->is_current
                     && ($user->role === 'admin' || (int) $session->teacher_id === (int) $user->id),
             ])
             ->values();
@@ -141,7 +140,6 @@ class MemorizationSessionsController extends Controller
             'can_filter_teacher' => $user->role !== 'teacher',
             'can_manage' => $user->role === 'admin',
             'can_create' => (bool) $year->is_active
-                && (bool) $year->is_current
                 && in_array($user->role, ['admin', 'teacher'], true),
             'form_options' => $this->formOptionsForYear($schoolId, $yearId, $user->role, (int) $user->id, $year),
         ]);
@@ -675,10 +673,10 @@ class MemorizationSessionsController extends Controller
         $year = DB::table('academic_years')
             ->where('id', $yearId)
             ->where('school_id', $schoolId)
-            ->first(['id', 'start_date', 'end_date', 'is_active', 'is_current']);
+            ->first(['id', 'start_date', 'end_date', 'is_active']);
         abort_unless($year, 404);
 
-        if (! $year->is_active || ! $year->is_current) {
+        if (! $year->is_active) {
             throw ValidationException::withMessages([
                 'year_id' => 'Memorization sessions in a closed academic year cannot be changed.',
             ]);
@@ -703,7 +701,10 @@ class MemorizationSessionsController extends Controller
         }
 
         if ($role !== 'admin') {
-            $query->where('is_current', true)->where('is_active', true);
+            $query->where('is_active', true);
+            if ($yearId === null) {
+                $query->where('is_current', true);
+            }
         }
 
         $year = $query->orderByDesc('start_date')->first([

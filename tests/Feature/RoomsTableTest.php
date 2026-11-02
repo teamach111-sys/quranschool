@@ -319,7 +319,7 @@ class RoomsTableTest extends TestCase
         ])->assertNotFound();
     }
 
-    public function test_room_and_student_placement_cannot_change_in_nonwritable_years(): void
+    public function test_room_and_student_placement_can_change_in_open_noncurrent_year_but_not_closed_year(): void
     {
         $this->seedRooms();
         DB::table('academic_years')->insert([
@@ -357,20 +357,17 @@ class RoomsTableTest extends TestCase
         $this->getJson('/rooms/table?year_id=3')
             ->assertOk()
             ->assertJsonPath('year_is_active', true)
-            ->assertJsonPath('year_is_writable', false);
+            ->assertJsonPath('year_is_writable', true);
 
         $this->patchJson('/rooms/4/archive', ['year_id' => 3])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('year_id')
-            ->assertJsonPath('errors.year_id.0', 'Rooms and student placements in a read-only academic year cannot be changed.');
+            ->assertOk();
 
-        $this->assertDatabaseHas('rooms', ['id' => 4, 'is_active' => true]);
+        $this->assertDatabaseHas('rooms', ['id' => 4, 'is_active' => false]);
 
         $this->patchJson('/students/6/room', ['year_id' => 3, 'room_id' => null])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('year_id');
+            ->assertOk();
 
-        $this->assertDatabaseHas('students', ['id' => 6, 'room_id' => 4]);
+        $this->assertDatabaseHas('students', ['id' => 6, 'room_id' => null]);
 
         DB::table('academic_years')->where('id', 3)->update(['is_active' => false]);
 

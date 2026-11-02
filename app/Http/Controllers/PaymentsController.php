@@ -120,10 +120,9 @@ class PaymentsController extends Controller
             'year_is_active' => (bool) $year->is_active,
             'year_is_current' => (bool) $year->is_current,
             'currency' => DB::table('schools')->where('id', $schoolId)->value('currency') ?? 'MAD',
-            'can_manage' => $user->role === 'admin' && (bool) $year->is_active && (bool) $year->is_current,
+            'can_manage' => $user->role === 'admin' && (bool) $year->is_active,
             'can_record' => in_array($user->role, ['admin', 'secretary'], true)
-                && (bool) $year->is_active
-                && (bool) $year->is_current,
+                && (bool) $year->is_active,
             'is_secretary' => $user->role === 'secretary',
             'payments' => $payments,
             'students' => $students,
@@ -267,7 +266,10 @@ class PaymentsController extends Controller
         }
 
         if ($role !== 'admin') {
-            $query->where('is_current', true)->where('is_active', true);
+            $query->where('is_active', true);
+            if ($yearId === null) {
+                $query->where('is_current', true);
+            }
         }
 
         $year = $query->orderByDesc('start_date')->first([
@@ -293,10 +295,10 @@ class PaymentsController extends Controller
         $year = DB::table('academic_years')
             ->where('id', $yearId)
             ->where('school_id', $schoolId)
-            ->first(['id', 'is_active', 'is_current']);
+            ->first(['id', 'is_active']);
         abort_unless($year, 404);
 
-        if (! $year->is_active || ! $year->is_current) {
+        if (! $year->is_active) {
             throw ValidationException::withMessages([
                 'year_id' => 'Payments in a closed academic year cannot be changed.',
             ]);

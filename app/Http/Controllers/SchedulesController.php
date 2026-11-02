@@ -69,12 +69,12 @@ class SchedulesController extends Controller
         $academicYear = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['is_active', 'is_current']);
+            ->first(['is_active']);
         abort_unless($academicYear, 404);
 
         $response = [
             'year_id' => $yearId,
-            'year_is_writable' => (bool) $academicYear->is_active && (bool) $academicYear->is_current,
+            'year_is_writable' => (bool) $academicYear->is_active,
             'schedules' => $schedules,
             'can_manage' => $user->role === 'admin',
         ];
@@ -315,9 +315,9 @@ class SchedulesController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['is_active', 'is_current']);
+            ->first(['is_active']);
 
-        if (! $year || ! $year->is_active || ! $year->is_current) {
+        if (! $year || ! $year->is_active) {
             throw ValidationException::withMessages([
                 'year_id' => 'Schedules in a read-only academic year cannot be changed.',
             ]);

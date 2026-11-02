@@ -103,7 +103,7 @@ class AttendanceTableTest extends TestCase
             ->assertJsonCount(2, 'teachers');
     }
 
-    public function test_active_noncurrent_year_attendance_is_read_only(): void
+    public function test_active_noncurrent_year_attendance_can_be_corrected_but_closed_year_cannot(): void
     {
         $this->seedAttendance();
         DB::table('academic_years')->where('id', 3)->update(['is_active' => true]);
@@ -111,11 +111,11 @@ class AttendanceTableTest extends TestCase
 
         $this->getJson('/attendance/table?year_id=3')
             ->assertOk()
-            ->assertJsonPath('year_is_writable', false)
-            ->assertJsonPath('can_correct', false)
+            ->assertJsonPath('year_is_writable', true)
+            ->assertJsonPath('can_correct', true)
             ->assertJsonPath('can_mark', false)
             ->assertJsonPath('can_follow_up', false)
-            ->assertJsonPath('attendance.0.can_edit', false);
+            ->assertJsonPath('attendance.0.can_edit', true);
 
         $this->postJson('/attendance', [
             'year_id' => 3,
@@ -123,10 +123,7 @@ class AttendanceTableTest extends TestCase
             'attendance_date' => '2026-01-10',
             'status' => 'late',
             'note' => 'Historical correction',
-        ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('year_id')
-            ->assertJsonPath('errors.year_id.0', 'Attendance in a read-only academic year cannot be changed.');
+        ])->assertOk();
 
         DB::table('academic_years')->where('id', 3)->update(['is_active' => false]);
 
@@ -142,9 +139,21 @@ class AttendanceTableTest extends TestCase
 
         $this->assertDatabaseHas('attendance', [
             'id' => 5,
-            'status' => 'present',
-            'note' => null,
+            'status' => 'late',
+            'note' => 'Historical correction',
         ]);
+    }
+
+    public function test_teacher_can_view_attendance_for_an_open_noncurrent_year(): void
+    {
+        $this->seedAttendance();
+        DB::table('academic_years')->where('id', 3)->update(['is_active' => true]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/attendance/table?year_id=3')
+            ->assertOk()
+            ->assertJsonPath('year_id', 3)
+            ->assertJsonPath('year_is_writable', true);
     }
 
     public function test_teacher_only_sees_records_from_rooms_assigned_on_the_attendance_date(): void

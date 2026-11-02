@@ -87,10 +87,26 @@ class AcademicYearsTableTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'years')
             ->assertJsonPath('can_manage', false)
-            ->assertJsonPath('years.0.is_read_only', true);
+            ->assertJsonPath('years.0.is_read_only', false)
+            ->assertJsonPath('years.1.is_read_only', true);
 
         $this->patchJson('/admin/academic-years/2/status', ['action' => 'open'])
             ->assertForbidden();
+    }
+
+    public function test_open_historical_year_is_not_marked_read_only_for_a_teacher(): void
+    {
+        DB::table('academic_years')->where('id', 2)->update(['is_active' => true]);
+        $this->actingAs(new GenericUser([
+            'id' => 11,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->getJson('/academic-years/table')
+            ->assertOk()
+            ->assertJsonPath('years.1.is_active', true)
+            ->assertJsonPath('years.1.is_read_only', false);
     }
 
     public function test_admin_can_open_a_year_and_set_it_as_current(): void

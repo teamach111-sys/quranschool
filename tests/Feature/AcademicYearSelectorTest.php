@@ -68,7 +68,7 @@ class AcademicYearSelectorTest extends TestCase
         ]);
     }
 
-    public function test_admin_sees_school_years_and_historical_years_are_read_only(): void
+    public function test_admin_sees_open_historical_years_as_writable_and_closed_years_as_read_only(): void
     {
         $this->actingAs(new GenericUser([
             'id' => 10,
@@ -81,15 +81,16 @@ class AcademicYearSelectorTest extends TestCase
             ->assertJsonCount(3, 'years')
             ->assertJsonPath('current_id', 3)
             ->assertJsonPath('years.0.is_read_only', false)
-            ->assertJsonPath('years.1.is_read_only', true)
+            ->assertJsonPath('years.1.is_read_only', false)
             ->assertJsonPath('years.2.is_read_only', true);
 
         $this->getJson('/academic-years/table')
             ->assertOk()
-            ->assertJsonPath('years.1.is_read_only', true);
+            ->assertJsonPath('years.1.is_read_only', false)
+            ->assertJsonPath('years.2.is_read_only', true);
     }
 
-    public function test_teachers_and_secretaries_only_see_the_current_active_year(): void
+    public function test_teachers_and_secretaries_see_all_open_years_as_writable(): void
     {
         foreach (['teacher', 'secretary'] as $role) {
             $this->actingAs(new GenericUser([
@@ -100,9 +101,11 @@ class AcademicYearSelectorTest extends TestCase
 
             $this->getJson('/academic-years')
                 ->assertOk()
-                ->assertJsonCount(1, 'years')
+                ->assertJsonCount(2, 'years')
                 ->assertJsonPath('years.0.id', 3)
-                ->assertJsonPath('years.0.is_read_only', false);
+                ->assertJsonPath('years.0.is_read_only', false)
+                ->assertJsonPath('years.1.id', 1)
+                ->assertJsonPath('years.1.is_read_only', false);
         }
     }
 }

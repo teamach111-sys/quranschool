@@ -22,7 +22,7 @@ class AttendanceController extends Controller
         [$user, $schoolId] = $this->staffContext();
         $year = $this->resolveYear($request, $schoolId);
         $yearId = (int) $year->id;
-        $yearIsWritable = (bool) $year->is_active && (bool) $year->is_current;
+        $yearIsWritable = (bool) $year->is_active;
         $filters = $request->validate([
             'room_id' => [
                 'nullable',
@@ -204,9 +204,9 @@ class AttendanceController extends Controller
         $year = DB::table('academic_years')
             ->where('id', $yearId)
             ->where('school_id', $schoolId)
-            ->first(['start_date', 'end_date', 'is_active', 'is_current']);
+            ->first(['start_date', 'end_date', 'is_active']);
         abort_unless($year, 404);
-        if (! $year->is_active || ! $year->is_current) {
+        if (! $year->is_active) {
             throw ValidationException::withMessages([
                 'year_id' => 'Attendance in a read-only academic year cannot be changed.',
             ]);
@@ -520,7 +520,6 @@ class AttendanceController extends Controller
             'start_date',
             'end_date',
             'is_active',
-            'is_current',
         ]);
         abort_unless($year, 404);
 

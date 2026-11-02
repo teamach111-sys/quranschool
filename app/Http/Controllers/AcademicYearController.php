@@ -29,7 +29,7 @@ class AcademicYearController extends Controller
         }
 
         if ($user->role !== 'admin') {
-            $query->where('is_active', 1)->where('is_current', 1);
+            $query->where('is_active', 1);
         }
 
         $rows = $query
@@ -43,7 +43,7 @@ class AcademicYearController extends Controller
             'end_date' => $row->end_date,
             'is_current' => (bool) $row->is_current,
             'is_active' => (bool) $row->is_active,
-            'is_read_only' => $user->role === 'admin' && (! $row->is_active || ! $row->is_current),
+            'is_read_only' => ! $row->is_active,
         ]);
 
         $current = $years->firstWhere('is_current', true);
@@ -54,7 +54,7 @@ class AcademicYearController extends Controller
         ]);
     }
 
-    /** Academic-year page data; unlike the selector, this includes history for read-only roles. */
+    /** Academic-year management data for every year in the current school. */
     public function table()
     {
         $user = Auth::user();
@@ -80,7 +80,7 @@ class AcademicYearController extends Controller
                 'end_date' => $row->end_date,
                 'is_current' => (bool) $row->is_current,
                 'is_active' => (bool) $row->is_active,
-                'is_read_only' => $user->role !== 'admin' || ! $row->is_active || ! $row->is_current,
+                'is_read_only' => ! $row->is_active,
             ]),
             'can_manage' => $user->role === 'admin',
         ]);

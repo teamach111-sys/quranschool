@@ -86,7 +86,7 @@ class PaymentsTableTest extends TestCase
             ->assertJsonMissing(['student_name' => 'Other School Student']);
     }
 
-    public function test_admin_can_view_a_historical_year_without_payment_management_access(): void
+    public function test_admin_can_view_a_closed_historical_year_without_payment_management_access(): void
     {
         $this->seedPayments();
         $this->actingAs($this->user(10, 1, 'admin'));
@@ -100,7 +100,7 @@ class PaymentsTableTest extends TestCase
             ->assertJsonPath('payments.0.student_name', 'Former Student');
     }
 
-    public function test_secretary_can_view_current_year_payments_but_not_historical_years(): void
+    public function test_secretary_can_view_current_year_payments_but_not_closed_historical_years(): void
     {
         $this->seedPayments();
         $this->actingAs($this->user(12, 1, 'secretary'));
@@ -119,6 +119,35 @@ class PaymentsTableTest extends TestCase
             ->assertJsonPath('payments.0.guardian_phone', '0600000002');
 
         $this->getJson('/payments/table?year_id=2')->assertNotFound();
+    }
+
+    public function test_admin_can_manage_payments_in_an_open_noncurrent_year(): void
+    {
+        $this->seedPayments();
+        DB::table('academic_years')->where('id', 2)->update(['is_active' => true]);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/payments/table?year_id=2')
+            ->assertOk()
+            ->assertJsonPath('can_manage', true)
+            ->assertJsonPath('can_record', true);
+    }
+
+    public function test_secretary_can_view_payments_for_an_open_noncurrent_year(): void
+    {
+        $this->seedPayments();
+        DB::table('academic_years')->where('id', 2)->update(['is_active' => true]);
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->getJson('/payments/table')
+            ->assertOk()
+            ->assertJsonPath('year_id', 1);
+
+        $this->getJson('/payments/table?year_id=2')
+            ->assertOk()
+            ->assertJsonPath('year_id', 2)
+            ->assertJsonPath('can_record', true)
+            ->assertJsonCount(1, 'payments');
     }
 
     public function test_teacher_cannot_access_payments(): void

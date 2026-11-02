@@ -369,6 +369,36 @@ class PaymentFormTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('year_id');
     }
 
+    public function test_admin_creates_a_payment_in_an_open_noncurrent_year(): void
+    {
+        $this->seedPaymentData();
+        DB::table('academic_years')->where('id', 2)->update(['is_active' => true]);
+        DB::table('students')->insert([
+            'id' => 4,
+            'school_id' => 1,
+            'year_id' => 2,
+            'full_name' => 'Former Student',
+        ]);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'year_id' => 2,
+            'student_id' => 4,
+            'period_start' => '2025-11-01',
+            'period_end' => '2025-11-30',
+        ]);
+
+        $response->assertCreated()->assertJsonStructure(['payment_id']);
+        $this->assertDatabaseHas('payments', [
+            'id' => $response->json('payment_id'),
+            'student_id' => 4,
+            'year_id' => 2,
+            'period_start' => '2025-11-01',
+            'period_end' => '2025-11-30',
+        ]);
+    }
+
     /**
      * @return array<string, int|string>
      */

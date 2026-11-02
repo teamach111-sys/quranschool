@@ -320,7 +320,7 @@ class StudentsTableTest extends TestCase
         ])->assertNotFound();
     }
 
-    public function test_student_archive_rejects_an_active_noncurrent_academic_year(): void
+    public function test_student_archive_is_allowed_in_an_active_noncurrent_academic_year(): void
     {
         DB::table('academic_years')->insert([
             'id' => 3,
@@ -348,19 +348,20 @@ class StudentsTableTest extends TestCase
         $this->getJson('/students/table?year_id=3')
             ->assertOk()
             ->assertJsonPath('year_is_active', true)
-            ->assertJsonPath('year_is_writable', false);
+            ->assertJsonPath('year_is_writable', true);
+
+        $this->getJson('/students/options?year_id=3')
+            ->assertOk()
+            ->assertJsonPath('is_editable', true);
 
         $this->patchJson('/students/5/status', [
             'year_id' => 3,
             'status' => 'paused',
-        ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('year_id')
-            ->assertJsonPath('errors.year_id.0', 'Students in a read-only academic year cannot be changed.');
+        ])->assertOk();
 
         $this->assertDatabaseHas('students', [
             'id' => 5,
-            'status' => 'active',
+            'status' => 'paused',
         ]);
     }
 

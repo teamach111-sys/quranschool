@@ -20,7 +20,7 @@ class RoomsController extends Controller
         $academicYear = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['start_date', 'end_date', 'is_active', 'is_current']);
+            ->first(['start_date', 'end_date', 'is_active']);
         abort_unless($academicYear, 404);
         $today = now()->toDateString();
         $studentCounts = DB::table('students')
@@ -130,7 +130,7 @@ class RoomsController extends Controller
         $response = [
             'year_id' => $yearId,
             'year_is_active' => (bool) $academicYear->is_active,
-            'year_is_writable' => (bool) $academicYear->is_active && (bool) $academicYear->is_current,
+            'year_is_writable' => (bool) $academicYear->is_active,
             'rooms' => $rooms,
             'can_manage' => $role === 'admin',
             'can_place' => in_array($role, ['admin', 'secretary'], true),
@@ -591,9 +591,9 @@ class RoomsController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['is_active', 'is_current']);
+            ->first(['is_active']);
 
-        if (! $year || ! $year->is_active || ! $year->is_current) {
+        if (! $year || ! $year->is_active) {
             throw ValidationException::withMessages([
                 'year_id' => 'Rooms and student placements in a read-only academic year cannot be changed.',
             ]);

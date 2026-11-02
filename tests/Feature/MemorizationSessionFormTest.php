@@ -370,6 +370,54 @@ class MemorizationSessionFormTest extends TestCase
         $this->assertDatabaseCount('memorization_sessions', 3);
     }
 
+    public function test_session_write_succeeds_for_an_open_noncurrent_year(): void
+    {
+        $this->seedMemorizationData();
+        DB::table('academic_years')->where('id', 2)->update(['is_active' => true]);
+        DB::table('rooms')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 2,
+            'name' => 'Historical Room',
+            'is_active' => true,
+        ]);
+        DB::table('room_teachers')->insert([
+            'room_id' => 5,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 2,
+            'assigned_from' => '2025-09-01',
+            'assigned_until' => null,
+        ]);
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 2,
+            'room_id' => 5,
+            'student_number' => 'S-005',
+            'full_name' => 'Historical Student',
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->postJson('/memorization-sessions', [
+            ...$this->validSession(),
+            'year_id' => 2,
+            'student_id' => 5,
+            'room_id' => 5,
+            'session_date' => '2025-10-10',
+            'teacher_id' => 20,
+        ]);
+
+        $response->assertCreated()->assertJsonStructure(['session_id']);
+        $this->assertDatabaseHas('memorization_sessions', [
+            'id' => $response->json('session_id'),
+            'student_id' => 5,
+            'year_id' => 2,
+            'session_date' => '2025-10-10',
+        ]);
+    }
+
     public function test_session_write_returns_403_for_secretary(): void
     {
         $this->seedMemorizationData();

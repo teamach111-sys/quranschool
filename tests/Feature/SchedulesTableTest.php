@@ -345,7 +345,7 @@ class SchedulesTableTest extends TestCase
         $this->postJson('/schedules', [])->assertForbidden();
     }
 
-    public function test_schedule_writes_are_rejected_for_an_active_noncurrent_year(): void
+    public function test_schedule_writes_are_allowed_for_an_active_noncurrent_year(): void
     {
         $this->seedScheduleData();
         DB::table('academic_years')->where('id', 1)->update(['is_current' => false]);
@@ -358,7 +358,7 @@ class SchedulesTableTest extends TestCase
         $this->getJson('/schedules/table?year_id=1')
             ->assertOk()
             ->assertJsonPath('year_is_active', true)
-            ->assertJsonPath('year_is_writable', false);
+            ->assertJsonPath('year_is_writable', true);
 
         $this->postJson('/schedules', [
             'year_id' => 1,
@@ -369,10 +369,12 @@ class SchedulesTableTest extends TestCase
             'ends_at' => '10:00',
             'valid_from' => '2026-09-01',
             'label' => 'Historical slot',
-        ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('year_id')
-            ->assertJsonPath('errors.year_id.0', 'Schedules in a read-only academic year cannot be changed.');
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('schedules', [
+            'year_id' => 1,
+            'label' => 'Historical slot',
+        ]);
 
         DB::table('academic_years')->where('id', 1)->update(['is_active' => false]);
 
@@ -389,7 +391,7 @@ class SchedulesTableTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('year_id');
 
-        $this->assertDatabaseCount('schedules', 0);
+        $this->assertDatabaseCount('schedules', 1);
     }
 
     public function test_schedule_access_is_scoped_to_the_users_school(): void

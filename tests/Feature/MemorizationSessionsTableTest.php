@@ -141,6 +141,22 @@ class MemorizationSessionsTableTest extends TestCase
         $this->getJson('/memorization-sessions/table?year_id=3')->assertNotFound();
     }
 
+    public function test_teacher_can_view_an_open_noncurrent_year(): void
+    {
+        $this->seedMemorizationSessions();
+        DB::table('academic_years')->where('id', 3)->update(['is_active' => true]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/memorization-sessions/table')
+            ->assertOk()
+            ->assertJsonPath('year_id', 1);
+
+        $this->getJson('/memorization-sessions/table?year_id=3')
+            ->assertOk()
+            ->assertJsonPath('year_id', 3)
+            ->assertJsonPath('can_create', true);
+    }
+
     public function test_secretary_can_view_sessions_for_the_current_year(): void
     {
         $this->seedMemorizationSessions();
