@@ -11,6 +11,7 @@ use App\Http\Controllers\RoleChangeHistoryController;
 use App\Http\Controllers\RoomsController;
 use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\SecretaryDashboardController;
 use App\Http\Controllers\StudentsController;
 use App\Http\Controllers\TeacherDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -179,6 +180,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/teacher/dashboard-summary', TeacherDashboardController::class)
         ->middleware('can:access-teacher')
         ->name('teacher.dashboard-summary');
+
+    Route::get('/secretary/dashboard-summary', SecretaryDashboardController::class)
+        ->middleware('can:access-secretary')
+        ->name('secretary.dashboard-summary');
 
     Route::get('/admin/users/table', [AdminUsersController::class, 'table'])
         ->middleware('can:access-admin')
