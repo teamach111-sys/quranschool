@@ -7,6 +7,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemorizationSessionsController;
 use App\Http\Controllers\PaymentsController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleChangeHistoryController;
 use App\Http\Controllers\RoomsController;
 use App\Http\Controllers\SchedulesController;
@@ -180,6 +181,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/teacher/dashboard-summary', TeacherDashboardController::class)
         ->middleware('can:access-teacher')
         ->name('teacher.dashboard-summary');
+
+    Route::get('/profile', [ProfileController::class, 'show'])
+        ->middleware('can:access-dashboard')
+        ->name('profile.show');
+
+    Route::put('/profile', [ProfileController::class, 'update'])
+        ->middleware('can:access-dashboard')
+        ->name('profile.update');
+
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])
+        ->middleware('can:access-dashboard')
+        ->name('profile.password.update');
 
     Route::get('/secretary/dashboard-summary', SecretaryDashboardController::class)
         ->middleware('can:access-secretary')

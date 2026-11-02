@@ -5,17 +5,26 @@ import { useLanguage } from '../hooks/useLanguage';
 export default function ProfileMenu({ user, onLogout, compact = false }) {
     const { isRTL, t } = useLanguage();
     const [open, setOpen] = useState(false);
+    const [profileName, setProfileName] = useState(null);
     const ref = useRef(null);
 
     useEffect(() => {
         const onClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
         const onKey = (e) => e.key === 'Escape' && setOpen(false);
+        const onProfileUpdated = (event) => {
+            if (event.detail?.full_name) setProfileName(event.detail.full_name);
+        };
         document.addEventListener('click', onClick);
         document.addEventListener('keydown', onKey);
-        return () => { document.removeEventListener('click', onClick); document.removeEventListener('keydown', onKey); };
+        window.addEventListener('tahfiz:profile-updated', onProfileUpdated);
+        return () => {
+            document.removeEventListener('click', onClick);
+            document.removeEventListener('keydown', onKey);
+            window.removeEventListener('tahfiz:profile-updated', onProfileUpdated);
+        };
     }, []);
 
-    const name = user?.name || t.userName;
+    const name = profileName ?? user?.name ?? t.userName;
     const email = user?.email || 'user@institution.dz';
     const role = (user?.role && t.roles?.[user.role]) || t.userRole;
 
@@ -47,7 +56,7 @@ export default function ProfileMenu({ user, onLogout, compact = false }) {
                     <p className="text-[12px] leading-[16px] font-semibold text-on-surface dark:text-[#ecf3ef] leading-tight truncate">{name}</p>
                     <p className="font-mono text-[10px] leading-[14px] tracking-[0.02em] text-on-surface-variant dark:text-[#9bb2a8] truncate mt-0.5" dir="ltr">{email}</p>
                 </div>
-                <a href="#" className="flex items-center gap-2 px-3 py-2 text-on-surface dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors">
+                <a href="#/mon-profil" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-on-surface dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors">
                     <Icon name="account_circle" className="text-[16px] text-outline dark:text-[#9bb2a8]" />
                     <span className="text-[12px] leading-[16px]">{t.profile}</span>
                 </a>
