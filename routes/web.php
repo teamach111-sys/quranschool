@@ -127,6 +127,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('memorization-sessions.table');
 
+    Route::get('/memorization-sessions/progress', [MemorizationSessionsController::class, 'progress'])
+        ->middleware('can:access-dashboard')
+        ->name('memorization-sessions.progress');
+
     Route::get('/payments/table', [PaymentsController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('payments.table');

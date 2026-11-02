@@ -147,6 +147,71 @@ class MemorizationSessionsController extends Controller
         ]);
     }
 
+    public function progress(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->writerContext();
+        $year = $this->resolveWritableYear($request, $schoolId);
+        $validated = $request->validate([
+            'student_id' => [
+                'required',
+                'integer',
+                Rule::exists('students', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', (int) $year->id),
+            ],
+        ]);
+        $student = DB::table('students')
+            ->where('id', (int) $validated['student_id'])
+            ->where('school_id', $schoolId)
+            ->where('year_id', (int) $year->id)
+            ->first(['id', 'room_id']);
+        abort_unless($student && $student->room_id !== null, 404);
+
+        $this->ensureSessionRoomAndStudent([
+            'student_id' => (int) $student->id,
+            'room_id' => (int) $student->room_id,
+        ], $user->role, $schoolId, (int) $year->id);
+        $this->ensureTeacherAssignment(
+            $user->role,
+            (int) $user->id,
+            (int) $student->room_id,
+            $schoolId,
+            (int) $year->id,
+            now()->toDateString(),
+        );
+
+        $sessions = DB::table('memorization_sessions')
+            ->where('student_id', (int) $student->id)
+            ->where('school_id', $schoolId)
+            ->where('year_id', (int) $year->id)
+            ->whereNotNull('surah_start')
+            ->whereNotNull('ayah_start')
+            ->whereNotNull('surah_end')
+            ->whereNotNull('ayah_end')
+            ->orderBy('session_date')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'surah_start',
+                'ayah_start',
+                'surah_end',
+                'ayah_end',
+            ])
+            ->map(fn ($session) => [
+                'id' => (int) $session->id,
+                'surah_start' => (int) $session->surah_start,
+                'ayah_start' => (int) $session->ayah_start,
+                'surah_end' => (int) $session->surah_end,
+                'ayah_end' => (int) $session->ayah_end,
+            ])
+            ->values();
+
+        return response()->json([
+            'student_id' => (int) $student->id,
+            'sessions' => $sessions,
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         [$user, $schoolId] = $this->writerContext();
@@ -230,6 +295,15 @@ class MemorizationSessionsController extends Controller
         int $yearId,
         stdClass $year,
     ): array {
+        $quranMetadata = json_decode(
+            file_get_contents(resource_path('data/quran-metadata.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+        $surahsById = collect($quranMetadata['surahs'])->keyBy('id');
+        $surahIds = $surahsById->keys()->all();
+
         $validated = $request->validate([
             'student_id' => [
                 'required',
@@ -255,10 +329,10 @@ class MemorizationSessionsController extends Controller
                 ]
                 : ['prohibited'],
             'session_date' => ['required', 'date_format:Y-m-d'],
-            'surah_start' => ['nullable', 'integer', 'between:1,114'],
-            'ayah_start' => ['nullable', 'integer', 'between:1,286'],
-            'surah_end' => ['nullable', 'integer', 'between:1,114'],
-            'ayah_end' => ['nullable', 'integer', 'between:1,286'],
+            'surah_start' => ['nullable', 'integer', Rule::in($surahIds)],
+            'ayah_start' => ['nullable', 'integer', 'min:1'],
+            'surah_end' => ['nullable', 'integer', Rule::in($surahIds)],
+            'ayah_end' => ['nullable', 'integer', 'min:1'],
             'portion_label' => ['required', 'string', 'max:160'],
             'evaluation' => ['required', Rule::in(['excellent', 'good', 'needs_review'])],
             'notes' => ['nullable', 'string', 'max:5000'],
@@ -276,6 +350,24 @@ class MemorizationSessionsController extends Controller
         $ayahEnd = isset($validated['ayah_end']) ? (int) $validated['ayah_end'] : null;
         $rangeHasStart = $surahStart !== null || $ayahStart !== null;
         $rangeHasEnd = $surahEnd !== null || $ayahEnd !== null;
+
+        if ($rangeHasStart && $surahStart !== null && $ayahStart !== null) {
+            $startAyahCount = (int) $surahsById->get($surahStart)['ayah_count'];
+            if ($ayahStart > $startAyahCount) {
+                throw ValidationException::withMessages([
+                    'ayah_start' => "The start ayah exceeds the selected surah's limit of {$startAyahCount}.",
+                ]);
+            }
+        }
+
+        if ($rangeHasEnd && $surahEnd !== null && $ayahEnd !== null) {
+            $endAyahCount = (int) $surahsById->get($surahEnd)['ayah_count'];
+            if ($ayahEnd > $endAyahCount) {
+                throw ValidationException::withMessages([
+                    'ayah_end' => "The end ayah exceeds the selected surah's limit of {$endAyahCount}.",
+                ]);
+            }
+        }
 
         if (
             ($rangeHasStart && ($surahStart === null || $ayahStart === null))

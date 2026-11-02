@@ -3,6 +3,7 @@ import Icon from '../../../components/Icon';
 import MemorizationSessionFormModal from './MemorizationSessionFormModal';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
+import { formatPortionRange } from '../../../lib/quranProgress';
 import {
     ACADEMIC_YEAR_CHANGED_EVENT,
     getSelectedAcademicYearId,
@@ -19,21 +20,8 @@ function emptyFilters() {
     };
 }
 
-function surahRange(session, emptyValue) {
-    if (
-        session.surah_start === null
-        || session.ayah_start === null
-        || session.surah_end === null
-        || session.ayah_end === null
-    ) {
-        return emptyValue;
-    }
-
-    return `${session.surah_start}:${session.ayah_start} – ${session.surah_end}:${session.ayah_end}`;
-}
-
 export default function MemorizationSessionsTable() {
-    const { isRTL, t } = useLanguage();
+    const { isRTL, lang, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [sessions, setSessions] = useState([]);
     const [rooms, setRooms] = useState([]);
@@ -167,16 +155,13 @@ export default function MemorizationSessionsTable() {
             value: (session) => session.teacher_name ?? t.memorization.emptyValue,
         },
         {
-            key: 'surah_range',
-            label: t.memorization.columns.range,
-            mobile: 'detail',
-            value: (session) => surahRange(session, t.memorization.emptyValue),
-        },
-        {
             key: 'portion_label',
             label: t.memorization.columns.portion,
             sortable: true,
             mobile: 'detail',
+            value: (session) => formatPortionRange(session, lang)
+                || session.portion_label
+                || t.memorization.emptyValue,
         },
         {
             key: 'evaluation',

@@ -241,6 +241,52 @@ class MemorizationSessionFormTest extends TestCase
         $this->assertDatabaseCount('memorization_sessions', 3);
     }
 
+    public function test_memorization_range_returns_422_when_start_ayah_exceeds_its_surah_count(): void
+    {
+        $this->seedMemorizationData();
+        $this->actingAs($this->user(20, 1, 'teacher'));
+        $surah = $this->surahMetadata(4);
+        $invalidAyah = $surah['ayah_count'] + 1;
+
+        $this->postJson('/memorization-sessions', [
+            ...$this->validSession(),
+            'surah_start' => 4,
+            'ayah_start' => $invalidAyah,
+            'surah_end' => 4,
+            'ayah_end' => 1,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.ayah_start.0',
+                "The start ayah exceeds the selected surah's limit of {$surah['ayah_count']}.",
+            );
+
+        $this->assertDatabaseCount('memorization_sessions', 3);
+    }
+
+    public function test_memorization_range_returns_422_when_end_ayah_exceeds_its_surah_count(): void
+    {
+        $this->seedMemorizationData();
+        $this->actingAs($this->user(20, 1, 'teacher'));
+        $surah = $this->surahMetadata(3);
+        $invalidAyah = $surah['ayah_count'] + 1;
+
+        $this->postJson('/memorization-sessions', [
+            ...$this->validSession(),
+            'surah_start' => 2,
+            'ayah_start' => 1,
+            'surah_end' => 3,
+            'ayah_end' => $invalidAyah,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath(
+                'errors.ayah_end.0',
+                "The end ayah exceeds the selected surah's limit of {$surah['ayah_count']}.",
+            );
+
+        $this->assertDatabaseCount('memorization_sessions', 3);
+    }
+
     public function test_memorization_range_returns_422_when_end_precedes_start(): void
     {
         $this->seedMemorizationData();
@@ -370,6 +416,72 @@ class MemorizationSessionFormTest extends TestCase
         $this->postJson('/memorization-sessions', [])->assertUnauthorized();
     }
 
+    public function test_teacher_progress_contains_only_the_selected_students_ranges(): void
+    {
+        $this->seedMemorizationData();
+        $this->travelTo('2026-10-10');
+        DB::table('memorization_sessions')->insert([
+            'id' => 4,
+            'student_id' => 1,
+            'school_id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'year_id' => 1,
+            'session_date' => '2026-10-11',
+            'surah_start' => 1,
+            'ayah_start' => 5,
+            'surah_end' => 2,
+            'ayah_end' => 2,
+            'portion_label' => 'Second session',
+            'evaluation' => 'good',
+            'notes' => null,
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/memorization-sessions/progress?year_id=1&student_id=1')
+            ->assertOk()
+            ->assertJsonPath('student_id', 1)
+            ->assertJsonCount(2, 'sessions')
+            ->assertJsonPath('sessions.0.id', 1)
+            ->assertJsonPath('sessions.1.id', 4)
+            ->assertJsonPath('sessions.1.surah_end', 2)
+            ->assertJsonPath('sessions.1.ayah_end', 2);
+    }
+
+    public function test_teacher_cannot_read_progress_for_an_unassigned_room(): void
+    {
+        $this->seedMemorizationData();
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/memorization-sessions/progress?year_id=1&student_id=3')
+            ->assertForbidden();
+    }
+
+    public function test_progress_requires_authentication(): void
+    {
+        $this->getJson('/memorization-sessions/progress?year_id=1&student_id=1')
+            ->assertUnauthorized();
+    }
+
+    public function test_secretary_cannot_read_memorization_progress(): void
+    {
+        $this->seedMemorizationData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->getJson('/memorization-sessions/progress?year_id=1&student_id=1')
+            ->assertForbidden();
+    }
+
+    public function test_progress_does_not_disclose_students_from_another_school(): void
+    {
+        $this->seedMemorizationData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/memorization-sessions/progress?year_id=1&student_id=4')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('student_id');
+    }
+
     /**
      * @return array<string, int|string|null>
      */
@@ -388,6 +500,21 @@ class MemorizationSessionFormTest extends TestCase
             'evaluation' => 'excellent',
             'notes' => null,
         ];
+    }
+
+    /**
+     * @return array{id: int, name: string, name_ar: string, name_fr: string, ayah_count: int, revelation: string, juz_start: int}
+     */
+    private function surahMetadata(int $surahId): array
+    {
+        $metadata = json_decode(
+            file_get_contents(resource_path('data/quran-metadata.json')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        return collect($metadata['surahs'])->firstWhere('id', $surahId);
     }
 
     private function seedMemorizationData(): void
