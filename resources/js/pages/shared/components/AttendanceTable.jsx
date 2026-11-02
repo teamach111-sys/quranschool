@@ -36,6 +36,9 @@ export default function AttendanceTable() {
     const [filters, setFilters] = useState(emptyFilters);
     const [rosterOpen, setRosterOpen] = useState(false);
     const [entry, setEntry] = useState(null);
+    const [bulkNotice, setBulkNotice] = useState(null);
+    const [undoingBulk, setUndoingBulk] = useState(false);
+    const [bulkUndoError, setBulkUndoError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
@@ -46,6 +49,8 @@ export default function AttendanceTable() {
             setFilters(emptyFilters());
             setEntry(null);
             setRosterOpen(false);
+            setBulkNotice(null);
+            setBulkUndoError(null);
             setCanCorrect(false);
             setCanMark(false);
             setCanFollowUp(false);
@@ -104,9 +109,43 @@ export default function AttendanceTable() {
         setEntry({ mode, record });
     };
 
-    const handleEntrySaved = async () => {
+    const handleEntrySaved = async (savedCount, undoEntries) => {
         setEntry(null);
+        if (typeof savedCount === 'number') {
+            setRosterOpen(false);
+            setBulkNotice({ type: 'saved', count: savedCount, entries: undoEntries });
+            setBulkUndoError(null);
+        }
         await loadAttendance();
+    };
+
+    const undoBulkSave = async () => {
+        if (!bulkNotice?.entries || undoingBulk) return;
+
+        setUndoingBulk(true);
+        setBulkUndoError(null);
+
+        try {
+            const response = await apiFetch('/attendance/bulk/undo', {
+                method: 'POST',
+                body: JSON.stringify({ year_id: yearId, entries: bulkNotice.entries }),
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 403) setBulkUndoError(t.attendance.permissionError);
+                else if (response.status === 409) setBulkUndoError(t.attendance.undoConflict);
+                else setBulkUndoError(t.attendance.undoError);
+                return;
+            }
+
+            setBulkNotice({ type: 'undone', count: data.undone_count });
+            await loadAttendance();
+        } catch {
+            setBulkUndoError(t.attendance.undoError);
+        } finally {
+            setUndoingBulk(false);
+        }
     };
 
     const columns = [
@@ -177,6 +216,43 @@ export default function AttendanceTable() {
         hidden: (record) => !record.can_edit,
         onClick: openEntry,
     }] : [];
+    const bulkNoticeElement = bulkNotice !== null && (
+        <div
+            role={bulkUndoError ? 'alert' : 'status'}
+            className="flex flex-col gap-2 rounded-lg bg-primary-container px-3 py-2 text-[13px] font-medium text-on-primary dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+        >
+            <div className="flex items-center justify-between gap-3">
+                <span>
+                    {bulkNotice.type === 'undone'
+                        ? t.attendance.bulkUndoSuccess(bulkNotice.count)
+                        : t.attendance.bulkSaveSuccess(bulkNotice.count)}
+                </span>
+                <div className="flex shrink-0 items-center gap-1">
+                    {bulkNotice.type === 'saved' && (
+                        <button
+                            type="button"
+                            disabled={undoingBulk}
+                            onClick={undoBulkSave}
+                            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3 font-semibold hover:bg-black/10 disabled:opacity-60"
+                        >
+                            <Icon name={undoingBulk ? 'progress_activity' : 'undo'} className={`text-[18px] ${undoingBulk ? 'animate-spin' : ''}`} />
+                            {undoingBulk ? t.attendance.undoing : t.attendance.undo}
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        aria-label={t.attendance.dismissNotice}
+                        disabled={undoingBulk}
+                        onClick={() => setBulkNotice(null)}
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-black/10 disabled:opacity-60"
+                    >
+                        <Icon name="close" className="text-[18px]" />
+                    </button>
+                </div>
+            </div>
+            {bulkUndoError && <p className="font-normal">{bulkUndoError}</p>}
+        </div>
+    );
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
     const toolbar = (
         <div className="flex flex-col gap-3">
@@ -184,7 +260,11 @@ export default function AttendanceTable() {
                 <div className="flex justify-end">
                     <button
                         type="button"
-                        onClick={() => setRosterOpen(true)}
+                        onClick={() => {
+                            setBulkNotice(null);
+                            setBulkUndoError(null);
+                            setRosterOpen(true);
+                        }}
                         className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
                     >
                         <Icon name="add" className="text-[17px]" />
@@ -238,15 +318,26 @@ export default function AttendanceTable() {
     );
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.attendance.loadError}</p>;
+        return (
+            <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
+                {bulkNoticeElement}
+                <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.attendance.loadError}</p>
+            </section>
+        );
     }
 
     if (loading) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.attendance.loading}</p>;
+        return (
+            <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
+                {bulkNoticeElement}
+                <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.attendance.loading}</p>
+            </section>
+        );
     }
 
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
+            {bulkNoticeElement}
             <div className="hidden md:block">
                 <DesktopTable
                     ariaLabel={t.attendance.listLabel}
@@ -275,7 +366,6 @@ export default function AttendanceTable() {
                 <AttendanceRosterModal
                     open
                     yearId={yearId}
-                    todayDate={todayDate}
                     onClose={() => setRosterOpen(false)}
                     onSaved={handleEntrySaved}
                 />

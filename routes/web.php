@@ -161,6 +161,14 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('attendance.store');
 
+    Route::post('/attendance/bulk', [AttendanceController::class, 'storeBulk'])
+        ->middleware('can:access-dashboard')
+        ->name('attendance.bulk');
+
+    Route::post('/attendance/bulk/undo', [AttendanceController::class, 'undoBulk'])
+        ->middleware('can:access-dashboard')
+        ->name('attendance.bulk.undo');
+
     Route::delete('/attendance/{attendanceId}', [AttendanceController::class, 'destroy'])
         ->middleware('can:access-dashboard')
         ->whereNumber('attendanceId')

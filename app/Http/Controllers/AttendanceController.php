@@ -255,6 +255,7 @@ class AttendanceController extends Controller
                 'students.student_number',
                 'students.room_id',
                 'attendance.status',
+                'attendance.recorded_by',
             ])
             ->groupBy('room_id');
 
@@ -270,10 +271,220 @@ class AttendanceController extends Controller
                         'name' => $student->name,
                         'student_number' => $student->student_number,
                         'status' => $student->status,
+                        'can_edit' => $student->status === null
+                            || (int) $student->recorded_by === (int) $user->id,
                     ])
                     ->values(),
             ])->values(),
         ]);
+    }
+
+    public function storeBulk(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        abort_unless($user->role === 'teacher', 403);
+
+        $yearId = (int) $request->validate([
+            'year_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_years', 'id')->where('school_id', $schoolId),
+            ],
+        ])['year_id'];
+        $entries = $request->validate([
+            'entries' => ['required', 'array', 'min:1', 'max:200'],
+            'entries.*' => ['required', 'array:student_id,status'],
+            'entries.*.student_id' => [
+                'required',
+                'integer',
+                'distinct',
+            ],
+            'entries.*.status' => ['required', Rule::in(self::STATUSES)],
+        ]);
+        $today = now()->toDateString();
+
+        $savedCount = DB::transaction(function () use ($entries, $user, $schoolId, $yearId, $today) {
+            $year = DB::table('academic_years')
+                ->where('id', $yearId)
+                ->where('school_id', $schoolId)
+                ->lockForUpdate()
+                ->first(['is_current', 'is_active', 'start_date', 'end_date']);
+            abort_unless($year, 404);
+
+            if (
+                ! $year->is_current
+                || ! $year->is_active
+                || $today < $year->start_date
+                || $today > $year->end_date
+            ) {
+                throw ValidationException::withMessages([
+                    'year_id' => 'Attendance can only be marked for the current active academic year.',
+                ]);
+            }
+
+            $studentIds = collect($entries['entries'])
+                ->pluck('student_id')
+                ->map(fn ($studentId) => (int) $studentId)
+                ->all();
+            $students = $this->lockBulkStudentsInAssignedRooms(
+                $studentIds,
+                $schoolId,
+                $yearId,
+                (int) $user->id,
+                $today,
+            );
+
+            $existingAttendance = DB::table('attendance')
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('attendance_date', $today)
+                ->whereIn('student_id', $studentIds)
+                ->lockForUpdate()
+                ->get(['student_id', 'recorded_by'])
+                ->keyBy('student_id');
+
+            if ($existingAttendance->contains(
+                fn ($record) => (int) $record->recorded_by !== (int) $user->id,
+            )) {
+                abort(403);
+            }
+
+            $now = now();
+            $rows = collect($entries['entries'])
+                ->map(fn (array $entry) => [
+                    'student_id' => (int) $entry['student_id'],
+                    'school_id' => $schoolId,
+                    'room_id' => (int) $students->get((int) $entry['student_id'])->room_id,
+                    'year_id' => $yearId,
+                    'recorded_by' => (int) $user->id,
+                    'attendance_date' => $today,
+                    'status' => $entry['status'],
+                    'note' => null,
+                    'created_at' => $now,
+                ])
+                ->all();
+
+            DB::table('attendance')->upsert(
+                $rows,
+                ['student_id', 'year_id', 'attendance_date'],
+                ['room_id', 'recorded_by', 'status'],
+            );
+
+            return count($rows);
+        });
+
+        return response()->json(['saved_count' => $savedCount]);
+    }
+
+    public function undoBulk(Request $request): JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        abort_unless($user->role === 'teacher', 403);
+
+        $yearId = (int) $request->validate([
+            'year_id' => [
+                'required',
+                'integer',
+                Rule::exists('academic_years', 'id')->where('school_id', $schoolId),
+            ],
+        ])['year_id'];
+        $entries = $request->validate([
+            'entries' => ['required', 'array', 'min:1', 'max:200'],
+            'entries.*' => ['required', 'array:student_id,saved_status,previous_status'],
+            'entries.*.student_id' => [
+                'required',
+                'integer',
+                'distinct',
+            ],
+            'entries.*.saved_status' => ['required', Rule::in(self::STATUSES)],
+            'entries.*.previous_status' => ['present', 'nullable', Rule::in(self::STATUSES)],
+        ]);
+        $today = now()->toDateString();
+
+        $undoneCount = DB::transaction(function () use ($entries, $user, $schoolId, $yearId, $today) {
+            $year = DB::table('academic_years')
+                ->where('id', $yearId)
+                ->where('school_id', $schoolId)
+                ->lockForUpdate()
+                ->first(['is_current', 'is_active', 'start_date', 'end_date']);
+            abort_unless($year, 404);
+
+            if (
+                ! $year->is_current
+                || ! $year->is_active
+                || $today < $year->start_date
+                || $today > $year->end_date
+            ) {
+                abort(409);
+            }
+
+            $studentIds = collect($entries['entries'])
+                ->pluck('student_id')
+                ->map(fn ($studentId) => (int) $studentId)
+                ->all();
+            $this->lockBulkStudentsInAssignedRooms(
+                $studentIds,
+                $schoolId,
+                $yearId,
+                (int) $user->id,
+                $today,
+            );
+            $attendance = DB::table('attendance')
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('attendance_date', $today)
+                ->whereIn('student_id', $studentIds)
+                ->lockForUpdate()
+                ->get(['id', 'student_id', 'status', 'recorded_by'])
+                ->keyBy('student_id');
+
+            foreach ($entries['entries'] as $entry) {
+                $record = $attendance->get((int) $entry['student_id']);
+                if (
+                    ! $record
+                    || (int) $record->recorded_by !== (int) $user->id
+                    || $record->status !== $entry['saved_status']
+                ) {
+                    abort(409);
+                }
+            }
+
+            $createdStudentIds = [];
+            $restoreByStatus = [];
+            foreach ($entries['entries'] as $entry) {
+                if ($entry['previous_status'] === null) {
+                    $createdStudentIds[] = (int) $entry['student_id'];
+
+                    continue;
+                }
+
+                $restoreByStatus[$entry['previous_status']][] = (int) $entry['student_id'];
+            }
+
+            if ($createdStudentIds !== []) {
+                DB::table('attendance')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId)
+                    ->where('attendance_date', $today)
+                    ->where('recorded_by', $user->id)
+                    ->whereIn('student_id', $createdStudentIds)
+                    ->delete();
+            }
+
+            foreach ($restoreByStatus as $status => $studentIdsForStatus) {
+                DB::table('attendance')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId)
+                    ->where('attendance_date', $today)
+                    ->where('recorded_by', $user->id)
+                    ->whereIn('student_id', $studentIdsForStatus)
+                    ->update(['status' => $status]);
+            }
+
+            return count($entries['entries']);
+        });
+
+        return response()->json(['undone_count' => $undoneCount]);
     }
 
     public function store(Request $request): JsonResponse
@@ -458,6 +669,59 @@ class AttendanceController extends Controller
         });
 
         return response()->json(['deleted' => true]);
+    }
+
+    private function lockBulkStudentsInAssignedRooms(
+        array $studentIds,
+        int $schoolId,
+        int $yearId,
+        int $teacherId,
+        string $attendanceDate,
+    ): Collection {
+        $students = DB::table('students')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->whereIn('id', $studentIds)
+            ->lockForUpdate()
+            ->get(['id', 'room_id', 'status'])
+            ->keyBy('id');
+
+        if ($students->count() !== count($studentIds) || $students->contains(
+            fn ($student) => $student->status !== 'active',
+        )) {
+            abort(403);
+        }
+
+        $roomIds = $students->pluck('room_id')->filter()->unique()->values();
+        $assignedRoomIds = DB::table('rooms')
+            ->join('room_teachers', function (JoinClause $join) {
+                $join->on('room_teachers.room_id', '=', 'rooms.id')
+                    ->on('room_teachers.school_id', '=', 'rooms.school_id')
+                    ->on('room_teachers.year_id', '=', 'rooms.year_id');
+            })
+            ->where('rooms.school_id', $schoolId)
+            ->where('rooms.year_id', $yearId)
+            ->where('rooms.is_active', true)
+            ->whereIn('rooms.id', $roomIds)
+            ->where('room_teachers.teacher_id', $teacherId)
+            ->where('room_teachers.assigned_from', '<=', $attendanceDate)
+            ->where(function (Builder $dates) use ($attendanceDate) {
+                $dates->whereNull('room_teachers.assigned_until')
+                    ->orWhere('room_teachers.assigned_until', '>=', $attendanceDate);
+            })
+            ->lockForUpdate()
+            ->pluck('rooms.id')
+            ->map(fn ($roomId) => (int) $roomId)
+            ->all();
+
+        if ($students->contains(
+            fn ($student) => $student->room_id === null
+                || ! in_array((int) $student->room_id, $assignedRoomIds, true),
+        )) {
+            abort(403);
+        }
+
+        return $students;
     }
 
     private function roomsForYear(int $schoolId, int $yearId, string $role, int $userId, stdClass $year): Collection

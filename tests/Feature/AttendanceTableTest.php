@@ -90,6 +90,322 @@ class AttendanceTableTest extends TestCase
         $this->getJson('/attendance/roster?year_id=1')->assertUnauthorized();
     }
 
+    public function test_bulk_attendance_requires_authentication(): void
+    {
+        $this->postJson('/attendance/bulk', [])->assertUnauthorized();
+        $this->postJson('/attendance/bulk/undo', [])->assertUnauthorized();
+    }
+
+    public function test_non_teacher_cannot_save_bulk_attendance(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'present'],
+            ],
+        ])->assertForbidden();
+
+        $this->assertDatabaseCount('attendance', 5);
+    }
+
+    public function test_teacher_can_save_mixed_attendance_for_assigned_students_in_one_request(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('attendance')->where('id', 1)->update(['note' => 'Keep this note']);
+        DB::table('students')->insert(collect(range(5, 15))
+            ->map(fn (int $studentId) => [
+                'id' => $studentId,
+                'school_id' => 1,
+                'year_id' => 1,
+                'room_id' => 1,
+                'student_number' => 'S-'.(100 + $studentId),
+                'full_name' => "Student {$studentId}",
+                'status' => 'active',
+            ])
+            ->all());
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $entries = [
+            ['student_id' => 1, 'status' => 'late'],
+            ['student_id' => 5, 'status' => 'absent'],
+            ...collect(range(6, 15))
+                ->map(fn (int $studentId) => ['student_id' => $studentId, 'status' => 'present'])
+                ->all(),
+        ];
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => $entries,
+        ])
+            ->assertOk()
+            ->assertJsonPath('saved_count', 12);
+
+        $this->assertDatabaseCount('attendance', 16);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 1,
+            'attendance_date' => '2026-10-10',
+            'status' => 'late',
+            'recorded_by' => 20,
+            'note' => 'Keep this note',
+        ]);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 5,
+            'attendance_date' => '2026-10-10',
+            'status' => 'absent',
+            'recorded_by' => 20,
+        ]);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 15,
+            'attendance_date' => '2026-10-10',
+            'status' => 'present',
+            'recorded_by' => 20,
+        ]);
+    }
+
+    public function test_bulk_attendance_rejects_a_room_outside_the_teacher_assignment_without_partial_writes(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 1,
+            'student_number' => 'S-102',
+            'full_name' => 'Adam Active',
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 5, 'status' => 'present'],
+                ['student_id' => 2, 'status' => 'absent'],
+            ],
+        ])->assertForbidden();
+
+        $this->assertDatabaseCount('attendance', 5);
+        $this->assertDatabaseMissing('attendance', [
+            'student_id' => 5,
+            'attendance_date' => '2026-10-10',
+        ]);
+    }
+
+    public function test_bulk_attendance_is_limited_to_the_current_active_academic_year(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 3,
+            'entries' => [
+                ['student_id' => 4, 'status' => 'present'],
+            ],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+
+        $this->assertDatabaseCount('attendance', 5);
+    }
+
+    public function test_bulk_attendance_cannot_overwrite_another_teachers_record(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('attendance')->where('id', 1)->update(['recorded_by' => 21]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'absent'],
+            ],
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 1,
+            'status' => 'present',
+            'recorded_by' => 21,
+        ]);
+    }
+
+    public function test_teacher_can_undo_a_saved_attendance_batch(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('attendance')->where('id', 1)->update(['note' => 'Keep this note']);
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 1,
+            'student_number' => 'S-102',
+            'full_name' => 'Adam Active',
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'late'],
+                ['student_id' => 5, 'status' => 'absent'],
+            ],
+        ])->assertOk();
+
+        $this->postJson('/attendance/bulk/undo', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'saved_status' => 'late', 'previous_status' => 'present'],
+                ['student_id' => 5, 'saved_status' => 'absent', 'previous_status' => null],
+            ],
+        ])
+            ->assertOk()
+            ->assertJsonPath('undone_count', 2);
+
+        $this->assertDatabaseCount('attendance', 5);
+        $this->assertDatabaseHas('attendance', [
+            'id' => 1,
+            'status' => 'present',
+            'recorded_by' => 20,
+            'note' => 'Keep this note',
+        ]);
+        $this->assertDatabaseMissing('attendance', [
+            'student_id' => 5,
+            'attendance_date' => '2026-10-10',
+        ]);
+    }
+
+    public function test_bulk_undo_rejects_stale_records_without_partial_changes(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 1,
+            'student_number' => 'S-102',
+            'full_name' => 'Adam Active',
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'late'],
+                ['student_id' => 5, 'status' => 'absent'],
+            ],
+        ])->assertOk();
+        DB::table('attendance')->where('id', 1)->update(['status' => 'excused']);
+
+        $this->postJson('/attendance/bulk/undo', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'saved_status' => 'late', 'previous_status' => 'present'],
+                ['student_id' => 5, 'saved_status' => 'absent', 'previous_status' => null],
+            ],
+        ])->assertConflict();
+
+        $this->assertDatabaseHas('attendance', ['id' => 1, 'status' => 'excused']);
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => 5,
+            'attendance_date' => '2026-10-10',
+            'status' => 'absent',
+        ]);
+    }
+
+    public function test_non_teacher_cannot_undo_bulk_attendance(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/attendance/bulk/undo', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'saved_status' => 'present', 'previous_status' => null],
+            ],
+        ])->assertForbidden();
+
+        $this->assertDatabaseCount('attendance', 5);
+    }
+
+    public function test_bulk_attendance_rejects_invalid_duplicate_and_unexpected_entry_fields(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'present'],
+                ['student_id' => '1', 'status' => 'absent'],
+            ],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('entries.1.student_id');
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'unknown', 'recorded_by' => 21],
+            ],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['entries.0', 'entries.0.status']);
+
+        $this->assertDatabaseCount('attendance', 5);
+    }
+
+    public function test_bulk_attendance_rolls_back_the_whole_batch_when_the_database_rejects_an_insert(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('students')->insert([
+            'id' => 5,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => 1,
+            'student_number' => 'S-102',
+            'full_name' => 'Adam Active',
+            'status' => 'active',
+        ]);
+        DB::statement(
+            "CREATE TRIGGER reject_bulk_attendance_insert
+            BEFORE INSERT ON attendance
+            WHEN NEW.student_id = 5
+            BEGIN
+                SELECT RAISE(ABORT, 'simulated batch failure');
+            END",
+        );
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->postJson('/attendance/bulk', [
+            'year_id' => 1,
+            'entries' => [
+                ['student_id' => 1, 'status' => 'late'],
+                ['student_id' => 5, 'status' => 'absent'],
+            ],
+        ])->assertServerError();
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => 1,
+            'status' => 'present',
+        ]);
+        $this->assertDatabaseMissing('attendance', [
+            'student_id' => 5,
+            'attendance_date' => '2026-10-10',
+        ]);
+        $this->assertDatabaseCount('attendance', 5);
+    }
+
     public function test_admin_sees_only_school_records_for_the_selected_year(): void
     {
         $this->seedAttendance();
@@ -277,6 +593,18 @@ class AttendanceTableTest extends TestCase
             ->assertJsonPath('rooms.0.id', 2)
             ->assertJsonCount(1, 'rooms.0.students')
             ->assertJsonPath('rooms.0.students.0.name', 'Amina Benali');
+    }
+
+    public function test_teacher_roster_marks_another_teachers_record_as_read_only(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        DB::table('attendance')->where('id', 1)->update(['recorded_by' => 21]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/attendance/roster?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('rooms.0.students.0.can_edit', false);
     }
 
     public function test_attendance_roster_is_unavailable_for_a_past_year(): void
