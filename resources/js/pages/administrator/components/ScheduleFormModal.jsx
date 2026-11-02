@@ -3,6 +3,7 @@ import Icon from '../../../components/Icon';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
+import { findScheduleConflict } from '../../../lib/scheduleConflicts';
 
 function today() {
     const date = new Date();
@@ -10,13 +11,13 @@ function today() {
     return date.toISOString().slice(0, 10);
 }
 
-function initialValues(schedule) {
+function initialValues(schedule, defaults = {}) {
     return {
         room_id: schedule ? String(schedule.room_id) : '',
         teacher_id: schedule ? String(schedule.teacher_id) : '',
-        day_of_week: schedule ? String(schedule.day_of_week) : '1',
-        starts_at: schedule?.starts_at ?? '09:00',
-        ends_at: schedule?.ends_at ?? '10:00',
+        day_of_week: schedule ? String(schedule.day_of_week) : String(defaults.day_of_week ?? '1'),
+        starts_at: schedule?.starts_at ?? defaults.starts_at ?? '09:00',
+        ends_at: schedule?.ends_at ?? defaults.ends_at ?? '10:00',
         valid_from: schedule?.valid_from ?? today(),
         valid_until: schedule?.valid_until ?? '',
         label: schedule?.label ?? '',
@@ -29,6 +30,8 @@ export default function ScheduleFormModal({
     yearId,
     rooms,
     teachers,
+    schedules = [],
+    defaultValues,
     onClose,
     onSaved,
 }) {
@@ -38,6 +41,14 @@ export default function ScheduleFormModal({
     const [error, setError] = useState(null);
     const formId = useId();
     const isEditing = Boolean(schedule?.id);
+    const conflict = findScheduleConflict(schedules, form, schedule?.id);
+    const conflictResource = conflict?.roomConflict && conflict?.teacherConflict
+        ? t.schedules.overlapRoomAndTeacher(conflict.schedule.room_name, conflict.schedule.teacher_name)
+        : conflict?.roomConflict
+            ? t.schedules.overlapRoom(conflict.schedule.room_name)
+            : conflict
+                ? t.schedules.overlapTeacher(conflict.schedule.teacher_name)
+                : '';
     const handleClose = useCallback(() => {
         if (!saving) onClose();
     }, [onClose, saving]);
@@ -54,9 +65,9 @@ export default function ScheduleFormModal({
     useEffect(() => {
         if (!open) return;
 
-        setForm(initialValues(schedule));
+        setForm(initialValues(schedule, defaultValues));
         setError(null);
-    }, [open, schedule]);
+    }, [open, schedule, defaultValues]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -232,6 +243,20 @@ export default function ScheduleFormModal({
                     </label>
                 </div>
                 {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
+                {conflict && (
+                    <p
+                        id={`${formId}-schedule-conflict`}
+                        role="alert"
+                        aria-live="assertive"
+                        className="rounded-lg border border-error/30 bg-error-container px-3 py-2.5 text-[13px] leading-5 text-on-error-container dark:border-error/40 dark:bg-[#4a2626]/50 dark:text-[#ffdad6]"
+                    >
+                        {t.schedules.overlapLive(
+                            conflictResource,
+                            conflict.schedule.starts_at,
+                            conflict.schedule.ends_at,
+                        )}
+                    </p>
+                )}
                 <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:flex-row">
                     <button
                         type="button"
@@ -243,7 +268,8 @@ export default function ScheduleFormModal({
                     </button>
                     <button
                         type="submit"
-                        disabled={saving || rooms.length === 0 || teachers.length === 0}
+                        aria-describedby={conflict ? `${formId}-schedule-conflict` : undefined}
+                        disabled={saving || rooms.length === 0 || teachers.length === 0 || Boolean(conflict)}
                         className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
                     >
                         <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
