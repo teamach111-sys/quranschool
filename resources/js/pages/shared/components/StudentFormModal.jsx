@@ -98,6 +98,7 @@ export default function StudentFormModal({
     const [selectedSurahId, setSelectedSurahId] = useState(null);
     const [reEnrollmentStudents, setReEnrollmentStudents] = useState([]);
     const [reEnrollmentSelection, setReEnrollmentSelection] = useState('');
+    const [lastAutoFilledReEnrollment, setLastAutoFilledReEnrollment] = useState(null);
     const formId = useId();
     const isEditing = Boolean(student?.id);
 
@@ -114,6 +115,7 @@ export default function StudentFormModal({
         setSelectedSurahId(null);
         setReEnrollmentStudents([]);
         setReEnrollmentSelection('');
+        setLastAutoFilledReEnrollment(null);
         setLoading(true);
 
         const query = yearId ? `?year_id=${encodeURIComponent(yearId)}` : '';
@@ -155,6 +157,19 @@ export default function StudentFormModal({
                                 nextValues.room_id = previousYearStudent.room_id ? String(previousYearStudent.room_id) : current.room_id;
                                 nextValues.status = current.status && current.status !== 'active' ? current.status : 'active';
                                 nextValues.enrollment_date = previousYearStudent.enrollment_date ?? current.enrollment_date;
+                                setLastAutoFilledReEnrollment({
+                                    id: previousYearStudent.id ?? '',
+                                    values: {
+                                        full_name: nextValues.full_name ?? '',
+                                        birth_date: nextValues.birth_date ?? '',
+                                        guardian_name: nextValues.guardian_name ?? '',
+                                        guardian_phone: nextValues.guardian_phone ?? '',
+                                        guardian_email: nextValues.guardian_email ?? '',
+                                        room_id: nextValues.room_id ?? '',
+                                        status: nextValues.status ?? 'active',
+                                        enrollment_date: nextValues.enrollment_date ?? '',
+                                    },
+                                });
                             }
 
                             return nextValues;
@@ -186,6 +201,7 @@ export default function StudentFormModal({
     const applyReEnrollmentSelection = (studentId) => {
         if (!studentId || !Array.isArray(reEnrollmentStudents) || !reEnrollmentStudents.length) {
             setReEnrollmentSelection('');
+            setLastAutoFilledReEnrollment(null);
             setForm((current) => ({
                 ...initialValues(student),
                 ...current,
@@ -199,17 +215,31 @@ export default function StudentFormModal({
         if (!candidate) return;
 
         setReEnrollmentSelection(studentId);
+        const previousAutoValues = lastAutoFilledReEnrollment?.values ?? {};
         setForm((current) => ({
             ...current,
-            full_name: candidate.full_name || current.full_name,
-            birth_date: candidate.birth_date || current.birth_date,
-            guardian_name: candidate.guardian_name || current.guardian_name,
-            guardian_phone: candidate.guardian_phone || current.guardian_phone,
-            guardian_email: candidate.guardian_email || current.guardian_email,
-            room_id: candidate.room_id ? String(candidate.room_id) : current.room_id,
-            status: current.status && current.status !== 'active' ? current.status : 'active',
-            enrollment_date: candidate.enrollment_date || current.enrollment_date,
+            full_name: current.full_name === previousAutoValues.full_name && candidate.full_name ? candidate.full_name : (candidate.full_name || current.full_name),
+            birth_date: current.birth_date === previousAutoValues.birth_date && candidate.birth_date ? candidate.birth_date : (candidate.birth_date || current.birth_date),
+            guardian_name: current.guardian_name === previousAutoValues.guardian_name && candidate.guardian_name ? candidate.guardian_name : (candidate.guardian_name || current.guardian_name),
+            guardian_phone: current.guardian_phone === previousAutoValues.guardian_phone && candidate.guardian_phone ? candidate.guardian_phone : (candidate.guardian_phone || current.guardian_phone),
+            guardian_email: current.guardian_email === previousAutoValues.guardian_email && candidate.guardian_email ? candidate.guardian_email : (candidate.guardian_email || current.guardian_email),
+            room_id: current.room_id === previousAutoValues.room_id && candidate.room_id ? String(candidate.room_id) : (candidate.room_id ? String(candidate.room_id) : current.room_id),
+            status: current.status === previousAutoValues.status && candidate.status ? candidate.status : (current.status && current.status !== 'active' ? current.status : 'active'),
+            enrollment_date: current.enrollment_date === previousAutoValues.enrollment_date && candidate.enrollment_date ? candidate.enrollment_date : (candidate.enrollment_date || current.enrollment_date),
         }));
+        setLastAutoFilledReEnrollment({
+            id: candidate.id ?? studentId,
+            values: {
+                full_name: candidate.full_name ?? '',
+                birth_date: candidate.birth_date ?? '',
+                guardian_name: candidate.guardian_name ?? '',
+                guardian_phone: candidate.guardian_phone ?? '',
+                guardian_email: candidate.guardian_email ?? '',
+                room_id: candidate.room_id ? String(candidate.room_id) : '',
+                status: 'active',
+                enrollment_date: candidate.enrollment_date ?? '',
+            },
+        });
         setError(null);
     };
 
