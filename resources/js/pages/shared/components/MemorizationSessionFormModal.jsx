@@ -191,6 +191,33 @@ export default function MemorizationSessionFormModal({
         });
     }, [form.ayah_end, form.ayah_start, form.surah_end, form.surah_start, form.student_id, isEditing, lang, open, progressSessions]);
 
+    useEffect(() => {
+        if (!open || !form.surah_start || !form.ayah_start || !form.surah_end || !form.ayah_end) {
+            return;
+        }
+
+        const generatedLabel = formatPortionRange(form, lang);
+        if (!generatedLabel || form.portion_label) {
+            return;
+        }
+
+        setForm((current) => {
+            if (!current.surah_start || !current.ayah_start || !current.surah_end || !current.ayah_end) {
+                return current;
+            }
+
+            const nextLabel = formatPortionRange(current, lang);
+            if (!nextLabel || current.portion_label) {
+                return current;
+            }
+
+            return {
+                ...current,
+                portion_label: nextLabel,
+            };
+        });
+    }, [form, lang, open]);
+
     const handleChange = (event) => {
         const { name, value } = event.target;
         setForm((current) => {
