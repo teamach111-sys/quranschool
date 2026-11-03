@@ -127,6 +127,13 @@ export default function StudentFormModal({
                 } else {
                     setRooms(Array.isArray(data.rooms) ? data.rooms : []);
                     setCanEditYear(Boolean(data.is_editable));
+
+                    if (!student?.id && !form.student_number && data.next_student_number) {
+                        setForm((current) => ({
+                            ...current,
+                            student_number: data.next_student_number,
+                        }));
+                    }
                 }
             })
             .catch((loadError) => {

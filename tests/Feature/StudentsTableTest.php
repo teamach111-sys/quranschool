@@ -194,6 +194,59 @@ class StudentsTableTest extends TestCase
         ]);
     }
 
+    public function test_admin_generates_the_next_student_number_when_none_is_provided(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $first = $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => 'New Student One',
+            'birth_date' => '2016-04-12',
+            'guardian_name' => 'Parent One',
+            'guardian_phone' => '0600000103',
+            'guardian_email' => 'parent1@example.com',
+            'room_id' => 1,
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+            'notes' => 'First enrollment',
+        ]);
+
+        $first->assertCreated()->assertJsonPath('student.student_number', 'QS-2026-103');
+
+        $second = $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => 'New Student Two',
+            'birth_date' => '2016-04-13',
+            'guardian_name' => 'Parent Two',
+            'guardian_phone' => '0600000104',
+            'guardian_email' => 'parent2@example.com',
+            'room_id' => 1,
+            'enrollment_date' => '2026-09-11',
+            'status' => 'active',
+            'notes' => 'Second enrollment',
+        ]);
+
+        $second->assertCreated()->assertJsonPath('student.student_number', 'QS-2026-104');
+
+        $this->assertDatabaseHas('students', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'student_number' => 'QS-2026-103',
+            'full_name' => 'New Student One',
+        ]);
+
+        $this->assertDatabaseHas('students', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'student_number' => 'QS-2026-104',
+            'full_name' => 'New Student Two',
+        ]);
+    }
+
     public function test_secretary_can_update_student_details_and_room_in_the_same_year(): void
     {
         $this->actingAs(new GenericUser([

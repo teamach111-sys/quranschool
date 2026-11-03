@@ -92,9 +92,12 @@ class StudentsController extends Controller
             ->where('id', $yearId)
             ->first(['is_active']);
 
+        $nextStudentNumber = $this->nextStudentNumberForYear($schoolId, $yearId);
+
         return response()->json([
             'year_id' => $yearId,
             'is_editable' => (bool) $year?->is_active,
+            'next_student_number' => $nextStudentNumber,
             'rooms' => DB::table('rooms')
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
@@ -271,6 +274,9 @@ class StudentsController extends Controller
         $yearId = $this->validateYearId($request, $schoolId);
         $this->ensureYearIsEditable($schoolId, $yearId);
         $student = $this->validatedStudent($request, $schoolId, $yearId);
+        if (empty($student['student_number'])) {
+            $student['student_number'] = $this->nextStudentNumberForYear($schoolId, $yearId);
+        }
         $now = now();
 
         $studentId = DB::transaction(function () use ($student, $schoolId, $yearId, $now) {
@@ -384,6 +390,39 @@ class StudentsController extends Controller
         ]);
 
         return (int) $validated['year_id'];
+    }
+
+    private function nextStudentNumberForYear(int $schoolId, int $yearId): string
+    {
+        $year = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('id', $yearId)
+            ->first(['year_label', 'start_date']);
+
+        $yearPrefix = $year?->year_label
+            ? (string) explode('-', (string) $year->year_label)[0]
+            : ($year?->start_date ? (new \DateTimeImmutable($year->start_date))->format('Y') : now()->format('Y'));
+
+        $highestSequence = DB::table('students')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->whereNotNull('student_number')
+            ->pluck('student_number')
+            ->reduce(function (?int $carry, mixed $value): ?int {
+                $number = trim((string) $value);
+
+                if (preg_match('/^QS-(\d{4})-(\d+)$/', $number, $matches)) {
+                    return max((int) ($carry ?? 0), (int) $matches[2]);
+                }
+
+                if (preg_match('/^S-(\d+)$/', $number, $matches)) {
+                    return max((int) ($carry ?? 0), (int) $matches[1]);
+                }
+
+                return $carry;
+            }, 0);
+
+        return sprintf('QS-%s-%03d', $yearPrefix, ($highestSequence ?? 0) + 1);
     }
 
     private function ensureYearIsEditable(int $schoolId, int $yearId): void
