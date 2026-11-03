@@ -619,6 +619,17 @@ class StudentsTableTest extends TestCase
             'enrollment_date' => '2024-09-01',
         ]);
 
+        DB::table('students')->insert([
+            'id' => 12,
+            'school_id' => 1,
+            'year_id' => 4,
+            'room_id' => 1,
+            'student_number' => 'QS-2024-010',
+            'full_name' => 'Withdrawn Previous Student',
+            'status' => 'withdrawn',
+            'enrollment_date' => '2024-09-02',
+        ]);
+
         $this->actingAs(new GenericUser([
             'id' => 10,
             'school_id' => 1,
@@ -629,6 +640,16 @@ class StudentsTableTest extends TestCase
             ->assertOk()
             ->assertJsonPath('previous_year_students.0.full_name', 'Returning Student')
             ->assertJsonCount(1, 'previous_year_students');
+
+        $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => 'Withdrawn Student Attempt',
+            're_enrollment_student_id' => 12,
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('re_enrollment_student_id');
     }
 
     public function test_student_number_must_be_unique_per_year_and_room_must_match_school_and_year(): void

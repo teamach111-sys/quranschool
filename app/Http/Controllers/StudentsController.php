@@ -424,6 +424,7 @@ class StudentsController extends Controller
         return DB::table('students')
             ->where('school_id', $schoolId)
             ->where('year_id', $previousYear->id)
+            ->whereIn('status', ['active', 'paused'])
             ->orderByDesc('enrollment_date')
             ->orderByDesc('id')
             ->limit(20)
@@ -467,6 +468,7 @@ class StudentsController extends Controller
             ->where('id', (int) $selectedId)
             ->where('school_id', $schoolId)
             ->where('year_id', '!=', $yearId)
+            ->whereIn('status', ['active', 'paused'])
             ->exists();
 
         if (! $exists) {
