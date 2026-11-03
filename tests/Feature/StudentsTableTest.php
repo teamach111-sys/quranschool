@@ -575,6 +575,50 @@ class StudentsTableTest extends TestCase
             ->assertJsonPath('student.status', 'active');
     }
 
+    public function test_re_enrollment_allows_a_user_override_of_the_default_active_status(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2025-2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        DB::table('students')->insert([
+            'id' => 10,
+            'school_id' => 1,
+            'year_id' => 3,
+            'room_id' => 1,
+            'student_number' => 'QS-2025-010',
+            'full_name' => 'Returning Student',
+            'status' => 'paused',
+            'enrollment_date' => '2025-09-10',
+            'birth_date' => '2014-04-06',
+            'guardian_name' => 'Parent Returning',
+            'guardian_phone' => '0600000998',
+            'guardian_email' => 'returning@example.com',
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->postJson('/students', [
+            'year_id' => 1,
+            're_enrollment_student_id' => 10,
+            'full_name' => 'Returning Student',
+            'enrollment_date' => '2026-09-15',
+            'status' => 'paused',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('student.status', 'paused');
+    }
+
     public function test_only_immediately_previous_year_students_are_offered_for_re_enrollment(): void
     {
         DB::table('academic_years')->insert([

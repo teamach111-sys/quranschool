@@ -153,7 +153,7 @@ export default function StudentFormModal({
                                 nextValues.guardian_phone = previousYearStudent.guardian_phone ?? current.guardian_phone;
                                 nextValues.guardian_email = previousYearStudent.guardian_email ?? current.guardian_email;
                                 nextValues.room_id = previousYearStudent.room_id ? String(previousYearStudent.room_id) : current.room_id;
-                                nextValues.status = previousYearStudent.status ?? current.status;
+                                nextValues.status = current.status && current.status !== 'active' ? current.status : 'active';
                                 nextValues.enrollment_date = previousYearStudent.enrollment_date ?? current.enrollment_date;
                             }
 
@@ -207,7 +207,7 @@ export default function StudentFormModal({
             guardian_phone: candidate.guardian_phone || current.guardian_phone,
             guardian_email: candidate.guardian_email || current.guardian_email,
             room_id: candidate.room_id ? String(candidate.room_id) : current.room_id,
-            status: 'active',
+            status: current.status && current.status !== 'active' ? current.status : 'active',
             enrollment_date: candidate.enrollment_date || current.enrollment_date,
         }));
         setError(null);
