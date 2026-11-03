@@ -154,7 +154,11 @@ export default function StudentFormModal({
                                 nextValues.guardian_name = previousYearStudent.guardian_name ?? current.guardian_name;
                                 nextValues.guardian_phone = previousYearStudent.guardian_phone ?? current.guardian_phone;
                                 nextValues.guardian_email = previousYearStudent.guardian_email ?? current.guardian_email;
-                                nextValues.room_id = previousYearStudent.room_id ? String(previousYearStudent.room_id) : current.room_id;
+                                const previousRoomId = previousYearStudent.room_id ? String(previousYearStudent.room_id) : '';
+                                const validCurrentYearRoom = previousRoomId && Array.isArray(data.rooms)
+                                    ? data.rooms.some((room) => String(room.id) === previousRoomId)
+                                    : false;
+                                nextValues.room_id = validCurrentYearRoom ? previousRoomId : current.room_id;
                                 nextValues.status = current.status && current.status !== 'active' ? current.status : 'active';
                                 nextValues.enrollment_date = previousYearStudent.enrollment_date ?? current.enrollment_date;
                                 setLastAutoFilledReEnrollment({
@@ -216,6 +220,9 @@ export default function StudentFormModal({
 
         setReEnrollmentSelection(studentId);
         const previousAutoValues = lastAutoFilledReEnrollment?.values ?? {};
+        const candidateRoomId = candidate.room_id && rooms.some((room) => String(room.id) === String(candidate.room_id))
+            ? String(candidate.room_id)
+            : '';
         setForm((current) => ({
             ...current,
             full_name: current.full_name === previousAutoValues.full_name && candidate.full_name ? candidate.full_name : (candidate.full_name || current.full_name),
@@ -223,7 +230,7 @@ export default function StudentFormModal({
             guardian_name: current.guardian_name === previousAutoValues.guardian_name && candidate.guardian_name ? candidate.guardian_name : (candidate.guardian_name || current.guardian_name),
             guardian_phone: current.guardian_phone === previousAutoValues.guardian_phone && candidate.guardian_phone ? candidate.guardian_phone : (candidate.guardian_phone || current.guardian_phone),
             guardian_email: current.guardian_email === previousAutoValues.guardian_email && candidate.guardian_email ? candidate.guardian_email : (candidate.guardian_email || current.guardian_email),
-            room_id: current.room_id === previousAutoValues.room_id && candidate.room_id ? String(candidate.room_id) : (candidate.room_id ? String(candidate.room_id) : current.room_id),
+            room_id: current.room_id === previousAutoValues.room_id && candidateRoomId ? candidateRoomId : (candidateRoomId || current.room_id),
             status: current.status === previousAutoValues.status && candidate.status ? candidate.status : (current.status && current.status !== 'active' ? current.status : 'active'),
             enrollment_date: current.enrollment_date === previousAutoValues.enrollment_date && candidate.enrollment_date ? candidate.enrollment_date : (candidate.enrollment_date || current.enrollment_date),
         }));
@@ -235,7 +242,7 @@ export default function StudentFormModal({
                 guardian_name: candidate.guardian_name ?? '',
                 guardian_phone: candidate.guardian_phone ?? '',
                 guardian_email: candidate.guardian_email ?? '',
-                room_id: candidate.room_id ? String(candidate.room_id) : '',
+                room_id: candidateRoomId,
                 status: 'active',
                 enrollment_date: candidate.enrollment_date ?? '',
             },

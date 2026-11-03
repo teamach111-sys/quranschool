@@ -517,13 +517,23 @@ class StudentsController extends Controller
             return;
         }
 
+        $roomId = $request->input('room_id');
+        if ($roomId === null || $roomId === '') {
+            $roomId = DB::table('rooms')
+                ->where('id', $previousStudent->room_id)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->where('is_active', true)
+                ->value('id');
+        }
+
         $request->merge([
             'full_name' => trim((string) $request->input('full_name', $previousStudent->full_name)) ?: $previousStudent->full_name,
             'birth_date' => $request->input('birth_date', $previousStudent->birth_date) ?: $previousStudent->birth_date,
             'guardian_name' => $request->input('guardian_name', $previousStudent->guardian_name) ?: $previousStudent->guardian_name,
             'guardian_phone' => $request->input('guardian_phone', $previousStudent->guardian_phone) ?: $previousStudent->guardian_phone,
             'guardian_email' => $request->input('guardian_email', $previousStudent->guardian_email) ?: $previousStudent->guardian_email,
-            'room_id' => $request->input('room_id', $previousStudent->room_id) ?: $previousStudent->room_id,
+            'room_id' => $roomId,
             'status' => $request->input('status', 'active') ?: 'active',
             'enrollment_date' => $request->input('enrollment_date', $previousStudent->enrollment_date) ?: $previousStudent->enrollment_date,
         ]);
