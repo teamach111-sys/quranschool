@@ -2,6 +2,8 @@ import React from 'react';
 import Icon from '../../../components/Icon';
 import { useLanguage } from '../../../hooks/useLanguage';
 
+const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
+
 const alertCategories = [
     { key: 'missed_attendance', title: 'missedAttendance', icon: 'fact_check', tone: 'text-error dark:text-error-container' },
     { key: 'late_payments', title: 'latePayments', icon: 'payments', tone: 'text-error dark:text-error-container' },
@@ -32,6 +34,18 @@ function alertRecordUrl(category, item) {
 
     const query = new URLSearchParams({ [target.parameter]: String(target.id) });
     return `#/${target.page}?${query.toString()}`;
+}
+
+function alertCategoryUrl(category) {
+    const pages = {
+        missed_attendance: 'presences',
+        late_payments: 'paiements-finances',
+        repeated_absences: 'presences',
+        rooms_without_active_teacher: 'groupes-attribution',
+        inactive_users_with_pending_items: 'utilisateurs-roles',
+    };
+
+    return pages[category] ? `#/${pages[category]}` : null;
 }
 
 export default function AdminDashboardAlerts({ alerts, latePaymentRollover = null }) {
@@ -119,6 +133,8 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
             <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-2">
                 {alertCategories.map((category) => {
                     const items = alerts[category.key];
+                    const visibleItems = items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT);
+                    const categoryUrl = alertCategoryUrl(category.key);
 
                     return (
                         <article
@@ -135,41 +151,51 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
                                 </div>
                             </div>
                             {items.length > 0 ? (
-                                <ul className="mt-3 flex flex-col gap-2">
-                                    {items.map((item) => {
-                                        const href = alertRecordUrl(category.key, item);
-                                        const itemKey = category.key === 'missed_attendance'
-                                            ? `${item.room_id}-${item.attendance_date}`
-                                            : item.id ?? item.student_id ?? item.room_id ?? item.user_id;
+                                <>
+                                    <ul className="mt-3 flex flex-col gap-2">
+                                        {visibleItems.map((item) => {
+                                            const href = alertRecordUrl(category.key, item);
+                                            const itemKey = category.key === 'missed_attendance'
+                                                ? `${item.room_id}-${item.attendance_date}`
+                                                : item.id ?? item.student_id ?? item.room_id ?? item.user_id;
 
-                                        return (
-                                            <li
-                                                key={itemKey}
-                                                className="border-t border-outline-variant pt-2 text-[12px] leading-5 dark:border-tertiary-container"
-                                            >
-                                                {href ? (
-                                                    <a
-                                                        href={href}
-                                                        className="flex min-h-11 flex-col gap-1 rounded px-2 py-1 text-on-surface outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary dark:text-inverse-on-surface dark:hover:bg-tertiary-container"
-                                                    >
-                                                        {renderAlertDetails(category.key, item)}
-                                                        <span className="inline-flex items-center gap-1 font-semibold text-primary dark:text-primary-fixed-dim">
-                                                            {t.dashboardStats.alerts.openRecord}
-                                                            <Icon name={isRTL ? 'arrow_back' : 'arrow_forward'} className="text-[15px]" />
-                                                        </span>
-                                                    </a>
-                                                ) : (
-                                                    <div className="flex flex-col gap-1 px-2 py-1">
-                                                        {renderAlertDetails(category.key, item)}
-                                                        <span role="status" className="text-error dark:text-error-container">
-                                                            {t.dashboardStats.alerts.recordUnavailable}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
+                                            return (
+                                                <li
+                                                    key={itemKey}
+                                                    className="border-t border-outline-variant pt-2 text-[12px] leading-5 dark:border-tertiary-container"
+                                                >
+                                                    {href ? (
+                                                        <a
+                                                            href={href}
+                                                            className="flex min-h-11 flex-col gap-1 rounded px-2 py-1 text-on-surface outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary dark:text-inverse-on-surface dark:hover:bg-tertiary-container"
+                                                        >
+                                                            {renderAlertDetails(category.key, item)}
+                                                            <span className="inline-flex items-center gap-1 font-semibold text-primary dark:text-primary-fixed-dim">
+                                                                {t.dashboardStats.alerts.openRecord}
+                                                                <Icon name={isRTL ? 'arrow_back' : 'arrow_forward'} className="text-[15px]" />
+                                                            </span>
+                                                        </a>
+                                                    ) : (
+                                                        <div className="flex flex-col gap-1 px-2 py-1">
+                                                            {renderAlertDetails(category.key, item)}
+                                                            <span role="status" className="text-error dark:text-error-container">
+                                                                {t.dashboardStats.alerts.recordUnavailable}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                    {items.length > visibleItems.length && categoryUrl && (
+                                        <a
+                                            href={categoryUrl}
+                                            className="mt-3 inline-flex min-h-11 items-center text-[12px] font-semibold text-primary hover:underline dark:text-primary-fixed-dim"
+                                        >
+                                            {t.dashboardStats.alerts.viewAll(numberFormat.format(items.length))}
+                                        </a>
+                                    )}
+                                </>
                             ) : (
                                 <p className="mt-3 text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
                                     {t.dashboardStats.alerts.empty}

@@ -11,6 +11,7 @@ import {
 const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-tertiary-container dark:bg-inverse-surface';
 const textClass = 'text-on-surface dark:text-inverse-on-surface';
 const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim';
+const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
 const alertCategories = ['late_payments', 'repeated_absences', 'incomplete_student_records'];
 const paymentToneClasses = {
     paid: 'bg-primary-fixed text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container',
@@ -118,7 +119,7 @@ export default function TableauDeBordSecretariat() {
                     </div>
                     {dashboard.new_or_incomplete_students.length > 0 ? (
                         <ul className="flex flex-col gap-2">
-                            {dashboard.new_or_incomplete_students.map((student) => (
+                            {dashboard.new_or_incomplete_students.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((student) => (
                                 <li key={student.id} className={cardClass}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
@@ -166,7 +167,7 @@ export default function TableauDeBordSecretariat() {
                     </div>
                     {dashboard.attendance_follow_up_items.length > 0 ? (
                         <ul className="flex flex-col gap-2">
-                            {dashboard.attendance_follow_up_items.map((item) => (
+                            {dashboard.attendance_follow_up_items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((item) => (
                                 <li key={item.id} className={`${cardClass} flex items-center justify-between gap-3`}>
                                     <div className="min-w-0">
                                         <p className={`truncate text-[13px] leading-5 font-semibold ${textClass}`}>{item.student_name}</p>
@@ -198,7 +199,7 @@ export default function TableauDeBordSecretariat() {
                     </div>
                     {dashboard.recent_payments.length > 0 ? (
                         <ul className="flex flex-col gap-2">
-                            {dashboard.recent_payments.map((payment) => (
+                            {dashboard.recent_payments.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((payment) => (
                                 <li key={payment.id} className={`${cardClass} flex items-center justify-between gap-3`}>
                                     <div className="min-w-0">
                                         <p className={`truncate text-[13px] leading-5 font-semibold ${textClass}`}>{payment.student_name}</p>
@@ -237,7 +238,7 @@ export default function TableauDeBordSecretariat() {
                                                     <p className={`text-[13px] leading-5 font-medium ${textClass}`}>{alertLabel}</p>
                                                 </div>
                                                 <ul className="flex flex-col gap-2">
-                                                    {dashboard.repeated_absence_items.map((student) => (
+                                                    {dashboard.repeated_absence_items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((student) => (
                                                         <li key={student.student_id}>
                                                             <a
                                                                 href={`#/presences?student_id=${encodeURIComponent(student.student_id)}`}

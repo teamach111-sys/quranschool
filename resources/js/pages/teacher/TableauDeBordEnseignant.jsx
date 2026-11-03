@@ -12,6 +12,7 @@ import {
 const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-tertiary-container dark:bg-inverse-surface';
 const textClass = 'text-on-surface dark:text-inverse-on-surface';
 const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim';
+const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
 const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export default function TableauDeBordEnseignant() {
@@ -84,6 +85,19 @@ export default function TableauDeBordEnseignant() {
     const pendingAttendanceSlotIds = new Set(
         dashboard?.attendance_tasks?.slots?.map((slot) => slot.id) ?? [],
     );
+    const todayLessons = dashboard?.today_lessons ?? [];
+    const visibleTodayLessons = todayLessons.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT);
+    const actionableLesson = todayLessons.find((lesson) => (
+        lesson.id === dashboard?.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id)
+    ));
+    if (actionableLesson && !visibleTodayLessons.some((lesson) => lesson.id === actionableLesson.id)) {
+        visibleTodayLessons[visibleTodayLessons.length < DASHBOARD_LIST_PREVIEW_LIMIT
+            ? visibleTodayLessons.length
+            : DASHBOARD_LIST_PREVIEW_LIMIT - 1] = actionableLesson;
+        visibleTodayLessons.sort((first, second) => first.starts_at.localeCompare(second.starts_at));
+    }
+    const visibleAttendanceStudents = dashboard?.attendance_tasks?.students
+        ?.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT) ?? [];
     const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00Z`));
     const refreshDashboard = () => setRefreshCount((current) => current + 1);
 
@@ -196,7 +210,7 @@ export default function TableauDeBordEnseignant() {
                 </div>
                 {dashboard.groups.length > 0 ? (
                     <ul className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        {dashboard.groups.map((group) => (
+                        {dashboard.groups.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((group) => (
                             <li key={group.id} className={cardClass}>
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex min-w-0 items-center gap-3">
@@ -221,10 +235,15 @@ export default function TableauDeBordEnseignant() {
 
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                 <section className="flex min-w-0 flex-col gap-3">
-                    <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{t.teacherDashboard.todayLessons}</h2>
+                    <div className="flex items-center justify-between gap-3">
+                        <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{t.teacherDashboard.todayLessons}</h2>
+                        <a href="#/mon-emploi-du-temps" className="shrink-0 text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim">
+                            {t.teacherDashboard.viewSchedule}
+                        </a>
+                    </div>
                     {dashboard.today_lessons.length > 0 ? (
                         <ul className="flex flex-col gap-2">
-                            {dashboard.today_lessons.map((lesson) => (
+                            {visibleTodayLessons.map((lesson) => (
                                 <li key={lesson.id} className={`${cardClass} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
                                     <div className="flex min-w-0 items-center justify-between gap-3">
                                         <div className="min-w-0">
@@ -268,7 +287,7 @@ export default function TableauDeBordEnseignant() {
                     </div>
                     {dashboard.upcoming_lessons.length > 0 ? (
                         <ul className="flex flex-col gap-2">
-                            {dashboard.upcoming_lessons.map((lesson) => (
+                            {dashboard.upcoming_lessons.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((lesson) => (
                                 <li key={`${lesson.id}-${lesson.lesson_date}`} className={`${cardClass} flex items-center justify-between gap-3`}>
                                     <div className="min-w-0">
                                         <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{lesson.label}</p>
@@ -297,16 +316,16 @@ export default function TableauDeBordEnseignant() {
                     {dashboard.attendance_tasks.students.length > 0 ? (
                         <>
                             <ul className="flex flex-col gap-2">
-                                {dashboard.attendance_tasks.students.map((student) => (
+                                {visibleAttendanceStudents.map((student) => (
                                     <li key={student.student_id} className={`${cardClass} flex items-center justify-between gap-3`}>
                                         <p className={`min-w-0 truncate text-[13px] leading-5 font-medium ${textClass}`}>{student.student_name}</p>
                                         <span className={`shrink-0 text-[12px] leading-5 ${secondaryTextClass}`}>{student.room_name}</span>
                                     </li>
                                 ))}
                             </ul>
-                            {dashboard.attendance_tasks.count > dashboard.attendance_tasks.students.length && (
+                            {dashboard.attendance_tasks.count > visibleAttendanceStudents.length && (
                                 <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>
-                                    {t.teacherDashboard.moreAttendanceTasks(numberFormat.format(dashboard.attendance_tasks.count - dashboard.attendance_tasks.students.length))}
+                                    {t.teacherDashboard.moreAttendanceTasks(numberFormat.format(dashboard.attendance_tasks.count - visibleAttendanceStudents.length))}
                                 </p>
                             )}
                         </>
@@ -324,7 +343,7 @@ export default function TableauDeBordEnseignant() {
                     </div>
                     {dashboard.recent_sessions.length > 0 ? (
                         <ul className="flex flex-col gap-2">
-                            {dashboard.recent_sessions.map((session) => (
+                            {dashboard.recent_sessions.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((session) => (
                                 <li key={session.id} className={cardClass}>
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
