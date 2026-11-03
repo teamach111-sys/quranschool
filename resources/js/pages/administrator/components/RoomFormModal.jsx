@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
@@ -123,7 +124,7 @@ export default function RoomFormModal({ open, room = null, yearId, onClose, onSa
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-level`} className={labelClass}>{t.rooms.form.level}</label>
-                        <select
+                        <SelectInput
                             id={`${formId}-level`}
                             name="level"
                             value={form.level}
@@ -133,7 +134,7 @@ export default function RoomFormModal({ open, room = null, yearId, onClose, onSa
                             {Object.entries(t.rooms.levels).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-capacity`} className={labelClass}>{t.rooms.form.capacity}</label>

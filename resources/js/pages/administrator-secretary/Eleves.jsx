@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import SelectInput from '../../components/SelectInput';
 import Icon from '../../components/Icon';
 import SearchInput from '../../components/SearchInput';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -279,7 +280,7 @@ export default function Eleves({ routeParams = {} }) {
                 />
             </label>
             <div className="flex flex-col gap-2 sm:flex-row">
-                <select
+                <SelectInput
                     value={status}
                     onChange={(event) => setStatus(event.target.value)}
                     aria-label={t.students.statusFilter}
@@ -289,8 +290,8 @@ export default function Eleves({ routeParams = {} }) {
                     <option value="active">{statusLabel('active')}</option>
                     <option value="paused">{statusLabel('paused')}</option>
                     <option value="withdrawn">{statusLabel('withdrawn')}</option>
-                </select>
-                <select
+                </SelectInput>
+                <SelectInput
                     value={roomId}
                     onChange={(event) => setRoomId(event.target.value)}
                     aria-label={t.students.roomFilter}
@@ -298,7 +299,7 @@ export default function Eleves({ routeParams = {} }) {
                 >
                     <option value="all">{t.students.allRooms}</option>
                     {rooms.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-                </select>
+                </SelectInput>
                 {canManage && yearIsWritable && (
                     <button
                         type="button"

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import Modal from '../../../modals/desktopmodal';
@@ -113,7 +114,7 @@ export default function RoomTeacherAssignmentModal({
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-room`} className={labelClass}>{t.rooms.form.targetRoom}</label>
-                        <select
+                        <SelectInput
                             id={`${formId}-room`}
                             name="room_id"
                             required
@@ -125,11 +126,11 @@ export default function RoomTeacherAssignmentModal({
                             {activeRooms.map((item) => (
                                 <option key={item.id} value={item.id}>{item.name}</option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-teacher`} className={labelClass}>{t.rooms.form.teacher}</label>
-                        <select
+                        <SelectInput
                             id={`${formId}-teacher`}
                             name="teacher_id"
                             required
@@ -141,7 +142,7 @@ export default function RoomTeacherAssignmentModal({
                             {teachers.map((teacher) => (
                                 <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">

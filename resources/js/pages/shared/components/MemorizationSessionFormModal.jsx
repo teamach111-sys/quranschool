@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
 import DateInput from '../../../components/DateInput';
@@ -67,7 +68,7 @@ function SurahPicker({
                 value={searchTerm}
                 onChange={onSearchChange}
             />
-            <select
+            <SelectInput
                 aria-label={selectLabel}
                 name={name}
                 value={value}
@@ -80,7 +81,7 @@ function SurahPicker({
                         {formatQuranNumber(surah.id, lang)} — {surah.name} — {surah.name_ar}
                     </option>
                 ))}
-            </select>
+            </SelectInput>
         </div>
     );
 }
@@ -421,7 +422,7 @@ export default function MemorizationSessionFormModal({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <label className={labelClass}>
                         {t.memorization.columns.room}
-                        <select
+                        <SelectInput
                             required
                             name="room_id"
                             value={form.room_id}
@@ -430,11 +431,11 @@ export default function MemorizationSessionFormModal({
                         >
                             <option value="">{t.memorization.selectRoom}</option>
                             {roomOptions.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className={labelClass}>
                         {t.memorization.columns.student}
-                        <select
+                        <SelectInput
                             required
                             name="student_id"
                             value={form.student_id}
@@ -448,12 +449,12 @@ export default function MemorizationSessionFormModal({
                                     {student.name}{student.student_number ? ` (${student.student_number})` : ''}
                                 </option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </label>
                     {canManage && (
                         <label className={labelClass}>
                             {t.memorization.columns.teacher}
-                            <select
+                            <SelectInput
                                 required
                                 name="teacher_id"
                                 value={form.teacher_id}
@@ -462,7 +463,7 @@ export default function MemorizationSessionFormModal({
                             >
                                 <option value="">{t.memorization.selectTeacher}</option>
                                 {teacherOptions.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
-                            </select>
+                            </SelectInput>
                         </label>
                     )}
                     <label className={labelClass}>
@@ -654,7 +655,7 @@ export default function MemorizationSessionFormModal({
                     </div>
                     <label className={labelClass}>
                         {t.memorization.columns.evaluation}
-                        <select
+                        <SelectInput
                             required
                             name="evaluation"
                             value={form.evaluation}
@@ -664,7 +665,7 @@ export default function MemorizationSessionFormModal({
                             {Object.entries(t.memorization.evaluations).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className={`${labelClass} sm:col-span-2`}>
                         {t.memorization.columns.notes}

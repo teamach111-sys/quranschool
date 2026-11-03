@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
@@ -284,7 +285,7 @@ export default function UsersTable({ routeParams = {} }) {
                 />
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
-                <select
+                <SelectInput
                     value={roleFilter}
                     onChange={(event) => setRoleFilter(event.target.value)}
                     aria-label={t.users.roleFilter}
@@ -292,8 +293,8 @@ export default function UsersTable({ routeParams = {} }) {
                 >
                     <option value="">{t.users.allRoles}</option>
                     {roles.map((role) => <option key={role.id} value={role.id}>{roleLabel(role)}</option>)}
-                </select>
-                <select
+                </SelectInput>
+                <SelectInput
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value)}
                     aria-label={t.users.statusFilter}
@@ -302,7 +303,7 @@ export default function UsersTable({ routeParams = {} }) {
                     <option value="">{t.users.allStatuses}</option>
                     <option value="active">{t.users.active}</option>
                     <option value="inactive">{t.users.inactive}</option>
-                </select>
+                </SelectInput>
                 <button
                     type="button"
                     onClick={() => openUserForm()}
@@ -380,14 +381,14 @@ export default function UsersTable({ routeParams = {} }) {
                         <>
                             <label className={labelClass}>
                                 {t.users.columns.role}
-                                <select
+                                <SelectInput
                                     required
                                     value={roleForm.role_id}
                                     onChange={(event) => setRoleForm((current) => ({ ...current, role_id: event.target.value }))}
                                     className={inputClass}
                                 >
                                     {roles.map((role) => <option key={role.id} value={role.id}>{roleLabel(role)}</option>)}
-                                </select>
+                                </SelectInput>
                             </label>
                             <label className={labelClass}>
                                 {t.users.reason}

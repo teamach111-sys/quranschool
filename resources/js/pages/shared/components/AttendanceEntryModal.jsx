@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import Modal from '../../../modals/desktopmodal';
@@ -107,7 +108,7 @@ export default function AttendanceEntryModal({
                     <label className={labelClass}>
                         {t.attendance.columns.student}
                         {isNewMark && !selectedStudentId ? (
-                            <select
+                            <SelectInput
                                 required
                                 name="student_id"
                                 value={form.student_id}
@@ -120,7 +121,7 @@ export default function AttendanceEntryModal({
                                         {student.name}{student.student_number ? ` (${student.student_number})` : ''}
                                     </option>
                                 ))}
-                            </select>
+                            </SelectInput>
                         ) : (
                             <input
                                 readOnly
@@ -151,7 +152,7 @@ export default function AttendanceEntryModal({
                                 className={`${inputClass} cursor-not-allowed opacity-75`}
                             />
                         ) : (
-                            <select
+                            <SelectInput
                                 required
                                 name="status"
                                 value={form.status}
@@ -161,7 +162,7 @@ export default function AttendanceEntryModal({
                                 {Object.entries(t.attendance.statuses).map(([value, label]) => (
                                     <option key={value} value={value}>{label}</option>
                                 ))}
-                            </select>
+                            </SelectInput>
                         )}
                     </label>
                     <label className={`${labelClass} sm:col-span-2`}>

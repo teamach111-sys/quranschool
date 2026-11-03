@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
@@ -159,7 +160,7 @@ export default function UserFormModal({ open, user = null, roles = [], onClose, 
                     </label>
                     <label className={labelClass}>
                         {t.users.columns.language}
-                        <select
+                        <SelectInput
                             required
                             value={form.language}
                             name="language"
@@ -169,11 +170,11 @@ export default function UserFormModal({ open, user = null, roles = [], onClose, 
                             {Object.entries(t.users.languages).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className={labelClass}>
                         {t.users.columns.role}
-                        <select
+                        <SelectInput
                             required
                             disabled={user?.is_self}
                             value={form.role_id}
@@ -187,7 +188,7 @@ export default function UserFormModal({ open, user = null, roles = [], onClose, 
                                     {locale === 'ar' ? role.name_ar : role.name_fr}
                                 </option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className="flex min-h-10 items-center gap-2 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         <input

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
@@ -476,18 +477,18 @@ export default function RoomsTable({ routeParams = {} }) {
                 <form id="room-placement-form" onSubmit={placeStudent} className="flex flex-col gap-4">
                     <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.rooms.form.student}
-                        <select required value={placementForm.student_id} onChange={(event) => setPlacementForm((form) => ({ ...form, student_id: event.target.value }))} className={controlClass}>
+                        <SelectInput required value={placementForm.student_id} onChange={(event) => setPlacementForm((form) => ({ ...form, student_id: event.target.value }))} className={controlClass}>
                             <option value="">{t.rooms.form.selectStudent}</option>
                             {students.map((student) => (
                                 <option key={student.id} value={student.id}>
                                     {student.full_name}{student.student_number ? ` · ${student.student_number}` : ''}
                                 </option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.rooms.form.targetRoom}
-                        <select value={placementForm.room_id} onChange={(event) => setPlacementForm((form) => ({ ...form, room_id: event.target.value }))} className={controlClass}>
+                        <SelectInput value={placementForm.room_id} onChange={(event) => setPlacementForm((form) => ({ ...form, room_id: event.target.value }))} className={controlClass}>
                             <option value="">{t.rooms.form.unassigned}</option>
                             {activeRooms.map((room) => (
                                 <option
@@ -498,7 +499,7 @@ export default function RoomsTable({ routeParams = {} }) {
                                     {room.name} ({room.student_count} / {room.capacity})
                                 </option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </label>
                     {isPlacementTargetFull && <p role="status" className="text-[12px] text-error dark:text-error-container">{t.rooms.fullRoomError}</p>}
                     {error && <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>}

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
 import DateInput from '../../../components/DateInput';
@@ -430,7 +431,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     />
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <select
+                    <SelectInput
                         name="student_id"
                         value={filters.student_id}
                         onChange={handleFilterChange}
@@ -443,10 +444,10 @@ export default function PaymentsTable({ routeParams = {} }) {
                                 {student.name}{student.student_number ? ` (${student.student_number})` : ''}
                             </option>
                         ))}
-                    </select>
+                    </SelectInput>
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <select
+                    <SelectInput
                         name="status"
                         value={filters.status}
                         onChange={handleFilterChange}
@@ -459,7 +460,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                             : t.payments.statuses).map(([status, label]) => (
                             <option key={status} value={status}>{label}</option>
                         ))}
-                    </select>
+                    </SelectInput>
                 </div>
                 <div className="min-w-0 xl:flex-1">
                     <DateInput

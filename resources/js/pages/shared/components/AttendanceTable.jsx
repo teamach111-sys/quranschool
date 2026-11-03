@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import AttendanceRosterModal from './AttendanceRosterModal';
@@ -298,26 +299,26 @@ export default function AttendanceTable({ routeParams = {} }) {
             )}
             <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
                 <div className="min-w-0 xl:flex-1">
-                    <select name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.attendance.filters.room} className={inputClass}>
+                    <SelectInput name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.attendance.filters.room} className={inputClass}>
                         <option value="">{t.attendance.filters.allRooms}</option>
                         {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-                    </select>
+                    </SelectInput>
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} aria-label={t.attendance.filters.teacher} className={inputClass}>
+                    <SelectInput name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} aria-label={t.attendance.filters.teacher} className={inputClass}>
                         <option value="">{t.attendance.filters.allTeachers}</option>
                         {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
-                    </select>
+                    </SelectInput>
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <select name="student_id" value={filters.student_id} onChange={handleFilterChange} aria-label={t.attendance.filters.student} className={inputClass}>
+                    <SelectInput name="student_id" value={filters.student_id} onChange={handleFilterChange} aria-label={t.attendance.filters.student} className={inputClass}>
                         <option value="">{t.attendance.filters.allStudents}</option>
                         {students.map((student) => (
                             <option key={student.id} value={student.id}>
                                 {student.name}{student.student_number ? ` (${student.student_number})` : ''}
                             </option>
                         ))}
-                    </select>
+                    </SelectInput>
                 </div>
                 <div className="min-w-0 xl:flex-1">
                     <DateInput
@@ -329,12 +330,12 @@ export default function AttendanceTable({ routeParams = {} }) {
                     />
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <select name="status" value={filters.status} onChange={handleFilterChange} aria-label={t.attendance.filters.status} className={inputClass}>
+                    <SelectInput name="status" value={filters.status} onChange={handleFilterChange} aria-label={t.attendance.filters.status} className={inputClass}>
                         <option value="">{t.attendance.filters.allStatuses}</option>
                         {Object.entries(t.attendance.statuses).map(([value, label]) => (
                             <option key={value} value={value}>{label}</option>
                         ))}
-                    </select>
+                    </SelectInput>
                 </div>
             </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
@@ -329,7 +330,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                             {t.payments.roomScope}
-                            <select
+                            <SelectInput
                                 value={roomFilter}
                                 onChange={(event) => setRoomFilter(event.target.value)}
                                 className="min-h-11 rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:bg-inverse-surface dark:text-inverse-on-surface"
@@ -338,11 +339,11 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                                 {options.rooms.map((room) => (
                                     <option key={room.id} value={room.id}>{room.name}</option>
                                 ))}
-                            </select>
+                            </SelectInput>
                         </label>
                         <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                             {t.payments.levelScope}
-                            <select
+                            <SelectInput
                                 value={levelFilter}
                                 onChange={(event) => setLevelFilter(event.target.value)}
                                 className="min-h-11 rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:bg-inverse-surface dark:text-inverse-on-surface"
@@ -351,7 +352,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                                 {options.levels.map((level) => (
                                     <option key={level} value={level}>{t.rooms.levels[level]}</option>
                                 ))}
-                            </select>
+                            </SelectInput>
                         </label>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3">

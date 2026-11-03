@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import SelectInput from '../../components/SelectInput';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
 
@@ -176,14 +177,14 @@ export default function MonProfil() {
                     </label>
                     <label className={labelClass}>
                         {t.profileForm.language}
-                        <select
+                        <SelectInput
                             className={inputClass}
                             onChange={(event) => updateProfileField('language', event.target.value)}
                             value={profile.language}
                         >
                             <option value="fr">{t.profileForm.french}</option>
                             <option value="ar">{t.profileForm.arabic}</option>
-                        </select>
+                        </SelectInput>
                     </label>
                     {profileError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{profileError}</p>}
                     {profileMessage && <p role="status" className="text-[13px] leading-5 text-primary dark:text-primary-fixed-dim">{profileMessage}</p>}

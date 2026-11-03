@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import MemorizationSessionFormModal from './MemorizationSessionFormModal';
@@ -204,28 +205,28 @@ export default function MemorizationSessionsTable() {
             )}
             <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
                 <div className="min-w-0 xl:flex-1">
-                    <select name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.memorization.filters.room} className={inputClass}>
+                    <SelectInput name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.memorization.filters.room} className={inputClass}>
                         <option value="">{t.memorization.filters.allRooms}</option>
                         {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-                    </select>
+                    </SelectInput>
                 </div>
                 {canFilterTeacher && (
                     <div className="min-w-0 xl:flex-1">
-                        <select name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} aria-label={t.memorization.filters.teacher} className={inputClass}>
+                        <SelectInput name="teacher_id" value={filters.teacher_id} onChange={handleFilterChange} aria-label={t.memorization.filters.teacher} className={inputClass}>
                             <option value="">{t.memorization.filters.allTeachers}</option>
                             {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
-                        </select>
+                        </SelectInput>
                     </div>
                 )}
                 <div className="min-w-0 xl:flex-1">
-                    <select name="student_id" value={filters.student_id} onChange={handleFilterChange} aria-label={t.memorization.filters.student} className={inputClass}>
+                    <SelectInput name="student_id" value={filters.student_id} onChange={handleFilterChange} aria-label={t.memorization.filters.student} className={inputClass}>
                         <option value="">{t.memorization.filters.allStudents}</option>
                         {students.map((student) => (
                             <option key={student.id} value={student.id}>
                                 {student.name}{student.student_number ? ` (${student.student_number})` : ''}
                             </option>
                         ))}
-                    </select>
+                    </SelectInput>
                 </div>
                 <div className="min-w-0 xl:flex-1">
                     <DateInput

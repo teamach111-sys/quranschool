@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
@@ -597,7 +598,7 @@ export default function StudentFormModal({
                 {!student?.id && reEnrollmentStudents.length > 0 && (
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-re_enrollment_student_id`} className={labelClass}>Returning student</label>
-                        <select
+                        <SelectInput
                             id={`${formId}-re_enrollment_student_id`}
                             value={reEnrollmentSelection}
                             onChange={(event) => applyReEnrollmentSelection(event.target.value)}
@@ -607,7 +608,7 @@ export default function StudentFormModal({
                             {reEnrollmentStudents.map((candidate) => (
                                 <option key={candidate.id} value={candidate.id}>{candidate.full_name}</option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </div>
                 )}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -637,10 +638,10 @@ export default function StudentFormModal({
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-room_id`} className={labelClass}>{t.students.columns.room}</label>
-                        <select id={`${formId}-room_id`} name="room_id" value={form.room_id} onChange={handleChange} className={inputClass}>
+                        <SelectInput id={`${formId}-room_id`} name="room_id" value={form.room_id} onChange={handleChange} className={inputClass}>
                             <option value="">{t.students.unassigned}</option>
                             {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-                        </select>
+                        </SelectInput>
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-enrollment_date`} className={labelClass}>{t.students.form.enrollmentDate}</label>
@@ -648,11 +649,11 @@ export default function StudentFormModal({
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-status`} className={labelClass}>{t.students.columns.status}</label>
-                        <select id={`${formId}-status`} name="status" value={form.status} onChange={handleChange} className={inputClass}>
+                        <SelectInput id={`${formId}-status`} name="status" value={form.status} onChange={handleChange} className={inputClass}>
                             {['active', 'paused', 'withdrawn'].map((value) => (
                                 <option key={value} value={value}>{t.students.statuses[value]}</option>
                             ))}
-                        </select>
+                        </SelectInput>
                     </div>
                     <div className="flex flex-col gap-1.5 sm:col-span-2">
                         <label htmlFor={`${formId}-notes`} className={labelClass}>{t.students.form.notes}</label>

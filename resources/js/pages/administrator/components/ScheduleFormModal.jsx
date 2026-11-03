@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import TimeInput from '../../../components/TimeInput';
@@ -152,7 +153,7 @@ export default function ScheduleFormModal({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <label className={labelClass}>
                         {t.schedules.columns.room}
-                        <select
+                        <SelectInput
                             required
                             name="room_id"
                             value={form.room_id}
@@ -161,11 +162,11 @@ export default function ScheduleFormModal({
                         >
                             <option value="">{t.schedules.selectRoom}</option>
                             {rooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className={labelClass}>
                         {t.schedules.columns.teacher}
-                        <select
+                        <SelectInput
                             required
                             name="teacher_id"
                             value={form.teacher_id}
@@ -174,11 +175,11 @@ export default function ScheduleFormModal({
                         >
                             <option value="">{t.schedules.selectTeacher}</option>
                             {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className={labelClass}>
                         {t.schedules.columns.day}
-                        <select
+                        <SelectInput
                             required
                             name="day_of_week"
                             value={form.day_of_week}
@@ -186,7 +187,7 @@ export default function ScheduleFormModal({
                             className={inputClass}
                         >
                             {days.map((day, index) => <option key={day} value={index + 1}>{day}</option>)}
-                        </select>
+                        </SelectInput>
                     </label>
                     <label className={labelClass}>
                         {t.schedules.columns.label}

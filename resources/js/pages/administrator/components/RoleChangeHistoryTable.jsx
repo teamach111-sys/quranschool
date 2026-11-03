@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import SelectInput from '../../../components/SelectInput';
 import SearchInput from '../../../components/SearchInput';
 import DateInput from '../../../components/DateInput';
 import { apiFetch } from '../../../lib/api';
@@ -139,7 +140,7 @@ export default function RoleChangeHistoryTable() {
                 />
             </div>
             <div className="min-w-0">
-                <select
+                <SelectInput
                     value={userFilter}
                     onChange={(event) => setUserFilter(event.target.value)}
                     aria-label={t.roleHistory.userFilter}
@@ -147,7 +148,7 @@ export default function RoleChangeHistoryTable() {
                 >
                     <option value="">{t.roleHistory.allUsers}</option>
                     {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
-                </select>
+                </SelectInput>
             </div>
             <div className="min-w-0">
                 <DateInput
