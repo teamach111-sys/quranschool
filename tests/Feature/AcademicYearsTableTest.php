@@ -71,6 +71,7 @@ class AcademicYearsTableTest extends TestCase
             ->assertOk()
             ->assertJsonCount(2, 'years')
             ->assertJsonPath('can_manage', true)
+            ->assertJsonPath('current_id', 1)
             ->assertJsonPath('years.0.is_current', true)
             ->assertJsonPath('years.1.is_read_only', true);
     }
