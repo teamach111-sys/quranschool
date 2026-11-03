@@ -149,7 +149,7 @@ export default function PaymentsTable({ routeParams = {} }) {
         }).format(Number(payment.amount))} ${payment.currency}`
     );
     const collectionPayments = isSecretary
-        ? filteredPayments.filter((payment) => ['due', 'late'].includes(payment.status))
+        ? filteredPayments.filter((payment) => ['due', 'late', 'waived'].includes(payment.status))
         : filteredPayments;
     const focusedAlertPayment = focusedAlertPaymentId
         ? payments.find((payment) => String(payment.id) === focusedAlertPaymentId)
