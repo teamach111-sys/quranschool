@@ -337,7 +337,6 @@ export default function Eleves({ routeParams = {} }) {
                     labels={tableLabels}
                     rows={filteredStudents}
                     actions={rowActions}
-                    selectable
                     toolbar={toolbar}
                 />
             </div>
@@ -350,7 +349,6 @@ export default function Eleves({ routeParams = {} }) {
                     labels={tableLabels}
                     rows={filteredStudents}
                     actions={rowActions}
-                    selectable
                     toolbar={toolbar}
                 />
             </div>
