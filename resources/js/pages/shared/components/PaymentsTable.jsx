@@ -454,7 +454,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     >
                         <option value="">{t.payments.filters.allStatuses}</option>
                         {Object.entries(isSecretary
-                            ? { due: t.payments.statuses.due, late: t.payments.statuses.late }
+                            ? { due: t.payments.statuses.due, late: t.payments.statuses.late, waived: t.payments.statuses.waived }
                             : t.payments.statuses).map(([status, label]) => (
                             <option key={status} value={status}>{label}</option>
                         ))}

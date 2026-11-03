@@ -111,12 +111,17 @@ class PaymentsTableTest extends TestCase
             ->assertJsonPath('can_manage', false)
             ->assertJsonPath('can_record', true)
             ->assertJsonPath('is_secretary', true)
-            ->assertJsonCount(3, 'payments');
+            ->assertJsonCount(4, 'payments');
 
         $this->getJson('/payments/table?status=late')
             ->assertOk()
             ->assertJsonCount(1, 'payments')
             ->assertJsonPath('payments.0.guardian_phone', '0600000002');
+
+        $this->getJson('/payments/table?status=waived')
+            ->assertOk()
+            ->assertJsonCount(1, 'payments')
+            ->assertJsonPath('payments.0.status', 'waived');
 
         $this->getJson('/payments/table?year_id=2')->assertNotFound();
     }
@@ -246,6 +251,19 @@ class PaymentsTableTest extends TestCase
             ],
             [
                 'id' => 4,
+                'student_id' => 1,
+                'school_id' => 1,
+                'year_id' => 1,
+                'recorded_by' => 12,
+                'period_start' => '2026-08-01',
+                'period_end' => '2026-08-31',
+                'amount' => '35.00',
+                'currency' => 'MAD',
+                'status' => 'waived',
+                'notes' => 'Family exemption',
+            ],
+            [
+                'id' => 5,
                 'student_id' => 3,
                 'school_id' => 1,
                 'year_id' => 2,
@@ -257,7 +275,7 @@ class PaymentsTableTest extends TestCase
                 'status' => 'waived',
             ],
             [
-                'id' => 5,
+                'id' => 6,
                 'student_id' => 4,
                 'school_id' => 2,
                 'year_id' => 3,
