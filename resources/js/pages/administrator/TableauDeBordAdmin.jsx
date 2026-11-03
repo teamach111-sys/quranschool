@@ -145,7 +145,10 @@ export default function TableauDeBordAdmin() {
                 </div>
             </section>
 
-            <AdminDashboardAlerts alerts={summary.alerts} />
+            <AdminDashboardAlerts
+                alerts={summary.alerts}
+                latePaymentRollover={summary.late_payment_rollover}
+            />
         </div>
     );
 }

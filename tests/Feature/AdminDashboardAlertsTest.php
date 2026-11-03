@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Console\Commands\RolloverLatePayments;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -25,6 +27,8 @@ class AdminDashboardAlertsTest extends TestCase
             $table->string('year_label');
             $table->date('start_date');
             $table->date('end_date');
+            $table->boolean('is_current')->default(false);
+            $table->boolean('is_active')->default(false);
         });
 
         Schema::create('roles', function (Blueprint $table) {
@@ -107,11 +111,17 @@ class AdminDashboardAlertsTest extends TestCase
     {
         $this->seedDashboardData();
         $this->travelTo('2026-10-10 12:00:00');
+        Cache::put(RolloverLatePayments::reportCacheKey(1, 1), [
+            'count' => 3,
+            'ran_at' => '2026-10-10T00:05:00+00:00',
+        ]);
         $this->actingAs($this->user(10, 1, 'admin'));
 
         $response = $this->getJson('/admin/dashboard-summary?year_id=1');
 
         $response->assertOk()
+            ->assertJsonPath('late_payment_rollover.count', 3)
+            ->assertJsonPath('late_payment_rollover.ran_at', '2026-10-10T00:05:00+00:00')
             ->assertJsonCount(1, 'alerts.late_payments')
             ->assertJsonPath('alerts.late_payments.0.id', 1)
             ->assertJsonPath('alerts.late_payments.0.student_name', 'Mariam Ali')
@@ -169,6 +179,21 @@ class AdminDashboardAlertsTest extends TestCase
             ->assertJsonPath('alerts.repeated_absences.0.absence_count', 3)
             ->assertJsonPath('alerts.repeated_absences.0.latest_attendance_date', '2026-10-09')
             ->assertJsonPath('alerts.repeated_absences.0.room_name', 'Alpha');
+    }
+
+    public function test_admin_dashboard_does_not_show_the_rollover_report_for_a_historical_year(): void
+    {
+        $this->seedDashboardData();
+        Cache::put(RolloverLatePayments::reportCacheKey(1, 3), [
+            'count' => 4,
+            'ran_at' => '2026-10-10T00:05:00+00:00',
+        ]);
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/admin/dashboard-summary?year_id=3')
+            ->assertOk()
+            ->assertJsonPath('late_payment_rollover', null);
     }
 
     public function test_admin_sees_unmarked_schedule_dates_only_after_the_session_ends(): void
@@ -278,9 +303,9 @@ class AdminDashboardAlertsTest extends TestCase
             ['id' => 2, 'currency' => 'EUR'],
         ]);
         DB::table('academic_years')->insert([
-            ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30'],
-            ['id' => 2, 'school_id' => 2, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30'],
-            ['id' => 3, 'school_id' => 1, 'year_label' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-06-30'],
+            ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
+            ['id' => 2, 'school_id' => 2, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
+            ['id' => 3, 'school_id' => 1, 'year_label' => '2025-2026', 'start_date' => '2025-09-01', 'end_date' => '2026-06-30', 'is_current' => false, 'is_active' => false],
         ]);
         DB::table('roles')->insert([
             ['id' => 1, 'role_key' => 'admin'],

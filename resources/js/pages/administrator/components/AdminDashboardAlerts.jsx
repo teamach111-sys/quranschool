@@ -34,7 +34,7 @@ function alertRecordUrl(category, item) {
     return `#/${target.page}?${query.toString()}`;
 }
 
-export default function AdminDashboardAlerts({ alerts }) {
+export default function AdminDashboardAlerts({ alerts, latePaymentRollover = null }) {
     const { isRTL, lang, t } = useLanguage();
     const locale = lang === 'ar' ? 'ar-MA' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
@@ -104,6 +104,18 @@ export default function AdminDashboardAlerts({ alerts }) {
             <h2 id="dashboard-alerts-heading" className="text-[16px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
                 {t.dashboardStats.alerts.title}
             </h2>
+            {latePaymentRollover && (
+                <p
+                    role="status"
+                    className="flex items-start gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[12px] leading-5 text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim"
+                >
+                    <Icon name="autorenew" className="mt-0.5 shrink-0 text-[16px] text-primary dark:text-primary-fixed-dim" />
+                    {t.dashboardStats.alerts.lateRolloverReport(
+                        numberFormat.format(latePaymentRollover.count),
+                        dateFormat.format(new Date(latePaymentRollover.ran_at)),
+                    )}
+                </p>
+            )}
             <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-2">
                 {alertCategories.map((category) => {
                     const items = alerts[category.key];

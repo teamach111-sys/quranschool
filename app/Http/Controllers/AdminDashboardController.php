@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Actions\GetRepeatedAbsenceAlerts;
+use App\Console\Commands\RolloverLatePayments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
@@ -25,10 +27,13 @@ class AdminDashboardController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['year_label', 'start_date', 'end_date']);
+            ->first(['year_label', 'start_date', 'end_date', 'is_current', 'is_active']);
 
         abort_unless($year, 404);
 
+        $latePaymentRollover = $year->is_current && $year->is_active
+            ? Cache::get(RolloverLatePayments::reportCacheKey((int) $schoolId, $yearId))
+            : null;
         $now = now();
         $today = $now->toDateString();
         $missedAttendance = $this->missedAttendanceSessions(
@@ -201,6 +206,7 @@ class AdminDashboardController extends Controller
         return response()->json([
             'year_label' => $year->year_label,
             'currency' => DB::table('schools')->where('id', $schoolId)->value('currency') ?? 'MAD',
+            'late_payment_rollover' => $latePaymentRollover,
             'alerts' => [
                 'late_payments' => $latePayments,
                 'repeated_absences' => $repeatedAbsences,
