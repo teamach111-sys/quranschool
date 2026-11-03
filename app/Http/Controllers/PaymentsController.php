@@ -385,7 +385,7 @@ class PaymentsController extends Controller
                     ->where('year_id', $yearId)
                     ->lockForUpdate()
                     ->first(['status', 'payment_method', 'reference', 'notes']);
-                abort_unless($payment && in_array($payment->status, ['due', 'late'], true), 404);
+                abort_unless($payment && in_array($payment->status, ['due', 'late', 'waived'], true), 404);
                 $receipt = $validated['status'] === 'paid'
                     ? $this->generatePaymentReceipt($schoolId)
                     : null;
@@ -843,7 +843,7 @@ class PaymentsController extends Controller
      */
     private function validatedSecretaryPaymentUpdate(Request $request, string $currentStatus): array
     {
-        abort_unless(in_array($currentStatus, ['due', 'late'], true), 404);
+        abort_unless(in_array($currentStatus, ['due', 'late', 'waived'], true), 404);
 
         return $request->validate([
             'status' => ['required', Rule::in(['paid', 'late', 'waived'])],

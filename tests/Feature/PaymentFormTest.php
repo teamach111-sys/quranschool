@@ -298,6 +298,32 @@ class PaymentFormTest extends TestCase
         ]);
     }
 
+    public function test_secretary_can_update_a_waived_payment_and_refresh_its_note(): void
+    {
+        $this->seedPaymentData();
+        DB::table('payments')->where('id', 2)->update([
+            'status' => 'waived',
+            'notes' => 'Previous scholarship note.',
+            'paid_at' => null,
+            'payment_method' => null,
+            'reference' => null,
+        ]);
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->putJson('/payments/2', [
+            'year_id' => 1,
+            'status' => 'waived',
+            'notes' => 'Updated scholarship note.',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'status' => 'waived',
+            'notes' => 'Updated scholarship note.',
+            'recorded_by' => 12,
+        ]);
+    }
+
     public function test_secretary_can_mark_a_due_payment_late_without_payment_details(): void
     {
         $this->seedPaymentData();

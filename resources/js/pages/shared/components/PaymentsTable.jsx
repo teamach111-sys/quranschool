@@ -304,7 +304,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                 key: 'record',
                 icon: 'payments',
                 label: t.payments.record,
-                hidden: (payment) => !['due', 'late'].includes(payment.status),
+                hidden: (payment) => !['due', 'late', 'waived'].includes(payment.status),
                 onClick: (payment) => setEntry({ payment }),
             }]
             : [];
