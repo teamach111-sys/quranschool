@@ -38,6 +38,7 @@ export default function RoomsTable({ routeParams = {} }) {
     const openedAlertRoomId = useRef(null);
     const [placementOpen, setPlacementOpen] = useState(false);
     const [placementForm, setPlacementForm] = useState({ student_id: '', room_id: '' });
+    const [showOtherAgeStudents, setShowOtherAgeStudents] = useState(false);
     const [savingPlacement, setSavingPlacement] = useState(false);
 
     useEffect(() => {
@@ -50,6 +51,7 @@ export default function RoomsTable({ routeParams = {} }) {
             setArchiveRoom(null);
             setAssignmentRoom(null);
             setPlacementOpen(false);
+            setShowOtherAgeStudents(false);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -196,9 +198,19 @@ export default function RoomsTable({ routeParams = {} }) {
         : null;
     const displayedRooms = focusedAlertRoom ? [focusedAlertRoom] : rooms;
     const selectedStudent = students.find((student) => String(student.id) === placementForm.student_id);
+    const placementTargetRoom = activeRooms.find((room) => String(room.id) === placementForm.room_id);
+    const placementRoomHasAgeRange = placementTargetRoom !== undefined
+        && (placementTargetRoom.age_min !== null || placementTargetRoom.age_max !== null);
     const isPlacementTargetFull = activeRooms.some((room) => String(room.id) === placementForm.room_id
         && room.student_count >= room.capacity
         && selectedStudent?.room_id !== room.id);
+    const placementStudents = placementTargetRoom
+        ? students.filter((student) => showOtherAgeStudents
+            || !placementRoomHasAgeRange
+            || (student.age !== null
+                && (placementTargetRoom.age_min === null || student.age >= placementTargetRoom.age_min)
+                && (placementTargetRoom.age_max === null || student.age <= placementTargetRoom.age_max)))
+        : students;
     const columns = [
         {
             key: 'name',
@@ -259,6 +271,7 @@ export default function RoomsTable({ routeParams = {} }) {
             hidden: (room) => !room.is_active,
             onClick: (room) => {
                 setPlacementForm({ student_id: '', room_id: String(room.id) });
+                setShowOtherAgeStudents(false);
                 setPlacementOpen(true);
             },
         }] : []),
@@ -384,6 +397,7 @@ export default function RoomsTable({ routeParams = {} }) {
                     type="button"
                     onClick={() => {
                         setPlacementForm({ student_id: '', room_id: '' });
+                        setShowOtherAgeStudents(false);
                         setPlacementOpen(true);
                     }}
                     className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]"
@@ -477,18 +491,21 @@ export default function RoomsTable({ routeParams = {} }) {
                 <form id="room-placement-form" onSubmit={placeStudent} className="flex flex-col gap-4">
                     <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.rooms.form.student}
-                        <SelectInput required value={placementForm.student_id} onChange={(event) => setPlacementForm((form) => ({ ...form, student_id: event.target.value }))} className={controlClass}>
+                        <SelectInput required disabled={savingPlacement} value={placementForm.student_id} onChange={(event) => setPlacementForm((form) => ({ ...form, student_id: event.target.value }))} className={controlClass}>
                             <option value="">{t.rooms.form.selectStudent}</option>
-                            {students.map((student) => (
+                            {placementStudents.map((student) => (
                                 <option key={student.id} value={student.id}>
-                                    {student.full_name}{student.student_number ? ` · ${student.student_number}` : ''}
+                                    {student.full_name}{student.student_number ? ` · ${student.student_number}` : ''} · {student.age === null ? t.rooms.unknownAge : t.rooms.ageValue(student.age)}
                                 </option>
                             ))}
                         </SelectInput>
                     </label>
                     <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.rooms.form.targetRoom}
-                        <SelectInput value={placementForm.room_id} onChange={(event) => setPlacementForm((form) => ({ ...form, room_id: event.target.value }))} className={controlClass}>
+                        <SelectInput disabled={savingPlacement} value={placementForm.room_id} onChange={(event) => {
+                            setPlacementForm({ student_id: '', room_id: event.target.value });
+                            setShowOtherAgeStudents(false);
+                        }} className={controlClass}>
                             <option value="">{t.rooms.form.unassigned}</option>
                             {activeRooms.map((room) => (
                                 <option
@@ -501,6 +518,36 @@ export default function RoomsTable({ routeParams = {} }) {
                             ))}
                         </SelectInput>
                     </label>
+                    {placementTargetRoom && (
+                        <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-3 dark:bg-[#182620]">
+                            <p className="text-[11px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                                {t.rooms.placementAgeHint(t.rooms.ageRange(placementTargetRoom.age_min, placementTargetRoom.age_max))}
+                            </p>
+                            {placementRoomHasAgeRange && (
+                                <>
+                                    <label className="flex items-start gap-2 text-[11px] leading-4 font-medium text-on-surface dark:text-inverse-on-surface">
+                                        <input
+                                            type="checkbox"
+                                            checked={showOtherAgeStudents}
+                                            onChange={(event) => {
+                                                setShowOtherAgeStudents(event.target.checked);
+                                                setPlacementForm((form) => ({ ...form, student_id: '' }));
+                                            }}
+                                            disabled={savingPlacement}
+                                            className="mt-0.5 size-4 shrink-0 accent-primary"
+                                        />
+                                        <span>{t.rooms.placementOtherAges}</span>
+                                    </label>
+                                    {placementStudents.length === 0 && !showOtherAgeStudents && (
+                                        <p className="text-[11px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.rooms.placementNoAgeMatches}</p>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+                    {!placementTargetRoom && (
+                        <p className="text-[11px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.rooms.placementSelectRoomForAge}</p>
+                    )}
                     {isPlacementTargetFull && <p role="status" className="text-[12px] text-error dark:text-error-container">{t.rooms.fullRoomError}</p>}
                     {error && <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>}
                 </form>

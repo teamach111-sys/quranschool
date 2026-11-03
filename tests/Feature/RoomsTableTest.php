@@ -72,6 +72,7 @@ class RoomsTableTest extends TestCase
             $table->unsignedBigInteger('room_id')->nullable();
             $table->string('student_number')->nullable();
             $table->string('full_name');
+            $table->date('birth_date')->nullable();
             $table->string('status');
             $table->timestamps();
         });
@@ -141,6 +142,28 @@ class RoomsTableTest extends TestCase
             ->assertJsonMissing(['full_name' => 'Student Three'])
             ->assertJsonMissingPath('teachers')
             ->assertJsonMissingPath('assignments');
+    }
+
+    public function test_room_table_returns_student_ages_without_exposing_birth_dates(): void
+    {
+        $this->seedRooms();
+        $this->travelTo('2026-11-03 12:00:00');
+        DB::table('students')->where('id', 1)->update(['birth_date' => '2015-11-04']);
+        DB::table('students')->where('id', 3)->update(['birth_date' => '2015-11-03']);
+        DB::table('students')->where('id', 4)->update(['birth_date' => '2027-01-01']);
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $this->getJson('/rooms/table?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('students.1.full_name', 'Student One')
+            ->assertJsonPath('students.1.age', 10)
+            ->assertJsonPath('students.2.age', null)
+            ->assertJsonPath('students.3.age', 11)
+            ->assertJsonMissingPath('students.1.birth_date');
     }
 
     public function test_admin_can_create_and_update_rooms_with_valid_age_range_and_capacity(): void

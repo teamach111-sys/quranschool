@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -197,14 +198,19 @@ class RoomsController extends Controller
                 ->where('year_id', $yearId)
                 ->whereIn('status', ['active', 'paused'])
                 ->orderBy('full_name')
-                ->get(['id', 'full_name', 'student_number', 'room_id', 'status'])
-                ->map(fn ($student) => [
-                    'id' => (int) $student->id,
-                    'full_name' => $student->full_name,
-                    'student_number' => $student->student_number,
-                    'room_id' => $student->room_id === null ? null : (int) $student->room_id,
-                    'status' => $student->status,
-                ])
+                ->get(['id', 'full_name', 'student_number', 'room_id', 'status', 'birth_date'])
+                ->map(function ($student) {
+                    $birthDate = $student->birth_date === null ? null : Carbon::parse($student->birth_date);
+
+                    return [
+                        'id' => (int) $student->id,
+                        'full_name' => $student->full_name,
+                        'student_number' => $student->student_number,
+                        'room_id' => $student->room_id === null ? null : (int) $student->room_id,
+                        'status' => $student->status,
+                        'age' => $birthDate === null || $birthDate->isFuture() ? null : $birthDate->age,
+                    ];
+                })
                 ->values();
         }
 
