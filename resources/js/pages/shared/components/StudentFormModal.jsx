@@ -186,6 +186,12 @@ export default function StudentFormModal({
     const applyReEnrollmentSelection = (studentId) => {
         if (!studentId || !Array.isArray(reEnrollmentStudents) || !reEnrollmentStudents.length) {
             setReEnrollmentSelection('');
+            setForm((current) => ({
+                ...initialValues(student),
+                ...current,
+                student_number: current.student_number || '',
+            }));
+            setError(null);
             return;
         }
 

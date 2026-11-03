@@ -498,7 +498,7 @@ class StudentsTableTest extends TestCase
             're_enrollment_student_id' => 10,
             'student_number' => '',
             'birth_date' => '',
-            'guardian_name' => '',
+            'guardian_name' => 'Custom Guardian',
             'guardian_phone' => '',
             'guardian_email' => '',
             'room_id' => '',
@@ -508,7 +508,7 @@ class StudentsTableTest extends TestCase
         ])
             ->assertCreated()
             ->assertJsonPath('student.full_name', 'Returning Student')
-            ->assertJsonPath('student.guardian_name', 'Parent Returning')
+            ->assertJsonPath('student.guardian_name', 'Custom Guardian')
             ->assertJsonPath('student.birth_date', '2014-04-06');
     }
 
