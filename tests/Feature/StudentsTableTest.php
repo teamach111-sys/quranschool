@@ -652,6 +652,56 @@ class StudentsTableTest extends TestCase
             ->assertJsonValidationErrors('re_enrollment_student_id');
     }
 
+    public function test_re_enrollment_selection_must_reference_the_immediately_previous_year_when_selected_manually(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2025-2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        DB::table('academic_years')->insert([
+            'id' => 4,
+            'school_id' => 1,
+            'year_label' => '2024-2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        DB::table('students')->insert([
+            'id' => 11,
+            'school_id' => 1,
+            'year_id' => 4,
+            'room_id' => 1,
+            'student_number' => 'QS-2024-009',
+            'full_name' => 'Older Returning Student',
+            'status' => 'active',
+            'enrollment_date' => '2024-09-01',
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => 'Manual Older Re-enrollment Attempt',
+            're_enrollment_student_id' => 11,
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('re_enrollment_student_id');
+    }
+
     public function test_student_number_must_be_unique_per_year_and_room_must_match_school_and_year(): void
     {
         $this->actingAs(new GenericUser([

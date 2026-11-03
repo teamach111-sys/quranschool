@@ -400,7 +400,7 @@ class StudentsController extends Controller
         return (int) $validated['year_id'];
     }
 
-    private function previousYearStudentsForYear(int $schoolId, int $yearId): array
+    private function previousAcademicYearIdForSchoolYear(int $schoolId, int $yearId): ?int
     {
         $thisYear = DB::table('academic_years')
             ->where('school_id', $schoolId)
@@ -408,7 +408,7 @@ class StudentsController extends Controller
             ->first(['id', 'start_date']);
 
         if (! $thisYear || ! $thisYear->start_date) {
-            return [];
+            return null;
         }
 
         $previousYear = DB::table('academic_years')
@@ -417,13 +417,20 @@ class StudentsController extends Controller
             ->orderByDesc('start_date')
             ->first(['id']);
 
-        if (! $previousYear) {
+        return $previousYear?->id ?? null;
+    }
+
+    private function previousYearStudentsForYear(int $schoolId, int $yearId): array
+    {
+        $previousYearId = $this->previousAcademicYearIdForSchoolYear($schoolId, $yearId);
+
+        if ($previousYearId === null) {
             return [];
         }
 
         return DB::table('students')
             ->where('school_id', $schoolId)
-            ->where('year_id', $previousYear->id)
+            ->where('year_id', $previousYearId)
             ->whereIn('status', ['active', 'paused'])
             ->orderByDesc('enrollment_date')
             ->orderByDesc('id')
@@ -464,10 +471,12 @@ class StudentsController extends Controller
             return;
         }
 
+        $previousYearId = $this->previousAcademicYearIdForSchoolYear($schoolId, $yearId);
+
         $exists = DB::table('students')
             ->where('id', (int) $selectedId)
             ->where('school_id', $schoolId)
-            ->where('year_id', '!=', $yearId)
+            ->where('year_id', $previousYearId)
             ->whereIn('status', ['active', 'paused'])
             ->exists();
 
@@ -486,11 +495,12 @@ class StudentsController extends Controller
             return;
         }
 
+        $previousYearId = $this->previousAcademicYearIdForSchoolYear($schoolId, $yearId);
+
         $previousStudent = DB::table('students')
             ->where('id', $selectedId)
             ->where('school_id', $schoolId)
-            ->whereNot('year_id', $yearId)
-            ->orderByDesc('year_id')
+            ->when($previousYearId !== null, fn ($query) => $query->where('year_id', $previousYearId))
             ->first([
                 'id',
                 'full_name',
