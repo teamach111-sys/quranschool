@@ -206,11 +206,11 @@ export default function StudentFormModal({
         if (!studentId || !Array.isArray(reEnrollmentStudents) || !reEnrollmentStudents.length) {
             setReEnrollmentSelection('');
             setLastAutoFilledReEnrollment(null);
-            setForm((current) => ({
-                ...initialValues(student),
-                ...current,
-                student_number: current.student_number || '',
-            }));
+            setForm((current) => {
+                const clearedValues = initialValues(student);
+                clearedValues.student_number = current.student_number || clearedValues.student_number || '';
+                return clearedValues;
+            });
             setError(null);
             return;
         }
