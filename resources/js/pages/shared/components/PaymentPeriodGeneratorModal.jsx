@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
+import MonthInput from '../../../components/MonthInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -298,32 +299,30 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                             {t.payments.fromMonth}
-                            <input
-                                type="month"
+                            <MonthInput
+                                name="from_month"
                                 value={fromMonth}
                                 min={options.start_date.slice(0, 7)}
                                 max={options.end_date.slice(0, 7)}
-                                onChange={(event) => {
-                                    setFromMonth(event.target.value);
+                                onChange={({ target }) => {
+                                    setFromMonth(target.value);
                                     setPreview(null);
                                     setError('');
                                 }}
-                                className="min-h-11 rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:bg-inverse-surface dark:text-inverse-on-surface"
                             />
                         </label>
                         <label className="flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                             {t.payments.toMonth}
-                            <input
-                                type="month"
+                            <MonthInput
+                                name="to_month"
                                 value={toMonth}
                                 min={options.start_date.slice(0, 7)}
                                 max={options.end_date.slice(0, 7)}
-                                onChange={(event) => {
-                                    setToMonth(event.target.value);
+                                onChange={({ target }) => {
+                                    setToMonth(target.value);
                                     setPreview(null);
                                     setError('');
                                 }}
-                                className="min-h-11 rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:bg-inverse-surface dark:text-inverse-on-surface"
                             />
                         </label>
                     </div>

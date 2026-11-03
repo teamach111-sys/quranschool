@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { ar, fr } from 'date-fns/locale';
 import Icon from './Icon';
@@ -44,6 +44,7 @@ export default function DateInput({
     'aria-label': ariaLabel,
 }) {
     const { isRTL, lang } = useLanguage();
+    const portalId = useId();
 
     return (
         <DatePicker
@@ -60,7 +61,8 @@ export default function DateInput({
             className={`date-input__field ${readOnly ? 'date-input__field--readonly' : ''}`}
             placeholderText={isRTL ? 'يوم/شهر/سنة' : 'jj/mm/aaaa'}
             wrapperClassName={`date-input__wrapper w-full ${isRTL ? 'date-input__wrapper--rtl' : ''}`}
-            popperClassName={isRTL ? 'date-input__popper--rtl' : undefined}
+            popperClassName={`date-input__popper ${isRTL ? 'date-input__popper--rtl' : ''}`}
+            portalId={`date-input-popper-${portalId}`}
             locale={lang}
             dateFormat={isRTL ? 'yyyy/MM/dd' : 'dd/MM/yyyy'}
             calendarStartDay={isRTL ? 6 : 1}

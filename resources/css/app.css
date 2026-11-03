@@ -146,7 +146,8 @@
     }
 }
 
-.date-input__wrapper {
+.date-input__wrapper,
+.month-input__wrapper {
     display: block;
 }
 
@@ -195,17 +196,20 @@
     cursor: pointer;
 }
 
-.date-input__wrapper .react-datepicker__view-calendar-icon input {
+.date-input__wrapper .react-datepicker__view-calendar-icon input,
+.month-input__wrapper .react-datepicker__view-calendar-icon input {
     min-height: 2.5rem;
     padding-left: 2.5rem;
 }
 
-.date-input__wrapper--rtl .date-input__icon {
+.date-input__wrapper--rtl .date-input__icon,
+.month-input__wrapper--rtl .date-input__icon {
     right: 0.25rem;
     left: auto;
 }
 
-.date-input__wrapper--rtl .react-datepicker__view-calendar-icon input {
+.date-input__wrapper--rtl .react-datepicker__view-calendar-icon input,
+.month-input__wrapper--rtl .react-datepicker__view-calendar-icon input {
     padding-right: 2.5rem;
     padding-left: 0.75rem;
 }
@@ -238,15 +242,23 @@
 }
 
 .react-datepicker__day--selected,
-.react-datepicker__day--keyboard-selected {
+.react-datepicker__day--keyboard-selected,
+.react-datepicker__month-text--selected,
+.react-datepicker__month-text--keyboard-selected {
     background-color: var(--color-primary);
     color: var(--color-on-primary);
 }
 
 .react-datepicker__day--selected:hover,
-.react-datepicker__day--keyboard-selected:hover {
+.react-datepicker__day--keyboard-selected:hover,
+.react-datepicker__month-text--selected:hover,
+.react-datepicker__month-text--keyboard-selected:hover {
     background-color: var(--color-primary-container);
     color: var(--color-on-primary-container);
+}
+
+.react-datepicker__month-text:hover {
+    background-color: var(--color-surface-container-high);
 }
 
 .react-datepicker__navigation-icon::before {
@@ -255,6 +267,10 @@
 
 .date-input__popper--rtl {
     direction: rtl;
+}
+
+.date-input__popper {
+    z-index: 80;
 }
 
 .time-input {
@@ -340,6 +356,10 @@
 }
 
 .dark .react-datepicker__day--disabled {
+    color: var(--color-outline);
+}
+
+.dark .react-datepicker__month-text--disabled {
     color: var(--color-outline);
 }
 

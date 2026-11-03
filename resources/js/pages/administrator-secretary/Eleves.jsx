@@ -103,7 +103,6 @@ export default function Eleves({ routeParams = {} }) {
 
     const statusLabel = (value) => t.students.statuses[value] ?? value;
     const textAlign = isRTL ? 'text-right' : 'text-left';
-    const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface sm:w-auto';
     const openForm = useCallback((student = null, readOnly = false) => {
         setEditingStudent(student);
         setFormReadOnly(readOnly || !yearIsWritable);
@@ -279,32 +278,34 @@ export default function Eleves({ routeParams = {} }) {
                     ariaLabel={t.students.search}
                 />
             </label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-                <SelectInput
-                    value={status}
-                    onChange={(event) => setStatus(event.target.value)}
-                    aria-label={t.students.statusFilter}
-                    className={controlClass}
-                >
-                    <option value="all">{t.students.allStatuses}</option>
-                    <option value="active">{statusLabel('active')}</option>
-                    <option value="paused">{statusLabel('paused')}</option>
-                    <option value="withdrawn">{statusLabel('withdrawn')}</option>
-                </SelectInput>
-                <SelectInput
-                    value={roomId}
-                    onChange={(event) => setRoomId(event.target.value)}
-                    aria-label={t.students.roomFilter}
-                    className={controlClass}
-                >
-                    <option value="all">{t.students.allRooms}</option>
-                    {rooms.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-                </SelectInput>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="min-w-0 sm:w-40">
+                    <SelectInput
+                        value={status}
+                        onChange={(event) => setStatus(event.target.value)}
+                        aria-label={t.students.statusFilter}
+                    >
+                        <option value="all">{t.students.allStatuses}</option>
+                        <option value="active">{statusLabel('active')}</option>
+                        <option value="paused">{statusLabel('paused')}</option>
+                        <option value="withdrawn">{statusLabel('withdrawn')}</option>
+                    </SelectInput>
+                </div>
+                <div className="min-w-0 sm:w-40">
+                    <SelectInput
+                        value={roomId}
+                        onChange={(event) => setRoomId(event.target.value)}
+                        aria-label={t.students.roomFilter}
+                    >
+                        <option value="all">{t.students.allRooms}</option>
+                        {rooms.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                    </SelectInput>
+                </div>
                 {canManage && yearIsWritable && (
                     <button
                         type="button"
                         onClick={() => openForm()}
-                        className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
                     >
                         <Icon name="add" className="text-[17px]" />
                         {t.students.form.createTitle}
