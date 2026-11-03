@@ -512,6 +512,25 @@ class StudentsTableTest extends TestCase
             ->assertJsonPath('student.birth_date', '2014-04-06');
     }
 
+    public function test_re_enrollment_selection_must_reference_a_valid_prior_year_student(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => 'Invalid Re-enrollment',
+            're_enrollment_student_id' => 999,
+            'enrollment_date' => '2026-09-10',
+            'status' => 'active',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('re_enrollment_student_id');
+    }
+
     public function test_student_number_must_be_unique_per_year_and_room_must_match_school_and_year(): void
     {
         $this->actingAs(new GenericUser([

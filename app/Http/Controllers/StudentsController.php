@@ -279,6 +279,7 @@ class StudentsController extends Controller
         [, $schoolId] = $this->managerContext();
         $yearId = $this->validateYearId($request, $schoolId);
         $this->ensureYearIsEditable($schoolId, $yearId);
+        $this->validateReEnrollmentSelection($request, $schoolId, $yearId);
         $this->applyReEnrollmentDefaults($request, $schoolId, $yearId);
         $student = $this->validatedStudent($request, $schoolId, $yearId);
         if (empty($student['student_number'])) {
@@ -452,6 +453,27 @@ class StudentsController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    private function validateReEnrollmentSelection(Request $request, int $schoolId, int $yearId): void
+    {
+        $selectedId = $request->input('re_enrollment_student_id', $request->input('previous_year_student_id'));
+
+        if ($selectedId === null || $selectedId === '') {
+            return;
+        }
+
+        $exists = DB::table('students')
+            ->where('id', (int) $selectedId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', '!=', $yearId)
+            ->exists();
+
+        if (! $exists) {
+            throw ValidationException::withMessages([
+                're_enrollment_student_id' => 'The selected re-enrollment record is not valid for this school and year.',
+            ]);
+        }
     }
 
     private function applyReEnrollmentDefaults(Request $request, int $schoolId, int $yearId): void
