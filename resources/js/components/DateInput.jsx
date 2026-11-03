@@ -36,7 +36,6 @@ export default function DateInput({
     name,
     value,
     onChange,
-    className = '',
     min,
     max,
     required = false,
@@ -58,7 +57,7 @@ export default function DateInput({
             readOnly={readOnly}
             disabled={disabled}
             aria-label={ariaLabel}
-            className={className}
+            className={`date-input__field ${readOnly ? 'date-input__field--readonly' : ''}`}
             placeholderText={isRTL ? 'يوم/شهر/سنة' : 'jj/mm/aaaa'}
             wrapperClassName={`date-input__wrapper w-full ${isRTL ? 'date-input__wrapper--rtl' : ''}`}
             popperClassName={isRTL ? 'date-input__popper--rtl' : undefined}

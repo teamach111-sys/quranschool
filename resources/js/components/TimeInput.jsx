@@ -18,7 +18,6 @@ export default function TimeInput({
     name,
     value,
     onChange,
-    className = '',
     min,
     max,
     required = false,
@@ -44,7 +43,7 @@ export default function TimeInput({
             minuteAriaLabel={isRTL ? 'الدقيقة' : 'Minute'}
             hourPlaceholder="HH"
             minutePlaceholder="MM"
-            className={`time-input ${isRTL ? 'time-input--rtl' : ''} ${className}`}
+            className={`time-input ${isRTL ? 'time-input--rtl' : ''}`}
             locale={isRTL ? 'ar-MA' : 'fr-FR'}
             format="HH:mm"
             maxDetail="minute"

@@ -150,6 +150,41 @@
     display: block;
 }
 
+.date-input__field {
+    display: block;
+    width: 100%;
+    min-height: 2.5rem;
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-container-low);
+    padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+    color: var(--color-on-surface);
+    font-size: 13px;
+    line-height: 1.25rem;
+    outline: none;
+    transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.date-input__field::placeholder {
+    color: var(--color-outline);
+}
+
+.date-input__field:focus {
+    border-color: var(--color-primary);
+    background-color: var(--color-surface-container-lowest);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.date-input__field:disabled,
+.date-input__field--readonly {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.date-input__field--readonly {
+    padding-right: 0.75rem;
+}
+
 .date-input__icon {
     top: 50%;
     left: 0.25rem;
@@ -172,6 +207,10 @@
 
 .date-input__wrapper--rtl .react-datepicker__view-calendar-icon input {
     padding-right: 2.5rem;
+    padding-left: 0.75rem;
+}
+
+.date-input__wrapper--rtl .date-input__field--readonly {
     padding-left: 0.75rem;
 }
 
@@ -219,6 +258,7 @@
 }
 
 .time-input {
+    display: flex;
     min-height: 2.5rem;
     width: 100%;
     border: 1px solid var(--color-outline-variant);
@@ -226,6 +266,10 @@
     background-color: var(--color-surface-container-low);
     color: var(--color-on-surface);
     font-size: 13px;
+}
+
+.time-input .react-time-picker__wrapper {
+    width: 100%;
 }
 
 .time-input .react-time-picker__wrapper {
@@ -311,4 +355,16 @@
 .dark .time-input .react-time-picker__clock {
     background-color: var(--color-surface-container);
     color: var(--color-on-surface);
+}
+
+.dark .date-input__field,
+.dark .time-input {
+    border-color: var(--color-outline-variant);
+    background-color: var(--color-inverse-surface);
+    color: var(--color-inverse-on-surface);
+}
+
+.dark .date-input__field:focus {
+    border-color: var(--color-primary);
+    background-color: var(--color-surface-container);
 }

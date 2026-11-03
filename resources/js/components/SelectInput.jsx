@@ -39,7 +39,6 @@ export default function SelectInput({
     name,
     required = false,
     disabled = false,
-    className = '',
     ...props
 }) {
     const { isRTL } = useLanguage();
@@ -52,7 +51,7 @@ export default function SelectInput({
     return (
         <ReactSelect
             {...props}
-            className={`app-select ${className}`}
+            className="app-select w-full"
             classNamePrefix="app-select"
             inputId={props.id}
             name={name}
