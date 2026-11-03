@@ -91,6 +91,7 @@ export default function TableauDeBordSecretariat() {
         { label: t.secretaryDashboard.attendanceFollowUp, value: numberFormat.format(dashboard.stats.attendance_follow_up), icon: 'fact_check', trendTone: dashboard.stats.attendance_follow_up > 0 ? 'warning' : 'positive' },
         { label: t.secretaryDashboard.dueBalance, value: currencyFormat.format(dashboard.stats.payment_balances.due.amount), icon: 'payments' },
         { label: t.secretaryDashboard.lateBalance, value: currencyFormat.format(dashboard.stats.payment_balances.late.amount), icon: 'warning', trendTone: dashboard.stats.payment_balances.late.amount > 0 ? 'warning' : 'positive' },
+        { label: t.secretaryDashboard.waivedBalance, value: currencyFormat.format(dashboard.stats.payment_balances.waived.amount), icon: 'check_circle', trendTone: dashboard.stats.payment_balances.waived.amount > 0 ? 'positive' : 'neutral' },
     ];
 
     return (

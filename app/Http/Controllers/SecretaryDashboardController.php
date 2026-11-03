@@ -157,11 +157,12 @@ class SecretaryDashboardController extends Controller
         $paymentBalances = [
             'due' => ['count' => 0, 'amount' => 0.0],
             'late' => ['count' => 0, 'amount' => 0.0],
+            'waived' => ['count' => 0, 'amount' => 0.0],
         ];
         $balanceRows = DB::table('payments')
             ->where('school_id', $schoolId)
             ->where('year_id', $yearId)
-            ->whereIn('status', ['due', 'late'])
+            ->whereIn('status', ['due', 'late', 'waived'])
             ->select('status', DB::raw('COUNT(*) AS payment_count'), DB::raw('SUM(amount) AS total_amount'))
             ->groupBy('status')
             ->get();

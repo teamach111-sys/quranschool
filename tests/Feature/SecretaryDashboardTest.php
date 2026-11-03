@@ -92,6 +92,8 @@ class SecretaryDashboardTest extends TestCase
             ->assertJsonPath('stats.payment_balances.due.amount', 100)
             ->assertJsonPath('stats.payment_balances.late.count', 1)
             ->assertJsonPath('stats.payment_balances.late.amount', 125.5)
+            ->assertJsonPath('stats.payment_balances.waived.count', 1)
+            ->assertJsonPath('stats.payment_balances.waived.amount', 30)
             ->assertJsonCount(4, 'new_or_incomplete_students')
             ->assertJsonPath('new_or_incomplete_students.0.student_name', 'New Student')
             ->assertJsonPath('new_or_incomplete_students.0.is_new', true)
@@ -205,6 +207,7 @@ class SecretaryDashboardTest extends TestCase
             ['id' => 5, 'student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'period_start' => '2026-08-01', 'period_end' => '2026-08-31', 'amount' => '25.00', 'currency' => 'MAD', 'status' => 'paid', 'created_at' => '2026-10-29 10:00:00'],
             ['id' => 6, 'student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'period_start' => '2026-07-01', 'period_end' => '2026-07-31', 'amount' => '25.00', 'currency' => 'MAD', 'status' => 'paid', 'created_at' => '2026-10-28 10:00:00'],
             ['id' => 7, 'student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'period_start' => '2026-06-01', 'period_end' => '2026-06-30', 'amount' => '25.00', 'currency' => 'MAD', 'status' => 'paid', 'created_at' => '2026-10-27 10:00:00'],
+            ['id' => 8, 'student_id' => 2, 'school_id' => 1, 'year_id' => 1, 'period_start' => '2026-05-01', 'period_end' => '2026-05-31', 'amount' => '30.00', 'currency' => 'MAD', 'status' => 'waived', 'created_at' => '2026-10-26 10:00:00'],
         ]);
     }
 
