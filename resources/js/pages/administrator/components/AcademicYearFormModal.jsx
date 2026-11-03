@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 
@@ -160,10 +161,9 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                                 <label htmlFor={`${dialogId}-start-date`} className="text-[12px] leading-4 font-semibold text-on-surface dark:text-inverse-on-surface">
                                     {t.academicYears.startDate}
                                 </label>
-                                <input
+                                <DateInput
                                     id={`${dialogId}-start-date`}
                                     name="start_date"
-                                    type="date"
                                     required
                                     value={form.start_date}
                                     onChange={handleChange}
@@ -174,10 +174,9 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                                 <label htmlFor={`${dialogId}-end-date`} className="text-[12px] leading-4 font-semibold text-on-surface dark:text-inverse-on-surface">
                                     {t.academicYears.endDate}
                                 </label>
-                                <input
+                                <DateInput
                                     id={`${dialogId}-end-date`}
                                     name="end_date"
-                                    type="date"
                                     required
                                     value={form.end_date}
                                     onChange={handleChange}

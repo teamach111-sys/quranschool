@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
+import DateInput from '../../../components/DateInput';
 import PaymentFormModal from './PaymentFormModal';
 import PaymentPeriodGeneratorModal from './PaymentPeriodGeneratorModal';
 import {
@@ -461,8 +462,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     </select>
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <input
-                        type="date"
+                    <DateInput
                         name="period_date"
                         value={filters.period_date}
                         onChange={handleFilterChange}

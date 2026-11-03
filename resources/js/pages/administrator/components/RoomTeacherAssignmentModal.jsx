@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -145,10 +146,9 @@ export default function RoomTeacherAssignmentModal({
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">
                             <label htmlFor={`${formId}-assigned-from`} className={labelClass}>{t.rooms.form.assignedFrom}</label>
-                            <input
+                            <DateInput
                                 id={`${formId}-assigned-from`}
                                 name="assigned_from"
-                                type="date"
                                 required
                                 value={form.assigned_from}
                                 onChange={handleChange}
@@ -157,10 +157,9 @@ export default function RoomTeacherAssignmentModal({
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <label htmlFor={`${formId}-assigned-until`} className={labelClass}>{t.rooms.form.assignedUntil}</label>
-                            <input
+                            <DateInput
                                 id={`${formId}-assigned-until`}
                                 name="assigned_until"
-                                type="date"
                                 min={form.assigned_from}
                                 value={form.assigned_until}
                                 onChange={handleChange}

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
+import DateInput from '../../../components/DateInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -466,9 +467,8 @@ export default function MemorizationSessionFormModal({
                     )}
                     <label className={labelClass}>
                         {t.memorization.columns.date}
-                        <input
+                        <DateInput
                             required
-                            type="date"
                             name="session_date"
                             value={form.session_date}
                             onChange={handleChange}

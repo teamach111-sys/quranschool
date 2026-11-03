@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -208,9 +209,8 @@ export default function PaymentFormModal({
                         </label>
                         <label className={labelClass}>
                             {t.payments.periodStart}
-                            <input
+                            <DateInput
                                 required
-                                type="date"
                                 name="period_start"
                                 value={form.period_start}
                                 onChange={handleChange}
@@ -219,9 +219,8 @@ export default function PaymentFormModal({
                         </label>
                         <label className={labelClass}>
                             {t.payments.periodEnd}
-                            <input
+                            <DateInput
                                 required
-                                type="date"
                                 name="period_end"
                                 min={form.period_start || undefined}
                                 value={form.period_end}

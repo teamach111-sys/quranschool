@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
+import TimeInput from '../../../components/TimeInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -198,9 +200,8 @@ export default function ScheduleFormModal({
                     </label>
                     <label className={labelClass}>
                         {t.schedules.startsAt}
-                        <input
+                        <TimeInput
                             required
-                            type="time"
                             name="starts_at"
                             value={form.starts_at}
                             onChange={handleChange}
@@ -209,9 +210,8 @@ export default function ScheduleFormModal({
                     </label>
                     <label className={labelClass}>
                         {t.schedules.endsAt}
-                        <input
+                        <TimeInput
                             required
-                            type="time"
                             min={form.starts_at}
                             name="ends_at"
                             value={form.ends_at}
@@ -221,9 +221,8 @@ export default function ScheduleFormModal({
                     </label>
                     <label className={labelClass}>
                         {t.schedules.validFrom}
-                        <input
+                        <DateInput
                             required
-                            type="date"
                             name="valid_from"
                             value={form.valid_from}
                             onChange={handleChange}
@@ -232,8 +231,7 @@ export default function ScheduleFormModal({
                     </label>
                     <label className={labelClass}>
                         {t.schedules.validUntil}
-                        <input
-                            type="date"
+                        <DateInput
                             min={form.valid_from}
                             name="valid_until"
                             value={form.valid_until}

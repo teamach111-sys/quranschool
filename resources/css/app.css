@@ -1,3 +1,6 @@
+@import 'react-datepicker/dist/react-datepicker.css';
+@import 'react-time-picker/dist/TimePicker.css';
+@import 'react-clock/dist/Clock.css';
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -141,4 +144,171 @@
             0 8px 30px -4px rgba(46, 94, 78, 0.05),
             0 2px 6px -1px rgba(46, 94, 78, 0.03);
     }
+}
+
+.date-input__wrapper {
+    display: block;
+}
+
+.date-input__icon {
+    top: 50%;
+    left: 0.25rem;
+    transform: translateY(-50%);
+    color: var(--color-outline);
+    font-size: 1.125rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.date-input__wrapper .react-datepicker__view-calendar-icon input {
+    min-height: 2.5rem;
+    padding-left: 2.5rem;
+}
+
+.date-input__wrapper--rtl .date-input__icon {
+    right: 0.25rem;
+    left: auto;
+}
+
+.date-input__wrapper--rtl .react-datepicker__view-calendar-icon input {
+    padding-right: 2.5rem;
+    padding-left: 0.75rem;
+}
+
+.react-datepicker {
+    border-color: var(--color-outline-variant);
+    background-color: var(--color-surface-container-low);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+}
+
+.react-datepicker__header {
+    border-bottom-color: var(--color-outline-variant);
+    background-color: var(--color-surface-container);
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker__day,
+.react-datepicker__time-name {
+    color: var(--color-on-surface);
+}
+
+.react-datepicker__day:hover {
+    background-color: var(--color-surface-container-high);
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+}
+
+.react-datepicker__day--selected:hover,
+.react-datepicker__day--keyboard-selected:hover {
+    background-color: var(--color-primary-container);
+    color: var(--color-on-primary-container);
+}
+
+.react-datepicker__navigation-icon::before {
+    border-color: var(--color-on-surface-variant);
+}
+
+.date-input__popper--rtl {
+    direction: rtl;
+}
+
+.time-input {
+    min-height: 2.5rem;
+    width: 100%;
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-container-low);
+    color: var(--color-on-surface);
+    font-size: 13px;
+}
+
+.time-input .react-time-picker__wrapper {
+    min-height: inherit;
+    padding-inline: 0.75rem;
+    border: 0;
+}
+
+.time-input .react-time-picker__inputGroup__input,
+.time-input .react-time-picker__inputGroup__divider,
+.time-input .react-time-picker__button {
+    color: inherit;
+}
+
+.time-input .react-time-picker__button svg {
+    stroke: currentColor;
+}
+
+.time-input .react-time-picker__clock-button {
+    padding-inline: 0.5rem;
+}
+
+.time-input .react-time-picker__clock-button .material-symbols-outlined {
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+.time-input .react-time-picker__button:enabled:hover .react-time-picker__button__icon,
+.time-input .react-time-picker__button:enabled:focus .react-time-picker__button__icon {
+    stroke: var(--color-primary);
+}
+
+.time-input .react-time-picker__clock {
+    border-color: var(--color-outline-variant);
+    background-color: var(--color-surface-container-low);
+    color: var(--color-on-surface);
+}
+
+.time-input .react-clock__face {
+    border-color: currentColor;
+}
+
+.time-input .react-clock__hand__body,
+.time-input .react-clock__mark__body {
+    background-color: currentColor;
+}
+
+.time-input .react-clock__mark__number {
+    color: currentColor;
+}
+
+.time-input--rtl .react-time-picker__wrapper {
+    direction: rtl;
+}
+
+.dark .react-datepicker {
+    border-color: var(--color-outline-variant);
+    background-color: var(--color-surface-container);
+    color: var(--color-on-surface);
+}
+
+.dark .react-datepicker__header {
+    background-color: var(--color-surface-container-high);
+}
+
+.dark .react-datepicker__day--outside-month {
+    color: var(--color-on-surface-variant);
+}
+
+.dark .react-datepicker__day--disabled {
+    color: var(--color-outline);
+}
+
+.dark .time-input {
+    background-color: var(--color-inverse-surface);
+    color: var(--color-inverse-on-surface);
+}
+
+.dark .time-input .react-time-picker__wrapper {
+    border-color: var(--color-outline-variant);
+}
+
+.dark .time-input .react-time-picker__clock {
+    background-color: var(--color-surface-container);
+    color: var(--color-on-surface);
 }

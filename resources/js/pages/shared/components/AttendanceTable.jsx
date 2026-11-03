@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
 import AttendanceRosterModal from './AttendanceRosterModal';
 import AttendanceEntryModal from './AttendanceEntryModal';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -319,8 +320,7 @@ export default function AttendanceTable({ routeParams = {} }) {
                     </select>
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <input
-                        type="date"
+                    <DateInput
                         name="attendance_date"
                         value={filters.attendance_date}
                         onChange={handleFilterChange}

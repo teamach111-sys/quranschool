@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
 import MemorizationSessionFormModal from './MemorizationSessionFormModal';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
@@ -227,8 +228,7 @@ export default function MemorizationSessionsTable() {
                     </select>
                 </div>
                 <div className="min-w-0 xl:flex-1">
-                    <input
-                        type="date"
+                    <DateInput
                         name="session_date"
                         value={filters.session_date}
                         onChange={handleFilterChange}

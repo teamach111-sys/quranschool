@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
@@ -620,7 +621,7 @@ export default function StudentFormModal({
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-birth_date`} className={labelClass}>{t.students.form.birthDate}</label>
-                        <input id={`${formId}-birth_date`} name="birth_date" type="date" value={form.birth_date} onChange={handleChange} className={inputClass} />
+                        <DateInput id={`${formId}-birth_date`} name="birth_date" value={form.birth_date} onChange={handleChange} className={inputClass} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-guardian_name`} className={labelClass}>{t.students.form.guardianName}</label>
@@ -643,7 +644,7 @@ export default function StudentFormModal({
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-enrollment_date`} className={labelClass}>{t.students.form.enrollmentDate}</label>
-                        <input id={`${formId}-enrollment_date`} name="enrollment_date" type="date" required value={form.enrollment_date} onChange={handleChange} className={inputClass} />
+                        <DateInput id={`${formId}-enrollment_date`} name="enrollment_date" required value={form.enrollment_date} onChange={handleChange} className={inputClass} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <label htmlFor={`${formId}-status`} className={labelClass}>{t.students.columns.status}</label>

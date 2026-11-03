@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useState } from 'react';
 import Icon from '../../../components/Icon';
+import DateInput from '../../../components/DateInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -130,10 +131,9 @@ export default function AttendanceEntryModal({
                     </label>
                     <label className={labelClass}>
                         {t.attendance.columns.date}
-                        <input
+                        <DateInput
                             required
                             readOnly={!isNewMark}
-                            type="date"
                             min={mode === 'mark' ? todayDate : undefined}
                             max={mode === 'mark' ? todayDate : undefined}
                             name="attendance_date"

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import SearchInput from '../../../components/SearchInput';
+import DateInput from '../../../components/DateInput';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 import DesktopTable from '../../../tables/desktoptable';
@@ -149,8 +150,8 @@ export default function RoleChangeHistoryTable() {
                 </select>
             </div>
             <div className="min-w-0">
-                <input
-                    type="date"
+                <DateInput
+                    name="date_filter"
                     value={dateFilter}
                     onChange={(event) => setDateFilter(event.target.value)}
                     aria-label={t.roleHistory.dateFilter}

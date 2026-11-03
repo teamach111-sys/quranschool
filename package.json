@@ -15,8 +15,11 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "date-fns": "^4.4.0",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-datepicker": "^9.1.0",
+        "react-dom": "^19.0.0",
+        "react-time-picker": "^8.1.0"
     },
     "optionalDependencies": {
         "@laravel/multiplex": "^0.4.1"
