@@ -4,29 +4,19 @@ import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 
-function localDateTime() {
-    const now = new Date();
-    const pad = (value) => String(value).padStart(2, '0');
-
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-}
-
-function initialValues(payment, currency, canManage) {
+function initialValues(payment, canManage, students) {
     const defaultStatus = !canManage && ['due', 'late'].includes(payment?.status)
         ? 'paid'
         : payment?.status ?? 'due';
+    const selectedStudent = students.find((student) => String(student.id) === String(payment?.student_id));
 
     return {
         student_id: payment ? String(payment.student_id) : '',
         period_start: payment?.period_start ?? '',
         period_end: payment?.period_end ?? '',
         amount: payment?.amount ?? '',
-        currency: payment?.currency ?? currency,
         status: defaultStatus,
-        paid_at: payment?.paid_at?.replace(' ', 'T').slice(0, 16)
-            || (!canManage && defaultStatus === 'paid' ? localDateTime() : ''),
-        payment_method: payment?.payment_method ?? '',
-        reference: payment?.reference ?? '',
+        payment_method: payment?.payment_method ?? selectedStudent?.last_payment_method ?? '',
         notes: payment?.notes ?? '',
     };
 }
@@ -41,7 +31,7 @@ export default function PaymentFormModal({
     onSaved,
 }) {
     const { isRTL, t } = useLanguage();
-    const [form, setForm] = useState(() => initialValues(payment, currency, canManage));
+    const [form, setForm] = useState(() => initialValues(payment, canManage, students));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const formId = useId();
@@ -51,17 +41,20 @@ export default function PaymentFormModal({
     }, [onClose, saving]);
 
     useEffect(() => {
-        setForm(initialValues(payment, currency, canManage));
+        setForm(initialValues(payment, canManage, students));
         setError('');
-    }, [payment, currency, canManage]);
+    }, [payment, canManage, students]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
+        const selectedStudent = name === 'student_id'
+            ? students.find((student) => String(student.id) === value)
+            : null;
         setForm((current) => ({
             ...current,
             [name]: value,
-            ...(name === 'status' && value === 'paid' && !current.paid_at
-                ? { paid_at: localDateTime() }
+            ...(name === 'student_id'
+                ? { payment_method: selectedStudent?.last_payment_method ?? '' }
                 : {}),
         }));
         setError('');
@@ -79,19 +72,14 @@ export default function PaymentFormModal({
                 period_start: form.period_start,
                 period_end: form.period_end,
                 amount: form.amount,
-                currency: form.currency.toUpperCase(),
                 status: form.status,
-                paid_at: form.status === 'paid' ? form.paid_at.replace('T', ' ') : null,
-                payment_method: form.payment_method || null,
-                reference: form.reference || null,
+                ...(form.status === 'paid' ? { payment_method: form.payment_method } : {}),
                 notes: form.notes || null,
             }
             : {
                 year_id: yearId,
                 status: form.status,
-                paid_at: form.status === 'paid' ? form.paid_at.replace('T', ' ') : null,
-                payment_method: form.status === 'paid' ? form.payment_method : null,
-                reference: form.status === 'paid' ? form.reference : null,
+                ...(form.status === 'paid' ? { payment_method: form.payment_method } : {}),
                 notes: form.notes || null,
             };
 
@@ -135,6 +123,7 @@ export default function PaymentFormModal({
     const statusOptions = canManage
         ? ['due', 'paid', 'late', 'waived']
         : ['paid', 'late', 'waived'];
+    const selectedStudent = students.find((student) => String(student.id) === form.student_id);
 
     return (
         <Modal
@@ -204,7 +193,7 @@ export default function PaymentFormModal({
                             </select>
                         </label>
                         <label className={labelClass}>
-                            {t.payments.columns.amount}
+                            {t.payments.columns.amount} ({currency})
                             <input
                                 required
                                 type="number"
@@ -241,18 +230,6 @@ export default function PaymentFormModal({
                             />
                         </label>
                         <label className={labelClass}>
-                            {t.payments.currency}
-                            <input
-                                required
-                                minLength="3"
-                                maxLength="3"
-                                name="currency"
-                                value={form.currency}
-                                onChange={handleChange}
-                                className={inputClass}
-                            />
-                        </label>
-                        <label className={labelClass}>
                             {t.payments.columns.status}
                             <select required name="status" value={form.status} onChange={handleChange} className={inputClass}>
                                 {statusOptions.map((status) => (
@@ -274,21 +251,21 @@ export default function PaymentFormModal({
                 )}
                 {showPaymentDetails && (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <label className={labelClass}>
-                            {t.payments.paidAt}
-                            <input
-                                required
-                                type="datetime-local"
-                                name="paid_at"
-                                value={form.paid_at}
-                                onChange={handleChange}
-                                className={inputClass}
-                            />
-                        </label>
+                        <div className={labelClass}>
+                            <span>{t.payments.paidAt}</span>
+                            <p className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 font-normal text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
+                                {t.payments.receiptAutomatic}
+                            </p>
+                        </div>
                         <label className={labelClass}>
                             {t.payments.paymentMethod}
+                            {selectedStudent?.last_payment_method && (
+                                <span className="font-normal text-on-surface-variant dark:text-[#9bb2a8]">
+                                    {t.payments.lastUsedMethod}: {selectedStudent.last_payment_method}
+                                </span>
+                            )}
                             <input
-                                required={!canManage}
+                                required
                                 maxLength="40"
                                 name="payment_method"
                                 value={form.payment_method}
@@ -296,17 +273,14 @@ export default function PaymentFormModal({
                                 className={inputClass}
                             />
                         </label>
-                        <label className={labelClass}>
-                            {t.payments.columns.reference}
-                            <input
-                                required={!canManage}
-                                maxLength="100"
-                                name="reference"
-                                value={form.reference}
-                                onChange={handleChange}
-                                className={inputClass}
-                            />
-                        </label>
+                        <div className={labelClass}>
+                            <span>{t.payments.columns.reference}</span>
+                            <p className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 font-normal text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
+                                {payment?.status === 'paid' && payment.reference
+                                    ? payment.reference
+                                    : t.payments.referenceGenerated}
+                            </p>
+                        </div>
                     </div>
                 )}
                 <label className={labelClass}>

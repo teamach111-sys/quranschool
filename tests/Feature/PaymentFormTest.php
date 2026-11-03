@@ -29,11 +29,18 @@ class PaymentFormTest extends TestCase
             $table->string('full_name');
         });
 
+        Schema::create('schools', function (Blueprint $table) {
+            $table->id();
+            $table->char('currency', 3);
+        });
+
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('school_id');
             $table->unsignedBigInteger('year_id');
             $table->string('full_name');
+            $table->string('student_number')->nullable();
+            $table->string('guardian_phone')->nullable();
         });
 
         Schema::create('payments', function (Blueprint $table) {
@@ -55,19 +62,18 @@ class PaymentFormTest extends TestCase
         });
     }
 
-    public function test_admin_creates_a_payment_period_and_records_the_actor(): void
+    public function test_admin_records_a_payment_with_an_automatically_generated_receipt(): void
     {
         $this->seedPaymentData();
         $this->actingAs($this->user(10, 1, 'admin'));
+        $this->travelTo('2026-11-03 12:00:00');
 
         $response = $this->postJson('/payments', [
             ...$this->validAdminPayment(),
             'period_start' => '2026-12-01',
             'period_end' => '2026-12-31',
             'status' => 'paid',
-            'paid_at' => '2026-10-10 12:00:00',
             'payment_method' => 'cash',
-            'reference' => 'REC-NEW',
         ]);
 
         $response->assertCreated()->assertJsonStructure(['payment_id']);
@@ -82,9 +88,9 @@ class PaymentFormTest extends TestCase
             'amount' => '125.50',
             'currency' => 'MAD',
             'status' => 'paid',
-            'paid_at' => '2026-10-10 12:00:00',
+            'paid_at' => '2026-11-03 12:00:00',
             'payment_method' => 'cash',
-            'reference' => 'REC-NEW',
+            'reference' => 'REC-2026-0002',
         ]);
     }
 
@@ -92,6 +98,7 @@ class PaymentFormTest extends TestCase
     {
         $this->seedPaymentData();
         $this->actingAs($this->user(10, 1, 'admin'));
+        $this->travelTo('2026-11-03 12:00:00');
 
         $this->putJson('/payments/2', [
             ...$this->validAdminPayment(),
@@ -99,9 +106,7 @@ class PaymentFormTest extends TestCase
             'period_start' => '2026-11-01',
             'period_end' => '2026-11-30',
             'status' => 'paid',
-            'paid_at' => '2026-11-05 09:00:00',
-            'payment_method' => 'bank_transfer',
-            'reference' => 'REC-UPDATED',
+            'payment_method' => 'cash',
         ])->assertOk()->assertJsonPath('updated', true);
 
         $this->assertDatabaseHas('payments', [
@@ -109,7 +114,33 @@ class PaymentFormTest extends TestCase
             'status' => 'paid',
             'recorded_by' => 10,
             'amount' => '130.00',
-            'reference' => 'REC-UPDATED',
+            'paid_at' => '2026-11-03 12:00:00',
+            'payment_method' => 'cash',
+            'reference' => 'REC-2026-0002',
+        ]);
+    }
+
+    public function test_admin_keeps_an_existing_receipt_when_editing_a_paid_payment(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+        $this->travelTo('2026-11-03 12:00:00');
+
+        $this->putJson('/payments/1', [
+            ...$this->validAdminPayment(),
+            'period_start' => '2026-10-01',
+            'period_end' => '2026-10-31',
+            'amount' => '110.00',
+            'status' => 'paid',
+            'payment_method' => 'bank_transfer',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 1,
+            'status' => 'paid',
+            'paid_at' => '2026-10-05 10:30:00',
+            'payment_method' => 'bank_transfer',
+            'reference' => 'REC-2026-0001',
         ]);
     }
 
@@ -165,7 +196,7 @@ class PaymentFormTest extends TestCase
         ]);
     }
 
-    public function test_admin_must_provide_valid_period_amount_status_and_paid_date(): void
+    public function test_admin_must_provide_valid_period_amount_and_status(): void
     {
         $this->seedPaymentData();
         $this->actingAs($this->user(10, 1, 'admin'));
@@ -185,6 +216,27 @@ class PaymentFormTest extends TestCase
         ]);
     }
 
+    public function test_admin_cannot_submit_payment_date_reference_or_currency(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'status' => 'paid',
+            'payment_method' => 'cash',
+            'paid_at' => '2026-11-02 10:30:00',
+            'reference' => 'REC-2026-9999',
+            'currency' => 'EUR',
+        ])->assertUnprocessable()->assertJsonValidationErrors([
+            'paid_at',
+            'reference',
+            'currency',
+        ]);
+
+        $this->assertDatabaseCount('payments', 3);
+    }
+
     public function test_admin_cannot_create_a_waived_payment_without_a_note(): void
     {
         $this->seedPaymentData();
@@ -200,6 +252,7 @@ class PaymentFormTest extends TestCase
     {
         $this->seedPaymentData();
         $this->actingAs($this->user(12, 1, 'secretary'));
+        $this->travelTo('2026-11-03 12:00:00');
 
         $this->putJson('/payments/2', [
             'year_id' => 1,
@@ -208,9 +261,7 @@ class PaymentFormTest extends TestCase
             'period_end' => '2026-08-31',
             'amount' => '1.00',
             'status' => 'paid',
-            'paid_at' => '2026-11-02 10:30:00',
             'payment_method' => 'cash',
-            'reference' => 'REC-SECRETARY',
         ])->assertOk()->assertJsonPath('updated', true);
 
         $this->assertDatabaseHas('payments', [
@@ -220,9 +271,9 @@ class PaymentFormTest extends TestCase
             'period_end' => '2026-11-30',
             'amount' => '125.50',
             'status' => 'paid',
-            'paid_at' => '2026-11-02 10:30:00',
+            'paid_at' => '2026-11-03 12:00:00',
             'payment_method' => 'cash',
-            'reference' => 'REC-SECRETARY',
+            'reference' => 'REC-2026-0002',
             'recorded_by' => 12,
         ]);
     }
@@ -272,13 +323,12 @@ class PaymentFormTest extends TestCase
         $this->seedPaymentData();
         DB::table('payments')->where('id', 2)->update(['status' => 'late']);
         $this->actingAs($this->user(12, 1, 'secretary'));
+        $this->travelTo('2026-11-03 12:00:00');
 
         $this->putJson('/payments/2', [
             'year_id' => 1,
             'status' => 'paid',
-            'paid_at' => '2026-11-02 10:30:00',
             'payment_method' => 'cash',
-            'reference' => 'REC-LATE',
         ])->assertOk()->assertJsonPath('updated', true);
 
         $this->assertDatabaseHas('payments', [
@@ -288,9 +338,9 @@ class PaymentFormTest extends TestCase
             'period_end' => '2026-11-30',
             'amount' => '125.50',
             'status' => 'paid',
-            'paid_at' => '2026-11-02 10:30:00',
+            'paid_at' => '2026-11-03 12:00:00',
             'payment_method' => 'cash',
-            'reference' => 'REC-LATE',
+            'reference' => 'REC-2026-0002',
             'recorded_by' => 12,
         ]);
     }
@@ -399,6 +449,57 @@ class PaymentFormTest extends TestCase
         ]);
     }
 
+    public function test_receipt_sequence_and_currency_are_scoped_to_the_school(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(30, 2, 'admin'));
+        $this->travelTo('2026-11-03 12:00:00');
+
+        $response = $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'year_id' => 3,
+            'student_id' => 3,
+            'status' => 'paid',
+            'payment_method' => 'cash',
+        ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('payments', [
+            'id' => $response->json('payment_id'),
+            'school_id' => 2,
+            'year_id' => 3,
+            'currency' => 'EUR',
+            'paid_at' => '2026-11-03 12:00:00',
+            'reference' => 'REC-2026-0001',
+        ]);
+    }
+
+    public function test_payment_table_suggests_the_students_last_used_payment_method(): void
+    {
+        $this->seedPaymentData();
+        DB::table('payments')->insert([
+            'id' => 4,
+            'student_id' => 1,
+            'school_id' => 1,
+            'year_id' => 1,
+            'recorded_by' => 12,
+            'period_start' => '2026-09-01',
+            'period_end' => '2026-09-30',
+            'amount' => '100.00',
+            'currency' => 'MAD',
+            'status' => 'paid',
+            'paid_at' => '2026-11-02 10:30:00',
+            'payment_method' => 'bank_transfer',
+            'reference' => 'REC-2026-0020',
+        ]);
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->getJson('/payments/table?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('students.0.last_payment_method', 'bank_transfer')
+            ->assertJsonPath('students.1.last_payment_method', null);
+    }
+
     /**
      * @return array<string, int|string>
      */
@@ -410,13 +511,16 @@ class PaymentFormTest extends TestCase
             'period_start' => '2026-11-01',
             'period_end' => '2026-11-30',
             'amount' => '125.50',
-            'currency' => 'MAD',
             'status' => 'due',
         ];
     }
 
     private function seedPaymentData(): void
     {
+        DB::table('schools')->insert([
+            ['id' => 1, 'currency' => 'MAD'],
+            ['id' => 2, 'currency' => 'EUR'],
+        ]);
         DB::table('academic_years')->insert([
             ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'is_current' => true, 'is_active' => true],
             ['id' => 2, 'school_id' => 1, 'year_label' => '2025-2026', 'start_date' => '2025-09-01', 'is_current' => false, 'is_active' => false],
@@ -456,7 +560,7 @@ class PaymentFormTest extends TestCase
                 'status' => 'paid',
                 'paid_at' => '2026-10-05 10:30:00',
                 'payment_method' => 'cash',
-                'reference' => 'REC-001',
+                'reference' => 'REC-2026-0001',
             ],
             [
                 'id' => 2,

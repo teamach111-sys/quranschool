@@ -107,11 +107,25 @@ class PaymentsController extends Controller
             ->where('year_id', $yearId)
             ->orderBy('full_name')
             ->orderBy('id')
-            ->get(['id', 'full_name', 'student_number'])
+            ->select(['id', 'full_name', 'student_number'])
+            ->selectSub(
+                DB::table('payments as previous_payments')
+                    ->select('payment_method')
+                    ->whereColumn('previous_payments.student_id', 'students.id')
+                    ->whereColumn('previous_payments.school_id', 'students.school_id')
+                    ->where('previous_payments.status', 'paid')
+                    ->whereNotNull('previous_payments.payment_method')
+                    ->orderByDesc('previous_payments.paid_at')
+                    ->orderByDesc('previous_payments.id')
+                    ->limit(1),
+                'last_payment_method',
+            )
+            ->get()
             ->map(fn ($student) => [
                 'id' => (int) $student->id,
                 'name' => $student->full_name,
                 'student_number' => $student->student_number,
+                'last_payment_method' => $student->last_payment_method,
             ])
             ->values();
 
@@ -280,6 +294,7 @@ class PaymentsController extends Controller
         $validated = $this->validatedPayment($request, $schoolId, (int) $year->id);
 
         $paymentId = DB::transaction(function () use ($validated, $user, $schoolId, $year) {
+            $schoolCurrency = $this->lockSchoolForPayment($schoolId);
             $this->lockStudentsForPayment([(int) $validated['student_id']], $schoolId, (int) $year->id);
             $this->ensureNoOverlappingPeriod(
                 (int) $validated['student_id'],
@@ -288,9 +303,12 @@ class PaymentsController extends Controller
                 $validated['period_start'],
                 $validated['period_end'],
             );
+            $receipt = $validated['status'] === 'paid'
+                ? $this->generatePaymentReceipt($schoolId)
+                : null;
 
             return DB::table('payments')->insertGetId([
-                ...$this->paymentAttributes($validated),
+                ...$this->paymentAttributes($validated, $schoolCurrency, $receipt),
                 'school_id' => $schoolId,
                 'year_id' => (int) $year->id,
                 'recorded_by' => (int) $user->id,
@@ -318,6 +336,7 @@ class PaymentsController extends Controller
             $validated = $this->validatedSecretaryPaymentUpdate($request, $existingPayment->status);
 
             DB::transaction(function () use ($paymentId, $schoolId, $yearId, $validated, $user) {
+                $schoolCurrency = $this->lockSchoolForPayment($schoolId);
                 $payment = DB::table('payments')
                     ->where('id', $paymentId)
                     ->where('school_id', $schoolId)
@@ -325,18 +344,22 @@ class PaymentsController extends Controller
                     ->lockForUpdate()
                     ->first(['status', 'payment_method', 'reference', 'notes']);
                 abort_unless($payment && in_array($payment->status, ['due', 'late'], true), 404);
+                $receipt = $validated['status'] === 'paid'
+                    ? $this->generatePaymentReceipt($schoolId)
+                    : null;
 
                 DB::table('payments')
                     ->where('id', $paymentId)
                     ->update([
                         'status' => $validated['status'],
-                        'paid_at' => $validated['status'] === 'paid' ? $validated['paid_at'] : null,
+                        'paid_at' => $receipt['paid_at'] ?? null,
+                        'currency' => $schoolCurrency,
                         'payment_method' => $validated['status'] === 'paid'
                             ? $validated['payment_method']
-                            : $payment->payment_method,
+                            : null,
                         'reference' => $validated['status'] === 'paid'
-                            ? $validated['reference']
-                            : $payment->reference,
+                            ? $receipt['reference']
+                            : null,
                         'notes' => $validated['notes'] ?? $payment->notes,
                         'recorded_by' => (int) $user->id,
                         'updated_at' => now(),
@@ -349,9 +372,18 @@ class PaymentsController extends Controller
         abort_unless($user->role === 'admin', 403);
         $validated = $this->validatedPayment($request, $schoolId, $yearId);
 
-        DB::transaction(function () use ($validated, $user, $schoolId, $yearId, $paymentId, $existingPayment) {
+        DB::transaction(function () use ($validated, $user, $schoolId, $yearId, $paymentId) {
+            $schoolCurrency = $this->lockSchoolForPayment($schoolId);
+            $payment = DB::table('payments')
+                ->where('id', $paymentId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->lockForUpdate()
+                ->first(['student_id', 'status', 'paid_at', 'reference']);
+            abort_unless($payment, 404);
+
             $this->lockStudentsForPayment(
-                [(int) $existingPayment->student_id, (int) $validated['student_id']],
+                [(int) $payment->student_id, (int) $validated['student_id']],
                 $schoolId,
                 $yearId,
             );
@@ -363,13 +395,16 @@ class PaymentsController extends Controller
                 $validated['period_end'],
                 $paymentId,
             );
+            $receipt = $validated['status'] === 'paid' && $payment->status !== 'paid'
+                ? $this->generatePaymentReceipt($schoolId)
+                : null;
 
             DB::table('payments')
                 ->where('id', $paymentId)
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
                 ->update([
-                    ...$this->paymentAttributes($validated),
+                    ...$this->paymentAttributes($validated, $schoolCurrency, $receipt, $payment),
                     'recorded_by' => (int) $user->id,
                     'updated_at' => now(),
                 ]);
@@ -740,16 +775,17 @@ class PaymentsController extends Controller
             'period_start' => ['required', 'date_format:Y-m-d'],
             'period_end' => ['required', 'date_format:Y-m-d', 'after_or_equal:period_start'],
             'amount' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
-            'currency' => ['required', 'string', 'regex:/^[A-Z]{3}$/'],
+            'currency' => ['prohibited'],
             'status' => ['required', Rule::in(['paid', 'due', 'late', 'waived'])],
-            'paid_at' => [
+            'paid_at' => ['prohibited'],
+            'payment_method' => [
                 Rule::requiredIf($request->input('status') === 'paid'),
                 Rule::prohibitedIf($request->input('status') !== 'paid'),
                 'nullable',
-                'date',
+                'string',
+                'max:40',
             ],
-            'payment_method' => ['nullable', 'string', 'max:40'],
-            'reference' => ['nullable', 'string', 'max:100'],
+            'reference' => ['prohibited'],
             'notes' => [
                 Rule::requiredIf($request->input('status') === 'waived'),
                 'nullable',
@@ -760,7 +796,7 @@ class PaymentsController extends Controller
     }
 
     /**
-     * @return array{status: string, paid_at: ?string, payment_method: ?string, reference: ?string, notes: ?string}
+     * @return array{status: string, payment_method: ?string, notes: ?string}
      */
     private function validatedSecretaryPaymentUpdate(Request $request, string $currentStatus): array
     {
@@ -768,24 +804,15 @@ class PaymentsController extends Controller
 
         return $request->validate([
             'status' => ['required', Rule::in(['paid', 'late', 'waived'])],
-            'paid_at' => [
-                Rule::requiredIf($request->input('status') === 'paid'),
-                Rule::prohibitedIf($request->input('status') !== 'paid'),
-                'nullable',
-                'date',
-            ],
+            'paid_at' => ['prohibited'],
             'payment_method' => [
                 Rule::requiredIf($request->input('status') === 'paid'),
+                Rule::prohibitedIf($request->input('status') !== 'paid'),
                 'nullable',
                 'string',
                 'max:40',
             ],
-            'reference' => [
-                Rule::requiredIf($request->input('status') === 'paid'),
-                'nullable',
-                'string',
-                'max:100',
-            ],
+            'reference' => ['prohibited'],
             'notes' => [
                 Rule::requiredIf($request->input('status') === 'waived'),
                 'nullable',
@@ -797,21 +824,73 @@ class PaymentsController extends Controller
 
     /**
      * @param  array<string, mixed>  $validated
+     * @param  array{paid_at: string, reference: string}|null  $receipt
      * @return array<string, mixed>
      */
-    private function paymentAttributes(array $validated): array
-    {
+    private function paymentAttributes(
+        array $validated,
+        string $currency,
+        ?array $receipt,
+        ?object $existingPayment = null,
+    ): array {
+        $paidAt = $receipt['paid_at'] ?? ($existingPayment->paid_at ?? null);
+        $reference = $receipt['reference'] ?? ($existingPayment->reference ?? null);
+
+        if ($validated['status'] === 'paid' && (! $paidAt || ! $reference)) {
+            throw new \LogicException('Paid payments require a generated receipt.');
+        }
+
         return [
             'student_id' => (int) $validated['student_id'],
             'period_start' => $validated['period_start'],
             'period_end' => $validated['period_end'],
             'amount' => $validated['amount'],
-            'currency' => $validated['currency'],
+            'currency' => $currency,
             'status' => $validated['status'],
-            'paid_at' => $validated['status'] === 'paid' ? $validated['paid_at'] : null,
-            'payment_method' => $validated['payment_method'] ?? null,
-            'reference' => $validated['reference'] ?? null,
+            'paid_at' => $validated['status'] === 'paid' ? $paidAt : null,
+            'payment_method' => $validated['status'] === 'paid'
+                ? $validated['payment_method']
+                : null,
+            'reference' => $validated['status'] === 'paid' ? $reference : null,
             'notes' => $validated['notes'] ?? null,
+        ];
+    }
+
+    private function lockSchoolForPayment(int $schoolId): string
+    {
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->lockForUpdate()
+            ->first(['currency']);
+        abort_unless($school, 404);
+
+        return (string) $school->currency;
+    }
+
+    /**
+     * @return array{paid_at: string, reference: string}
+     */
+    private function generatePaymentReceipt(int $schoolId): array
+    {
+        $paidAt = now();
+        $year = $paidAt->format('Y');
+        $referencePrefix = "REC-{$year}-";
+        $references = DB::table('payments')
+            ->where('school_id', $schoolId)
+            ->where('reference', 'like', $referencePrefix.'%')
+            ->pluck('reference');
+        $highestSequence = 0;
+        $referencePattern = '/^'.preg_quote($referencePrefix, '/').'([0-9]+)$/D';
+
+        foreach ($references as $reference) {
+            if (preg_match($referencePattern, (string) $reference, $matches) === 1) {
+                $highestSequence = max($highestSequence, (int) $matches[1]);
+            }
+        }
+
+        return [
+            'paid_at' => $paidAt->toDateTimeString(),
+            'reference' => $referencePrefix.str_pad((string) ($highestSequence + 1), 4, '0', STR_PAD_LEFT),
         ];
     }
 
