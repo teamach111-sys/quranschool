@@ -512,7 +512,7 @@ class StudentsController extends Controller
             'guardian_phone' => $request->input('guardian_phone', $previousStudent->guardian_phone) ?: $previousStudent->guardian_phone,
             'guardian_email' => $request->input('guardian_email', $previousStudent->guardian_email) ?: $previousStudent->guardian_email,
             'room_id' => $request->input('room_id', $previousStudent->room_id) ?: $previousStudent->room_id,
-            'status' => $request->input('status', $previousStudent->status) ?: $previousStudent->status,
+            'status' => $request->input('status', 'active') ?: 'active',
             'enrollment_date' => $request->input('enrollment_date', $previousStudent->enrollment_date) ?: $previousStudent->enrollment_date,
         ]);
     }

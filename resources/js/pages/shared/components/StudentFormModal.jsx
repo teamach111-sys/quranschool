@@ -207,7 +207,7 @@ export default function StudentFormModal({
             guardian_phone: candidate.guardian_phone || current.guardian_phone,
             guardian_email: candidate.guardian_email || current.guardian_email,
             room_id: candidate.room_id ? String(candidate.room_id) : current.room_id,
-            status: candidate.status || current.status,
+            status: 'active',
             enrollment_date: candidate.enrollment_date || current.enrollment_date,
         }));
         setError(null);
