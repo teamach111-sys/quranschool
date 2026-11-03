@@ -90,9 +90,11 @@ class StudentsController extends Controller
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)
-            ->first(['is_active']);
+            ->first(['id', 'start_date', 'is_active']);
 
         $nextStudentNumber = $this->nextStudentNumberForYear($schoolId, $yearId);
+        $reEnrollmentCandidates = $this->previousYearStudentsForYear($schoolId, $yearId);
+        $reEnrollmentStudent = $reEnrollmentCandidates[0] ?? null;
 
         return response()->json([
             'year_id' => $yearId,
@@ -104,6 +106,10 @@ class StudentsController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name']),
+            'previous_year_student' => $reEnrollmentStudent,
+            're_enrollment_student' => $reEnrollmentStudent,
+            'previous_year_students' => $reEnrollmentCandidates,
+            're_enrollment_candidates' => $reEnrollmentCandidates,
         ]);
     }
 
@@ -390,6 +396,61 @@ class StudentsController extends Controller
         ]);
 
         return (int) $validated['year_id'];
+    }
+
+    private function previousYearStudentsForYear(int $schoolId, int $yearId): array
+    {
+        $thisYear = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('id', $yearId)
+            ->first(['id', 'start_date']);
+
+        if (! $thisYear || ! $thisYear->start_date) {
+            return [];
+        }
+
+        $previousYear = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('start_date', '<', $thisYear->start_date)
+            ->orderByDesc('start_date')
+            ->first(['id']);
+
+        if (! $previousYear) {
+            return [];
+        }
+
+        return DB::table('students')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $previousYear->id)
+            ->orderByDesc('enrollment_date')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get([
+                'id',
+                'full_name',
+                'student_number',
+                'birth_date',
+                'guardian_name',
+                'guardian_phone',
+                'guardian_email',
+                'room_id',
+                'status',
+                'enrollment_date',
+            ])
+            ->map(fn ($student): array => [
+                'id' => (int) $student->id,
+                'full_name' => $student->full_name,
+                'student_number' => $student->student_number,
+                'birth_date' => $student->birth_date,
+                'guardian_name' => $student->guardian_name,
+                'guardian_phone' => $student->guardian_phone,
+                'guardian_email' => $student->guardian_email,
+                'room_id' => $student->room_id ? (int) $student->room_id : null,
+                'status' => $student->status,
+                'enrollment_date' => $student->enrollment_date,
+            ])
+            ->values()
+            ->all();
     }
 
     private function nextStudentNumberForYear(int $schoolId, int $yearId): string

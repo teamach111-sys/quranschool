@@ -418,6 +418,47 @@ class StudentsTableTest extends TestCase
         ]);
     }
 
+    public function test_student_re_enrollment_prefills_previous_year_details_for_a_new_record(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2025-2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        DB::table('students')->insert([
+            'id' => 10,
+            'school_id' => 1,
+            'year_id' => 3,
+            'room_id' => 1,
+            'student_number' => 'QS-2025-010',
+            'full_name' => 'Returning Student',
+            'status' => 'active',
+            'enrollment_date' => '2025-09-10',
+            'birth_date' => '2014-04-06',
+            'guardian_name' => 'Parent Returning',
+            'guardian_phone' => '0600000998',
+            'guardian_email' => 'returning@example.com',
+            'notes' => 'Previous year record',
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/students/options?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('previous_year_student.full_name', 'Returning Student')
+            ->assertJsonPath('re_enrollment_student.guardian_name', 'Parent Returning')
+            ->assertJsonPath('previous_year_students.0.full_name', 'Returning Student');
+    }
+
     public function test_student_number_must_be_unique_per_year_and_room_must_match_school_and_year(): void
     {
         $this->actingAs(new GenericUser([

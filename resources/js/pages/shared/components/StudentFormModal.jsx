@@ -128,11 +128,32 @@ export default function StudentFormModal({
                     setRooms(Array.isArray(data.rooms) ? data.rooms : []);
                     setCanEditYear(Boolean(data.is_editable));
 
-                    if (!student?.id && !form.student_number && data.next_student_number) {
-                        setForm((current) => ({
-                            ...current,
-                            student_number: data.next_student_number,
-                        }));
+                    const previousYearStudent = data.previous_year_student
+                        ?? data.re_enrollment_student
+                        ?? (Array.isArray(data.previous_year_students) ? data.previous_year_students[0] : null)
+                        ?? (Array.isArray(data.re_enrollment_candidates) ? data.re_enrollment_candidates[0] : null);
+
+                    if (!student?.id) {
+                        setForm((current) => {
+                            const nextValues = { ...current };
+
+                            if (!current.student_number && data.next_student_number) {
+                                nextValues.student_number = data.next_student_number;
+                            }
+
+                            if (previousYearStudent && !current.full_name && !current.guardian_name && !current.guardian_phone && !current.guardian_email && !current.birth_date && !current.room_id) {
+                                nextValues.full_name = previousYearStudent.full_name ?? current.full_name;
+                                nextValues.birth_date = previousYearStudent.birth_date ?? current.birth_date;
+                                nextValues.guardian_name = previousYearStudent.guardian_name ?? current.guardian_name;
+                                nextValues.guardian_phone = previousYearStudent.guardian_phone ?? current.guardian_phone;
+                                nextValues.guardian_email = previousYearStudent.guardian_email ?? current.guardian_email;
+                                nextValues.room_id = previousYearStudent.room_id ? String(previousYearStudent.room_id) : current.room_id;
+                                nextValues.status = previousYearStudent.status ?? current.status;
+                                nextValues.enrollment_date = previousYearStudent.enrollment_date ?? current.enrollment_date;
+                            }
+
+                            return nextValues;
+                        });
                     }
                 }
             })
