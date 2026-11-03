@@ -233,13 +233,15 @@ class StudentsController extends Controller
             ->where('year_id', $yearId)
             ->select('currency')
             ->selectRaw(
-                'SUM(CASE WHEN status IN (?, ?) THEN amount ELSE 0 END) as outstanding_amount',
+                'COALESCE(SUM(CASE WHEN status IN (?, ?) THEN amount ELSE 0 END), 0) as outstanding_amount',
                 ['due', 'late'],
             )
-            ->selectRaw('SUM(CASE WHEN status = ? THEN amount ELSE 0 END) as due_amount', ['due'])
-            ->selectRaw('SUM(CASE WHEN status = ? THEN amount ELSE 0 END) as late_amount', ['late'])
-            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as due_count', ['due'])
-            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as late_count', ['late'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as due_amount', ['due'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as late_amount', ['late'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN status = ? THEN amount ELSE 0 END), 0) as waived_amount', ['waived'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as due_count', ['due'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as late_count', ['late'])
+            ->selectRaw('COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as waived_count', ['waived'])
             ->groupBy('currency')
             ->orderBy('currency')
             ->get()
@@ -248,8 +250,10 @@ class StudentsController extends Controller
                 'outstanding_amount' => (string) $payment->outstanding_amount,
                 'due_amount' => (string) $payment->due_amount,
                 'late_amount' => (string) $payment->late_amount,
+                'waived_amount' => (string) $payment->waived_amount,
                 'due_count' => (int) $payment->due_count,
                 'late_count' => (int) $payment->late_count,
+                'waived_count' => (int) $payment->waived_count,
             ])
             ->values();
 

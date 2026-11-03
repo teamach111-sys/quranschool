@@ -588,8 +588,10 @@ class StudentsTableTest extends TestCase
             ->assertJsonPath('student.payment_summary.0.outstanding_amount', '125')
             ->assertJsonPath('student.payment_summary.0.due_amount', '75')
             ->assertJsonPath('student.payment_summary.0.late_amount', '50')
+            ->assertJsonPath('student.payment_summary.0.waived_amount', '25')
             ->assertJsonPath('student.payment_summary.0.due_count', 1)
-            ->assertJsonPath('student.payment_summary.0.late_count', 1);
+            ->assertJsonPath('student.payment_summary.0.late_count', 1)
+            ->assertJsonPath('student.payment_summary.0.waived_count', 1);
     }
 
     public function test_student_options_are_limited_to_active_rooms_in_the_selected_school_and_year(): void

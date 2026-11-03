@@ -433,7 +433,18 @@ export const translations = {
                 surahCoverage: (covered, total) => `${covered} / ${total} versets mémorisés`,
                 payments: 'Paiements',
                 outstanding: 'Solde restant à régler',
-                paymentBreakdown: (due, dueCount, late, lateCount) => `À régler : ${due} (${dueCount}) · En retard : ${late} (${lateCount})`,
+                paymentBreakdown: (due, dueCount, late, lateCount, waived = '0', waivedCount = 0) => {
+                    const parts = [
+                        `À régler : ${due} (${dueCount})`,
+                        `En retard : ${late} (${lateCount})`,
+                    ];
+
+                    if (waivedCount > 0 || waived !== '0') {
+                        parts.push(`Exonérés : ${waived} (${waivedCount})`);
+                    }
+
+                    return parts.join(' · ');
+                },
                 noPayments: 'Aucun paiement enregistré pour cette année scolaire.',
                 retry: 'Réessayer',
             },
@@ -1355,7 +1366,18 @@ export const translations = {
                 surahCoverage: (covered, total) => `تم حفظ ${covered} من ${total} آية`,
                 payments: 'المدفوعات',
                 outstanding: 'المبلغ المتبقي',
-                paymentBreakdown: (due, dueCount, late, lateCount) => `مستحق: ${due} (${dueCount}) · متأخر: ${late} (${lateCount})`,
+                paymentBreakdown: (due, dueCount, late, lateCount, waived = '0', waivedCount = 0) => {
+                    const parts = [
+                        `مستحق: ${due} (${dueCount})`,
+                        `متأخر: ${late} (${lateCount})`,
+                    ];
+
+                    if (waivedCount > 0 || waived !== '0') {
+                        parts.push(`معفى: ${waived} (${waivedCount})`);
+                    }
+
+                    return parts.join(' · ');
+                },
                 noPayments: 'لا توجد مدفوعات مسجلة لهذه السنة الدراسية.',
                 retry: 'إعادة المحاولة',
             },

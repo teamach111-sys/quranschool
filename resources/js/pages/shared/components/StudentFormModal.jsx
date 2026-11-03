@@ -474,6 +474,8 @@ export default function StudentFormModal({
                                             formatNumber(summary.due_count, lang),
                                             formatCurrency(summary.late_amount, summary.currency, lang),
                                             formatNumber(summary.late_count, lang),
+                                            formatCurrency(summary.waived_amount ?? '0', summary.currency, lang),
+                                            formatNumber(summary.waived_count ?? 0, lang),
                                         )}
                                     </p>
                                 </div>
