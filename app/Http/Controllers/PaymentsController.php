@@ -832,6 +832,7 @@ class PaymentsController extends Controller
                 Rule::requiredIf($request->input('status') === 'waived'),
                 'nullable',
                 'string',
+                'filled',
                 'max:500',
             ],
         ]);
@@ -859,6 +860,7 @@ class PaymentsController extends Controller
                 Rule::requiredIf($request->input('status') === 'waived'),
                 'nullable',
                 'string',
+                'filled',
                 'max:500',
             ],
         ]);
