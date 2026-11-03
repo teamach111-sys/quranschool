@@ -531,6 +531,62 @@ class StudentsTableTest extends TestCase
             ->assertJsonValidationErrors('re_enrollment_student_id');
     }
 
+    public function test_only_immediately_previous_year_students_are_offered_for_re_enrollment(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2025-2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        DB::table('academic_years')->insert([
+            'id' => 4,
+            'school_id' => 1,
+            'year_label' => '2024-2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-06-30',
+            'is_current' => false,
+            'is_active' => true,
+        ]);
+
+        DB::table('students')->insert([
+            'id' => 10,
+            'school_id' => 1,
+            'year_id' => 3,
+            'room_id' => 1,
+            'student_number' => 'QS-2025-010',
+            'full_name' => 'Returning Student',
+            'status' => 'active',
+            'enrollment_date' => '2025-09-01',
+        ]);
+
+        DB::table('students')->insert([
+            'id' => 11,
+            'school_id' => 1,
+            'year_id' => 4,
+            'room_id' => 1,
+            'student_number' => 'QS-2024-009',
+            'full_name' => 'Older Returning Student',
+            'status' => 'active',
+            'enrollment_date' => '2024-09-01',
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/students/options?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('previous_year_students.0.full_name', 'Returning Student')
+            ->assertJsonCount(1, 'previous_year_students');
+    }
+
     public function test_student_number_must_be_unique_per_year_and_room_must_match_school_and_year(): void
     {
         $this->actingAs(new GenericUser([

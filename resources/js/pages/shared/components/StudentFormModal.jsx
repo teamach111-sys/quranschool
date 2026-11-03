@@ -558,14 +558,14 @@ export default function StudentFormModal({
             <form id={`${formId}-form`} className="flex flex-col gap-4" onSubmit={handleSubmit} aria-busy={loading}>
                 {!student?.id && reEnrollmentStudents.length > 0 && (
                     <div className="flex flex-col gap-1.5">
-                        <label htmlFor={`${formId}-re_enrollment_student_id`} className={labelClass}>Re-enrollment</label>
+                        <label htmlFor={`${formId}-re_enrollment_student_id`} className={labelClass}>Returning student</label>
                         <select
                             id={`${formId}-re_enrollment_student_id`}
                             value={reEnrollmentSelection}
                             onChange={(event) => applyReEnrollmentSelection(event.target.value)}
                             className={inputClass}
                         >
-                            <option value="">{t.students.form.createTitle}</option>
+                            <option value="">New student / no return</option>
                             {reEnrollmentStudents.map((candidate) => (
                                 <option key={candidate.id} value={candidate.id}>{candidate.full_name}</option>
                             ))}
