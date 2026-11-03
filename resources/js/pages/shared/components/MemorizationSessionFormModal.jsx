@@ -7,6 +7,7 @@ import { useLanguage } from '../../../hooks/useLanguage';
 import {
     formatPortionRange,
     formatQuranNumber,
+    getNextPortionSuggestion,
     getProgressPreview,
     getSurah,
     juzDisplayName,
@@ -161,6 +162,34 @@ export default function MemorizationSessionFormModal({
         loadProgress();
         return () => controller.abort();
     }, [form.student_id, open, yearId]);
+
+    useEffect(() => {
+        if (!open || isEditing || !form.student_id || form.surah_start || form.ayah_start || form.surah_end || form.ayah_end) {
+            return;
+        }
+
+        const suggestion = getNextPortionSuggestion(progressSessions);
+        if (!suggestion) return;
+
+        setForm((current) => {
+            if (current.surah_start || current.ayah_start || current.surah_end || current.ayah_end) {
+                return current;
+            }
+
+            const nextForm = {
+                ...current,
+                surah_start: String(suggestion.surah_start),
+                ayah_start: String(suggestion.ayah_start),
+                surah_end: String(suggestion.surah_end),
+                ayah_end: String(suggestion.ayah_end),
+            };
+
+            return {
+                ...nextForm,
+                portion_label: formatPortionRange(nextForm, lang),
+            };
+        });
+    }, [form.ayah_end, form.ayah_start, form.surah_end, form.surah_start, form.student_id, isEditing, lang, open, progressSessions]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;

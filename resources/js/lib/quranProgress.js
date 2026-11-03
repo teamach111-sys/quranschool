@@ -65,6 +65,60 @@ export function formatPortionRange(range, language) {
     return `${startLabel} → ${surahDisplayName(endSurah, language)} ${endNumber}`;
 }
 
+function surahAyahForAbsoluteIndex(positionIndex) {
+    for (const surah of quranMetadata.surahs) {
+        const start = surahOffsets.get(surah.id);
+        const endExclusive = start + surah.ayah_count;
+
+        if (positionIndex >= start && positionIndex < endExclusive) {
+            return {
+                surah: surah.id,
+                ayah: positionIndex - start + 1,
+            };
+        }
+    }
+
+    return null;
+}
+
+export function getNextPortionSuggestion(sessions = []) {
+    if (!Array.isArray(sessions) || sessions.length === 0) {
+        return null;
+    }
+
+    const latestSession = sessions[ sessions.length - 1 ];
+    const hasStart = Number.isInteger(Number(latestSession?.surah_end)) && Number.isInteger(Number(latestSession?.ayah_end));
+
+    if (!hasStart) {
+        return null;
+    }
+
+    const lastPosition = positionIndex({
+        surah: latestSession.surah_end,
+        ayah: latestSession.ayah_end,
+    });
+
+    if (lastPosition === null || lastPosition >= totalAyahs - 1) {
+        return null;
+    }
+
+    const nextPosition = lastPosition + 1;
+    const endPosition = Math.min(nextPosition + 4, totalAyahs - 1);
+    const start = surahAyahForAbsoluteIndex(nextPosition);
+    const end = surahAyahForAbsoluteIndex(endPosition);
+
+    if (!start || !end) {
+        return null;
+    }
+
+    return {
+        surah_start: start.surah,
+        ayah_start: start.ayah,
+        surah_end: end.surah,
+        ayah_end: end.ayah,
+    };
+}
+
 function positionIndex(position) {
     const offset = surahOffsets.get(Number(position?.surah));
     const ayah = Number(position?.ayah);
