@@ -279,6 +279,7 @@ class StudentsController extends Controller
         [, $schoolId] = $this->managerContext();
         $yearId = $this->validateYearId($request, $schoolId);
         $this->ensureYearIsEditable($schoolId, $yearId);
+        $this->applyReEnrollmentDefaults($request, $schoolId, $yearId);
         $student = $this->validatedStudent($request, $schoolId, $yearId);
         if (empty($student['student_number'])) {
             $student['student_number'] = $this->nextStudentNumberForYear($schoolId, $yearId);
@@ -451,6 +452,47 @@ class StudentsController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    private function applyReEnrollmentDefaults(Request $request, int $schoolId, int $yearId): void
+    {
+        $selectedId = $request->input('re_enrollment_student_id', $request->input('previous_year_student_id'));
+
+        if ($selectedId === null || $selectedId === '') {
+            return;
+        }
+
+        $previousStudent = DB::table('students')
+            ->where('id', $selectedId)
+            ->where('school_id', $schoolId)
+            ->whereNot('year_id', $yearId)
+            ->orderByDesc('year_id')
+            ->first([
+                'id',
+                'full_name',
+                'birth_date',
+                'guardian_name',
+                'guardian_phone',
+                'guardian_email',
+                'room_id',
+                'status',
+                'enrollment_date',
+            ]);
+
+        if (! $previousStudent) {
+            return;
+        }
+
+        $request->merge([
+            'full_name' => trim((string) $request->input('full_name', $previousStudent->full_name)) ?: $previousStudent->full_name,
+            'birth_date' => $request->input('birth_date', $previousStudent->birth_date) ?: $previousStudent->birth_date,
+            'guardian_name' => $request->input('guardian_name', $previousStudent->guardian_name) ?: $previousStudent->guardian_name,
+            'guardian_phone' => $request->input('guardian_phone', $previousStudent->guardian_phone) ?: $previousStudent->guardian_phone,
+            'guardian_email' => $request->input('guardian_email', $previousStudent->guardian_email) ?: $previousStudent->guardian_email,
+            'room_id' => $request->input('room_id', $previousStudent->room_id) ?: $previousStudent->room_id,
+            'status' => $request->input('status', $previousStudent->status) ?: $previousStudent->status,
+            'enrollment_date' => $request->input('enrollment_date', $previousStudent->enrollment_date) ?: $previousStudent->enrollment_date,
+        ]);
     }
 
     private function nextStudentNumberForYear(int $schoolId, int $yearId): string

@@ -96,6 +96,8 @@ export default function StudentFormModal({
     const [error, setError] = useState(null);
     const [retryKey, setRetryKey] = useState(0);
     const [selectedSurahId, setSelectedSurahId] = useState(null);
+    const [reEnrollmentStudents, setReEnrollmentStudents] = useState([]);
+    const [reEnrollmentSelection, setReEnrollmentSelection] = useState('');
     const formId = useId();
     const isEditing = Boolean(student?.id);
 
@@ -110,6 +112,8 @@ export default function StudentFormModal({
         setCanEditYear(false);
         setError(null);
         setSelectedSurahId(null);
+        setReEnrollmentStudents([]);
+        setReEnrollmentSelection('');
         setLoading(true);
 
         const query = yearId ? `?year_id=${encodeURIComponent(yearId)}` : '';
@@ -127,6 +131,7 @@ export default function StudentFormModal({
                 } else {
                     setRooms(Array.isArray(data.rooms) ? data.rooms : []);
                     setCanEditYear(Boolean(data.is_editable));
+                    setReEnrollmentStudents(Array.isArray(data.previous_year_students) ? data.previous_year_students : []);
 
                     const previousYearStudent = data.previous_year_student
                         ?? data.re_enrollment_student
@@ -178,6 +183,30 @@ export default function StudentFormModal({
         setError(null);
     };
 
+    const applyReEnrollmentSelection = (studentId) => {
+        if (!studentId || !Array.isArray(reEnrollmentStudents) || !reEnrollmentStudents.length) {
+            setReEnrollmentSelection('');
+            return;
+        }
+
+        const candidate = reEnrollmentStudents.find((item) => String(item.id) === String(studentId));
+        if (!candidate) return;
+
+        setReEnrollmentSelection(studentId);
+        setForm((current) => ({
+            ...current,
+            full_name: candidate.full_name || current.full_name,
+            birth_date: candidate.birth_date || current.birth_date,
+            guardian_name: candidate.guardian_name || current.guardian_name,
+            guardian_phone: candidate.guardian_phone || current.guardian_phone,
+            guardian_email: candidate.guardian_email || current.guardian_email,
+            room_id: candidate.room_id ? String(candidate.room_id) : current.room_id,
+            status: candidate.status || current.status,
+            enrollment_date: candidate.enrollment_date || current.enrollment_date,
+        }));
+        setError(null);
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         setSaving(true);
@@ -192,6 +221,7 @@ export default function StudentFormModal({
                         ...form,
                         room_id: form.room_id || null,
                         year_id: yearId,
+                        re_enrollment_student_id: reEnrollmentSelection || undefined,
                     }),
                 },
             );
@@ -520,6 +550,22 @@ export default function StudentFormModal({
     } else {
         content = (
             <form id={`${formId}-form`} className="flex flex-col gap-4" onSubmit={handleSubmit} aria-busy={loading}>
+                {!student?.id && reEnrollmentStudents.length > 0 && (
+                    <div className="flex flex-col gap-1.5">
+                        <label htmlFor={`${formId}-re_enrollment_student_id`} className={labelClass}>Re-enrollment</label>
+                        <select
+                            id={`${formId}-re_enrollment_student_id`}
+                            value={reEnrollmentSelection}
+                            onChange={(event) => applyReEnrollmentSelection(event.target.value)}
+                            className={inputClass}
+                        >
+                            <option value="">{t.students.form.createTitle}</option>
+                            {reEnrollmentStudents.map((candidate) => (
+                                <option key={candidate.id} value={candidate.id}>{candidate.full_name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5 sm:col-span-2">
                         <label htmlFor={`${formId}-full_name`} className={labelClass}>{t.students.columns.name}</label>
