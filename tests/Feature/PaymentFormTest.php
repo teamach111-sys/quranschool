@@ -318,6 +318,60 @@ class PaymentFormTest extends TestCase
         ]);
     }
 
+    public function test_secretary_sees_unpaid_balances_grouped_by_student(): void
+    {
+        $this->seedPaymentData();
+        DB::table('payments')->insert([
+            [
+                'id' => 4,
+                'student_id' => 2,
+                'school_id' => 1,
+                'year_id' => 1,
+                'recorded_by' => 12,
+                'period_start' => '2026-09-01',
+                'period_end' => '2026-09-30',
+                'amount' => '45.00',
+                'currency' => 'MAD',
+                'status' => 'due',
+                'paid_at' => null,
+                'payment_method' => null,
+                'reference' => null,
+                'notes' => null,
+                'created_at' => '2026-09-10 08:00:00',
+                'updated_at' => '2026-09-10 08:00:00',
+            ],
+            [
+                'id' => 5,
+                'student_id' => 1,
+                'school_id' => 1,
+                'year_id' => 1,
+                'recorded_by' => 12,
+                'period_start' => '2026-08-01',
+                'period_end' => '2026-08-31',
+                'amount' => '30.00',
+                'currency' => 'MAD',
+                'status' => 'late',
+                'paid_at' => null,
+                'payment_method' => null,
+                'reference' => null,
+                'notes' => null,
+                'created_at' => '2026-08-10 08:00:00',
+                'updated_at' => '2026-08-10 08:00:00',
+            ],
+        ]);
+
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $response = $this->getJson('/payments/table?year_id=1');
+
+        $response->assertOk();
+        $this->assertSame(2, count($response->json('unpaid_balances')));
+        $this->assertSame(1, $response->json('unpaid_balances.0.student_id'));
+        $this->assertSame(2, $response->json('unpaid_balances.0.period_count'));
+        $this->assertSame('155.50', $response->json('unpaid_balances.0.total_amount'));
+        $this->assertSame(2, $response->json('unpaid_balances.0.first_payment_id'));
+    }
+
     public function test_secretary_can_record_a_late_payment_without_changing_its_billing_period(): void
     {
         $this->seedPaymentData();

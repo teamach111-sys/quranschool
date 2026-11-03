@@ -102,6 +102,47 @@ class PaymentsController extends Controller
             ])
             ->values();
 
+        $schoolCurrency = DB::table('schools')->where('id', $schoolId)->value('currency') ?? 'MAD';
+
+        $unpaidBalances = DB::table('payments')
+            ->join('students', function (JoinClause $join) {
+                $join->on('students.id', '=', 'payments.student_id')
+                    ->on('students.school_id', '=', 'payments.school_id')
+                    ->on('students.year_id', '=', 'payments.year_id');
+            })
+            ->where('payments.school_id', $schoolId)
+            ->where('payments.year_id', $yearId)
+            ->whereIn('payments.status', ['due', 'late'])
+            ->select([
+                'students.id as student_id',
+                'students.full_name as student_name',
+                'students.student_number',
+                'students.guardian_phone',
+                DB::raw('SUM(payments.amount) as total_amount'),
+                DB::raw('COUNT(*) as period_count'),
+                DB::raw('MIN(payments.period_start) as oldest_period_start'),
+                DB::raw('MAX(payments.period_end) as latest_period_end'),
+                DB::raw('MIN(payments.id) as first_payment_id'),
+            ])
+            ->groupBy('students.id', 'students.full_name', 'students.student_number', 'students.guardian_phone')
+            ->orderBy('oldest_period_start')
+            ->orderBy('students.full_name')
+            ->orderBy('students.id')
+            ->get()
+            ->map(fn ($balance) => [
+                'student_id' => (int) $balance->student_id,
+                'student_name' => $balance->student_name,
+                'student_number' => $balance->student_number,
+                'guardian_phone' => $balance->guardian_phone,
+                'period_count' => (int) $balance->period_count,
+                'total_amount' => $this->decimalAmount((string) $balance->total_amount),
+                'currency' => $schoolCurrency,
+                'oldest_period_start' => $balance->oldest_period_start,
+                'latest_period_end' => $balance->latest_period_end,
+                'first_payment_id' => (int) $balance->first_payment_id,
+            ])
+            ->values();
+
         $students = DB::table('students')
             ->where('school_id', $schoolId)
             ->where('year_id', $yearId)
@@ -134,13 +175,14 @@ class PaymentsController extends Controller
             'year_label' => $year->year_label,
             'year_is_active' => (bool) $year->is_active,
             'year_is_current' => (bool) $year->is_current,
-            'currency' => DB::table('schools')->where('id', $schoolId)->value('currency') ?? 'MAD',
+            'currency' => $schoolCurrency,
             'can_manage' => $user->role === 'admin' && (bool) $year->is_active,
             'can_record' => in_array($user->role, ['admin', 'secretary'], true)
                 && (bool) $year->is_active,
             'is_secretary' => $user->role === 'secretary',
             'payments' => $payments,
             'students' => $students,
+            'unpaid_balances' => $user->role === 'secretary' ? $unpaidBalances : [],
         ]);
     }
 

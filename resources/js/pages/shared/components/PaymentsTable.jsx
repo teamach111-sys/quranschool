@@ -32,6 +32,7 @@ export default function PaymentsTable({ routeParams = {} }) {
     const { isRTL, lang, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [payments, setPayments] = useState([]);
+    const [unpaidBalances, setUnpaidBalances] = useState([]);
     const [students, setStudents] = useState([]);
     const [filters, setFilters] = useState(emptyFilters);
     const [search, setSearch] = useState('');
@@ -78,6 +79,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             if (signal?.aborted) return;
             setYearId((currentYearId) => currentYearId ?? Number(data.year_id));
             setPayments(Array.isArray(data.payments) ? data.payments : []);
+            setUnpaidBalances(Array.isArray(data.unpaid_balances) ? data.unpaid_balances : []);
             setStudents(Array.isArray(data.students) ? data.students : []);
             setCurrency(data.currency ?? 'MAD');
             setCanManage(Boolean(data.can_manage));
@@ -317,6 +319,62 @@ export default function PaymentsTable({ routeParams = {} }) {
                     <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
                         {t.payments.collectionsDescription}
                     </p>
+                </div>
+            )}
+            {isSecretary && unpaidBalances.length > 0 && (
+                <div className="space-y-2">
+                    <h3 className="text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                        {t.payments.unpaidBalancesTitle}
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+                        {unpaidBalances.map((balance) => (
+                            <div key={balance.student_id} className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 dark:border-[#384d43] dark:bg-[#182620]">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface">{balance.student_name}</p>
+                                        <p className="text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                            {t.payments.unpaidBalanceSummary(balance.period_count, formatAmount({ amount: balance.total_amount, currency: balance.currency }))}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEntry({
+                                            payment: {
+                                                id: balance.first_payment_id,
+                                                student_id: balance.student_id,
+                                                student_name: balance.student_name,
+                                                amount: balance.total_amount,
+                                                currency: balance.currency,
+                                                status: 'due',
+                                                period_start: balance.oldest_period_start,
+                                                period_end: balance.latest_period_end,
+                                                guardian_phone: balance.guardian_phone,
+                                            },
+                                        })}
+                                        className="inline-flex min-h-9 items-center justify-center rounded-lg bg-primary-container px-2.5 py-1.5 text-[11px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                                    >
+                                        {t.payments.record}
+                                    </button>
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                    {balance.guardian_phone ? (
+                                        <>
+                                            <a href={`tel:${balance.guardian_phone.replace(/[^\d+]/g, '')}`} className="underline-offset-2 hover:underline">{balance.guardian_phone}</a>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyGuardianPhone(balance)}
+                                                className="inline-flex items-center rounded-md bg-surface-container px-2 py-1 font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-inverse-on-surface"
+                                            >
+                                                {t.payments.copyPhone}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span>{t.payments.noGuardianPhone}</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
             {isSecretary && collectionTotals.length > 0 && (
