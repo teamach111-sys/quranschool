@@ -229,6 +229,17 @@ class AdminUsersTableTest extends TestCase
             'new_role_id' => 3,
             'reason' => 'Account deactivated.',
         ]);
+        $event = DB::table('audit_events')->where('entity_id', 21)->first();
+        $this->assertNotNull($event);
+        $this->assertSame(1, (int) $event->school_id);
+        $this->assertSame(10, (int) $event->actor_user_id);
+        $this->assertSame('Admin User', $event->actor_name);
+        $this->assertSame('user.status_changed', $event->summary_key);
+        $this->assertSame('Account deactivated.', $event->reason);
+        $this->assertSame(
+            ['is_active' => ['before' => true, 'after' => false]],
+            json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR),
+        );
     }
 
     public function test_admin_cannot_edit_a_user_from_another_school(): void
@@ -267,6 +278,13 @@ class AdminUsersTableTest extends TestCase
             'new_role_id' => 3,
             'reason' => 'Account deactivated.',
         ]);
+        $event = DB::table('audit_events')->where('entity_id', 21)->first();
+        $this->assertNotNull($event);
+        $this->assertSame('user.status_changed', $event->summary_key);
+        $this->assertSame(
+            ['is_active' => ['before' => true, 'after' => false]],
+            json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR),
+        );
     }
 
     public function test_admin_reactivates_a_user(): void
@@ -282,6 +300,44 @@ class AdminUsersTableTest extends TestCase
             'user_id' => 21,
             'reason' => 'Account reactivated.',
         ]);
+        $event = DB::table('audit_events')->where('entity_id', 21)->first();
+        $this->assertNotNull($event);
+        $this->assertSame(
+            ['is_active' => ['before' => false, 'after' => true]],
+            json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    public function test_status_change_rolls_back_when_its_audit_event_cannot_be_written(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+        Schema::drop('audit_events');
+
+        $this->patchJson('/admin/users/21/status', ['is_active' => false])
+            ->assertServerError();
+
+        $this->assertDatabaseHas('users', ['id' => 21, 'is_active' => true]);
+        $this->assertDatabaseCount('role_change_history', 0);
+    }
+
+    public function test_edit_form_status_change_rolls_back_when_its_audit_event_cannot_be_written(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+        Schema::drop('audit_events');
+
+        $this->putJson('/admin/users/21', [
+            'full_name' => 'Secretary User',
+            'email' => 'secretary@example.test',
+            'phone' => '+212 600 000 001',
+            'language' => 'fr',
+            'role_id' => 3,
+            'is_active' => false,
+        ])->assertServerError();
+
+        $this->assertDatabaseHas('users', ['id' => 21, 'is_active' => true]);
+        $this->assertDatabaseCount('role_change_history', 0);
     }
 
     public function test_admin_cannot_deactivate_their_own_account(): void

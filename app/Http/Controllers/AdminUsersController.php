@@ -181,15 +181,23 @@ class AdminUsersController extends Controller
             }
 
             if ($statusChanged) {
+                $statusReason = $validated['is_active'] ? 'Account reactivated.' : 'Account deactivated.';
                 DB::table('role_change_history')->insert([
                     'school_id' => $schoolId,
                     'user_id' => $userId,
                     'changed_by' => (int) Auth::id(),
                     'old_role_id' => $validated['role_id'],
                     'new_role_id' => $validated['role_id'],
-                    'reason' => $validated['is_active'] ? 'Account reactivated.' : 'Account deactivated.',
+                    'reason' => $statusReason,
                     'created_at' => now(),
                 ]);
+                $this->recordUserStatusAuditEvent(
+                    $schoolId,
+                    $userId,
+                    (bool) $user->is_active,
+                    $validated['is_active'],
+                    $statusReason,
+                );
             }
         });
 
@@ -233,15 +241,23 @@ class AdminUsersController extends Controller
                     'updated_at' => now(),
                 ]);
 
+            $statusReason = $isActive ? 'Account reactivated.' : 'Account deactivated.';
             DB::table('role_change_history')->insert([
                 'school_id' => $schoolId,
                 'user_id' => $userId,
                 'changed_by' => (int) Auth::id(),
                 'old_role_id' => (int) $user->role_id,
                 'new_role_id' => (int) $user->role_id,
-                'reason' => $isActive ? 'Account reactivated.' : 'Account deactivated.',
+                'reason' => $statusReason,
                 'created_at' => now(),
             ]);
+            $this->recordUserStatusAuditEvent(
+                $schoolId,
+                $userId,
+                (bool) $user->is_active,
+                $isActive,
+                $statusReason,
+            );
         });
 
         return response()->json(['updated' => true]);
@@ -372,6 +388,43 @@ class AdminUsersController extends Controller
                 'role_id' => [
                     'before' => $oldRoleId,
                     'after' => $newRoleId,
+                ],
+            ], JSON_THROW_ON_ERROR),
+            'reason' => $reason,
+            'created_at' => now(),
+        ]);
+    }
+
+    private function recordUserStatusAuditEvent(
+        int $schoolId,
+        int $userId,
+        bool $wasActive,
+        bool $isActive,
+        string $reason,
+    ): void {
+        $actorId = (int) Auth::id();
+        $actorName = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', $actorId)
+            ->value('full_name');
+
+        if (! is_string($actorName) || $actorName === '') {
+            throw new \RuntimeException('Unable to resolve the authenticated actor for the audit event.');
+        }
+
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => null,
+            'actor_user_id' => $actorId,
+            'actor_name' => $actorName,
+            'action_type' => 'updated',
+            'entity_type' => 'user',
+            'entity_id' => $userId,
+            'summary_key' => 'user.status_changed',
+            'changes' => json_encode([
+                'is_active' => [
+                    'before' => $wasActive,
+                    'after' => $isActive,
                 ],
             ], JSON_THROW_ON_ERROR),
             'reason' => $reason,
