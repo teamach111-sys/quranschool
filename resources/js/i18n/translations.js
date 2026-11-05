@@ -375,6 +375,7 @@ export const translations = {
             entities: {
                 user: 'Utilisateur',
                 payment: 'Paiement',
+                attendance: 'Présence',
                 audit_event: 'Événement d’audit',
             },
             summaries: {
@@ -382,6 +383,7 @@ export const translations = {
                 'user.status_changed': 'Statut du compte modifié',
                 'payment.table_exported': 'Liste des paiements exportée',
                 'payment.receipt_exported': 'Reçu de paiement exporté',
+                'attendance.exported': 'Registre des présences exporté',
                 'action_history.exported': 'Historique des actions exporté',
             },
             fields: {
@@ -707,6 +709,10 @@ export const translations = {
         },
         attendance: {
             listLabel: 'Registre des présences',
+            exportFormats: { csv: 'Exporter CSV', pdf: 'Exporter PDF', xlsx: 'Exporter Excel' },
+            exporting: { csv: 'Export CSV…', pdf: 'Export PDF…', xlsx: 'Export Excel…' },
+            exported: (format, count) => `Le registre filtré de ${count} présence${count === 1 ? '' : 's'} a été exporté en ${format.toUpperCase()}.`,
+            exportError: 'Impossible d’exporter le registre des présences.',
             loading: 'Chargement des présences…',
             loadError: 'Impossible de charger les présences.',
             empty: 'Aucune présence ne correspond à ces filtres.',
@@ -1438,6 +1444,7 @@ export const translations = {
             entities: {
                 user: 'مستخدم',
                 payment: 'دفعة',
+                attendance: 'حضور',
                 audit_event: 'حدث تدقيق',
             },
             summaries: {
@@ -1445,6 +1452,7 @@ export const translations = {
                 'user.status_changed': 'تغيير حالة الحساب',
                 'payment.table_exported': 'تصدير قائمة المدفوعات',
                 'payment.receipt_exported': 'تصدير إيصال الدفع',
+                'attendance.exported': 'تصدير سجل الحضور',
                 'action_history.exported': 'تصدير سجل الإجراءات',
             },
             fields: {
@@ -1770,6 +1778,10 @@ export const translations = {
         },
         attendance: {
             listLabel: 'سجل الحضور',
+            exportFormats: { csv: 'تصدير CSV', pdf: 'تصدير PDF', xlsx: 'تصدير Excel' },
+            exporting: { csv: 'جارٍ تصدير CSV…', pdf: 'جارٍ إعداد PDF…', xlsx: 'جارٍ إعداد Excel…' },
+            exported: (format, count) => `تم تصدير سجل الحضور المصفى بصيغة ${format.toUpperCase()} (${count} سجل).`,
+            exportError: 'تعذر تصدير سجل الحضور.',
             loading: 'جارٍ تحميل الحضور…',
             loadError: 'تعذر تحميل سجلات الحضور.',
             empty: 'لا توجد سجلات حضور تطابق عوامل التصفية.',

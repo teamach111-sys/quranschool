@@ -6,11 +6,19 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use stdClass;
 
 class AttendanceController extends Controller
@@ -24,31 +32,7 @@ class AttendanceController extends Controller
         $yearId = (int) $year->id;
         $yearIsWritable = (bool) $year->is_active;
         $yearIsCurrent = (bool) $year->is_current;
-        $filters = $request->validate([
-            'room_id' => [
-                'nullable',
-                'integer',
-                Rule::exists('rooms', 'id')
-                    ->where('school_id', $schoolId)
-                    ->where('year_id', $yearId),
-            ],
-            'teacher_id' => [
-                'nullable',
-                'integer',
-                Rule::exists('users', 'id')
-                    ->where('school_id', $schoolId)
-                    ->where('role_id', DB::table('roles')->where('role_key', 'teacher')->value('id')),
-            ],
-            'student_id' => [
-                'nullable',
-                'integer',
-                Rule::exists('students', 'id')
-                    ->where('school_id', $schoolId)
-                    ->where('year_id', $yearId),
-            ],
-            'attendance_date' => ['nullable', 'date_format:Y-m-d'],
-            'status' => ['nullable', Rule::in(self::STATUSES)],
-        ]);
+        $filters = $this->validatedTableFilters($request, $schoolId, $yearId);
 
         $rooms = $this->roomsForYear($schoolId, $yearId, $user->role, $user->id, $year);
         $students = DB::table('students')
@@ -89,58 +73,7 @@ class AttendanceController extends Controller
             ->values();
         $teachers = $this->teachersForYear($schoolId, $yearId, $user->role, $user->id, $year);
 
-        $attendanceQuery = DB::table('attendance')
-            ->join('students', function (JoinClause $join) {
-                $join->on('students.id', '=', 'attendance.student_id')
-                    ->on('students.school_id', '=', 'attendance.school_id')
-                    ->on('students.year_id', '=', 'attendance.year_id');
-            })
-            ->leftJoin('rooms', function (JoinClause $join) {
-                $join->on('rooms.id', '=', 'attendance.room_id')
-                    ->on('rooms.school_id', '=', 'attendance.school_id')
-                    ->on('rooms.year_id', '=', 'attendance.year_id');
-            })
-            ->leftJoin('room_teachers as assignments', function (JoinClause $join) {
-                $join->on('assignments.room_id', '=', 'attendance.room_id')
-                    ->on('assignments.school_id', '=', 'attendance.school_id')
-                    ->on('assignments.year_id', '=', 'attendance.year_id')
-                    ->whereColumn('assignments.assigned_from', '<=', 'attendance.attendance_date')
-                    ->where(function (JoinClause $dates) {
-                        $dates->whereNull('assignments.assigned_until')
-                            ->orWhereColumn('assignments.assigned_until', '>=', 'attendance.attendance_date');
-                    });
-            })
-            ->leftJoin('users as teachers', function (JoinClause $join) {
-                $join->on('teachers.id', '=', 'assignments.teacher_id')
-                    ->on('teachers.school_id', '=', 'assignments.school_id');
-            })
-            ->where('attendance.school_id', $schoolId)
-            ->where('attendance.year_id', $yearId);
-
-        if ($user->role === 'teacher') {
-            $this->applyTeacherRoomScope($attendanceQuery, (int) $user->id);
-        }
-
-        if (! empty($filters['room_id'])) {
-            $attendanceQuery->where('attendance.room_id', (int) $filters['room_id']);
-        }
-        if (! empty($filters['teacher_id'])) {
-            $attendanceQuery->where('assignments.teacher_id', (int) $filters['teacher_id']);
-        }
-        if (! empty($filters['student_id'])) {
-            $attendanceQuery->where('attendance.student_id', (int) $filters['student_id']);
-        }
-        if (! empty($filters['attendance_date'])) {
-            $attendanceQuery->where('attendance.attendance_date', $filters['attendance_date']);
-        }
-        if (! empty($filters['status'])) {
-            $attendanceQuery->where('attendance.status', $filters['status']);
-        }
-
-        $attendance = $attendanceQuery
-            ->orderByDesc('attendance.attendance_date')
-            ->orderBy('students.full_name')
-            ->orderBy('attendance.id')
+        $attendance = $this->attendanceQuery($user, $schoolId, $yearId, $filters)
             ->get([
                 'attendance.id',
                 'attendance.student_id',
@@ -191,6 +124,551 @@ class AttendanceController extends Controller
             'can_mark' => $yearIsWritable && $yearIsCurrent && $user->role === 'teacher',
             'can_follow_up' => $yearIsWritable && $user->role === 'secretary',
         ]);
+    }
+
+    public function export(Request $request): Response|JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        $year = $this->resolveYear($request, $schoolId);
+        $yearId = (int) $year->id;
+        $filters = $this->validatedTableFilters($request, $schoolId, $yearId);
+        $validated = $request->validate([
+            'lang' => ['nullable', Rule::in(['fr', 'ar'])],
+            'format' => ['nullable', Rule::in(['csv', 'pdf', 'xlsx'])],
+        ]);
+        $language = $validated['lang'] ?? 'fr';
+        $format = $validated['format'] ?? 'csv';
+        $records = $this->attendanceQuery($user, $schoolId, $yearId, $filters)
+            ->get([
+                'attendance.attendance_date',
+                'students.full_name as student_name',
+                'rooms.name as room_name',
+                'teachers.full_name as teacher_name',
+                'attendance.status',
+                'attendance.note',
+            ]);
+
+        if ($records->isEmpty()) {
+            return response()->json(['message' => 'No attendance matches the selected filters.'], 422);
+        }
+
+        $schoolName = DB::table('schools')
+            ->where('id', $schoolId)
+            ->value($language === 'ar' ? 'name_ar' : 'name_fr');
+        abort_unless(is_string($schoolName) && $schoolName !== '', 500);
+        $yearLabel = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('id', $yearId)
+            ->value('year_label');
+        abort_unless(is_string($yearLabel) && $yearLabel !== '', 500);
+        $labels = $this->exportLabels($language);
+        $filterSummary = $this->exportFilterSummary($filters, $schoolId, $yearId, $labels);
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        $contents = match ($format) {
+            'xlsx' => $this->xlsxContents(
+                $records,
+                $labels,
+                $language,
+                $schoolName,
+                $yearLabel,
+                $filterSummary,
+                $generatedAt,
+            ),
+            'pdf' => $this->pdfContents(
+                $records,
+                $labels,
+                $language,
+                $schoolName,
+                $yearLabel,
+                $filterSummary,
+                $generatedAt,
+            ),
+            default => $this->csvContents(
+                $records,
+                $labels,
+                $schoolName,
+                $yearLabel,
+                $filterSummary,
+                $generatedAt,
+            ),
+        };
+
+        $actor = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', Auth::id())
+            ->first(['id', 'full_name']);
+        abort_unless($actor && is_string($actor->full_name) && $actor->full_name !== '', 403);
+
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => $yearId,
+            'actor_user_id' => (int) $actor->id,
+            'actor_name' => $actor->full_name,
+            'action_type' => 'exported',
+            'entity_type' => 'attendance',
+            'entity_id' => null,
+            'summary_key' => 'attendance.exported',
+            'changes' => json_encode([
+                'format' => $format,
+                'page' => 'attendance',
+                'record_count' => $records->count(),
+                'filters' => [
+                    'room' => $filterSummary['room'] ?? null,
+                    'teacher' => $filterSummary['teacher'] ?? null,
+                    'student' => $filterSummary['student'] ?? null,
+                    'attendance_date' => $filters['attendance_date'] ?? null,
+                    'status' => $filters['status'] ?? null,
+                ],
+                'sort_key' => $filters['sort_key'] ?? null,
+                'sort_direction' => $filters['sort_direction'] ?? null,
+            ], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+        ]);
+
+        $mimeType = match ($format) {
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'pdf' => 'application/pdf',
+            default => 'text/csv; charset=UTF-8',
+        };
+
+        return response($contents, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'attachment; filename="attendance.'.$format.'"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Export-Record-Count' => (string) $records->count(),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatedTableFilters(Request $request, int $schoolId, int $yearId): array
+    {
+        return $request->validate([
+            'room_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('rooms', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'teacher_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('role_id', DB::table('roles')->where('role_key', 'teacher')->value('id')),
+            ],
+            'student_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('students', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'attendance_date' => ['nullable', 'date_format:Y-m-d'],
+            'status' => ['nullable', Rule::in(self::STATUSES)],
+            'sort_key' => ['nullable', Rule::in([
+                'attendance_date',
+                'student_name',
+                'room_name',
+                'teacher_name',
+                'status',
+                'note',
+            ])],
+            'sort_direction' => ['nullable', Rule::in(['asc', 'desc'])],
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function attendanceQuery(object $user, int $schoolId, int $yearId, array $filters): Builder
+    {
+        $query = DB::table('attendance')
+            ->join('students', function (JoinClause $join) {
+                $join->on('students.id', '=', 'attendance.student_id')
+                    ->on('students.school_id', '=', 'attendance.school_id')
+                    ->on('students.year_id', '=', 'attendance.year_id');
+            })
+            ->leftJoin('rooms', function (JoinClause $join) {
+                $join->on('rooms.id', '=', 'attendance.room_id')
+                    ->on('rooms.school_id', '=', 'attendance.school_id')
+                    ->on('rooms.year_id', '=', 'attendance.year_id');
+            })
+            ->leftJoin('room_teachers as assignments', function (JoinClause $join) {
+                $join->on('assignments.room_id', '=', 'attendance.room_id')
+                    ->on('assignments.school_id', '=', 'attendance.school_id')
+                    ->on('assignments.year_id', '=', 'attendance.year_id')
+                    ->whereColumn('assignments.assigned_from', '<=', 'attendance.attendance_date')
+                    ->where(function (JoinClause $dates) {
+                        $dates->whereNull('assignments.assigned_until')
+                            ->orWhereColumn('assignments.assigned_until', '>=', 'attendance.attendance_date');
+                    });
+            })
+            ->leftJoin('users as teachers', function (JoinClause $join) {
+                $join->on('teachers.id', '=', 'assignments.teacher_id')
+                    ->on('teachers.school_id', '=', 'assignments.school_id');
+            })
+            ->where('attendance.school_id', $schoolId)
+            ->where('attendance.year_id', $yearId);
+
+        if ($user->role === 'teacher') {
+            $this->applyTeacherRoomScope($query, (int) $user->id);
+        }
+
+        if (! empty($filters['room_id'])) {
+            $query->where('attendance.room_id', (int) $filters['room_id']);
+        }
+        if (! empty($filters['teacher_id'])) {
+            $query->where('assignments.teacher_id', (int) $filters['teacher_id']);
+        }
+        if (! empty($filters['student_id'])) {
+            $query->where('attendance.student_id', (int) $filters['student_id']);
+        }
+        if (! empty($filters['attendance_date'])) {
+            $query->where('attendance.attendance_date', $filters['attendance_date']);
+        }
+        if (! empty($filters['status'])) {
+            $query->where('attendance.status', $filters['status']);
+        }
+
+        $sortColumns = [
+            'attendance_date' => 'attendance.attendance_date',
+            'student_name' => 'students.full_name',
+            'room_name' => 'rooms.name',
+            'teacher_name' => 'teachers.full_name',
+            'status' => 'attendance.status',
+            'note' => 'attendance.note',
+        ];
+        $sortKey = $filters['sort_key'] ?? null;
+        if ($sortKey === null) {
+            return $query
+                ->orderByDesc('attendance.attendance_date')
+                ->orderBy('students.full_name')
+                ->orderBy('attendance.id');
+        }
+
+        return $query
+            ->orderBy($sortColumns[$sortKey], $filters['sort_direction'] ?? 'asc')
+            ->orderByDesc('attendance.attendance_date')
+            ->orderBy('students.full_name')
+            ->orderBy('attendance.id');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function exportLabels(string $language): array
+    {
+        return $language === 'ar'
+            ? [
+                'title' => 'سجل الحضور',
+                'school' => 'المدرسة',
+                'year' => 'السنة الدراسية',
+                'count' => 'عدد السجلات',
+                'generated' => 'تاريخ التصدير',
+                'filters' => 'عوامل التصفية',
+                'date' => 'التاريخ',
+                'student' => 'الطالب',
+                'room' => 'المجموعة',
+                'teacher' => 'المعلم',
+                'status' => 'الحالة',
+                'note' => 'ملاحظة',
+                'allRooms' => 'كل المجموعات',
+                'allTeachers' => 'كل المعلمين',
+                'allStudents' => 'كل الطلاب',
+                'allStatuses' => 'كل الحالات',
+                'present' => 'حاضر',
+                'absent' => 'غائب',
+                'late' => 'متأخر',
+                'excused' => 'بعذر',
+                'sort' => 'الترتيب',
+                'ascending' => 'تصاعدي',
+                'descending' => 'تنازلي',
+                'student_name' => 'الطالب',
+                'room_name' => 'المجموعة',
+                'teacher_name' => 'المعلم',
+            ]
+            : [
+                'title' => 'Registre des présences',
+                'school' => 'Établissement',
+                'year' => 'Année scolaire',
+                'count' => 'Nombre de présences',
+                'generated' => 'Date d’export',
+                'filters' => 'Filtres',
+                'date' => 'Date',
+                'student' => 'Élève',
+                'room' => 'Groupe',
+                'teacher' => 'Enseignant',
+                'status' => 'Statut',
+                'note' => 'Note',
+                'allRooms' => 'Tous les groupes',
+                'allTeachers' => 'Tous les enseignants',
+                'allStudents' => 'Tous les élèves',
+                'allStatuses' => 'Tous les statuts',
+                'present' => 'Présent',
+                'absent' => 'Absent',
+                'late' => 'En retard',
+                'excused' => 'Excusé',
+                'sort' => 'Tri',
+                'ascending' => 'Croissant',
+                'descending' => 'Décroissant',
+                'student_name' => 'Élève',
+                'room_name' => 'Groupe',
+                'teacher_name' => 'Enseignant',
+            ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @param  array<string, string>  $labels
+     * @return array<string, string>
+     */
+    private function exportFilterSummary(
+        array $filters,
+        int $schoolId,
+        int $yearId,
+        array $labels,
+    ): array {
+        $summary = [];
+        foreach ([
+            'room_id' => ['rooms', 'name', 'room'],
+            'teacher_id' => ['users', 'full_name', 'teacher'],
+            'student_id' => ['students', 'full_name', 'student'],
+        ] as $filterKey => [$table, $column, $labelKey]) {
+            if (! empty($filters[$filterKey])) {
+                $summary[$labelKey] = (string) DB::table($table)
+                    ->where('id', $filters[$filterKey])
+                    ->where('school_id', $schoolId)
+                    ->when($table !== 'users', fn ($query) => $query->where('year_id', $yearId))
+                    ->value($column);
+            }
+        }
+        if (! empty($filters['attendance_date'])) {
+            $summary['date'] = $filters['attendance_date'];
+        }
+        if (! empty($filters['status'])) {
+            $summary['status'] = $labels[$filters['status']];
+        }
+        if (! empty($filters['sort_key'])) {
+            $sortLabel = $labels[$filters['sort_key']] ?? $filters['sort_key'];
+            $direction = ($filters['sort_direction'] ?? 'asc') === 'desc'
+                ? $labels['descending']
+                : $labels['ascending'];
+            $summary['sort'] = $sortLabel.' ('.$direction.')';
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param  Collection<int, object>  $records
+     * @param  array<string, string>  $labels
+     * @param  array<string, string>  $filters
+     */
+    private function csvContents(
+        Collection $records,
+        array $labels,
+        string $schoolName,
+        string $yearLabel,
+        array $filters,
+        string $generatedAt,
+    ): string {
+        $stream = fopen('php://temp', 'r+');
+        if ($stream === false) {
+            throw new \RuntimeException('Unable to create the attendance CSV export.');
+        }
+        $filterValues = array_map(
+            fn ($key, $value) => $labels[$key].': '.$value,
+            array_keys($filters),
+            array_values($filters),
+        );
+
+        fwrite($stream, "\xEF\xBB\xBF");
+        fputcsv($stream, [$labels['title']]);
+        fputcsv($stream, [$labels['school'], $this->spreadsheetSafe($schoolName)]);
+        fputcsv($stream, [$labels['year'], $this->spreadsheetSafe($yearLabel)]);
+        fputcsv($stream, [$labels['count'], $records->count()]);
+        fputcsv($stream, [$labels['generated'], $generatedAt]);
+        fputcsv($stream, [$labels['filters'], $this->spreadsheetSafe(implode(' | ', $filterValues))]);
+        fputcsv($stream, []);
+        fputcsv($stream, [
+            $labels['date'],
+            $labels['student'],
+            $labels['room'],
+            $labels['teacher'],
+            $labels['status'],
+            $labels['note'],
+        ]);
+        foreach ($records as $record) {
+            fputcsv($stream, [
+                $this->spreadsheetSafe($record->attendance_date),
+                $this->spreadsheetSafe($record->student_name),
+                $this->spreadsheetSafe($record->room_name),
+                $this->spreadsheetSafe($record->teacher_name),
+                $labels[$record->status] ?? $this->spreadsheetSafe($record->status),
+                $this->spreadsheetSafe($record->note),
+            ]);
+        }
+
+        rewind($stream);
+        $contents = stream_get_contents($stream);
+        fclose($stream);
+        if ($contents === false) {
+            throw new \RuntimeException('Unable to read the attendance CSV export.');
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @param  Collection<int, object>  $records
+     * @param  array<string, string>  $labels
+     * @param  array<string, string>  $filters
+     */
+    private function xlsxContents(
+        Collection $records,
+        array $labels,
+        string $language,
+        string $schoolName,
+        string $yearLabel,
+        array $filters,
+        string $generatedAt,
+    ): string {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle($language === 'ar' ? 'سجل الحضور' : 'Présences');
+        $sheet->setRightToLeft($language === 'ar');
+
+        $filterValues = array_map(
+            fn ($key, $value) => $labels[$key].': '.$value,
+            array_keys($filters),
+            array_values($filters),
+        );
+        $metadata = [
+            [$labels['title']],
+            [$labels['school'], $schoolName],
+            [$labels['year'], $yearLabel],
+            [$labels['count'], (string) $records->count()],
+            [$labels['generated'], $generatedAt],
+            [$labels['filters'], implode(' | ', $filterValues)],
+        ];
+        foreach ($metadata as $rowIndex => $row) {
+            foreach ($row as $columnIndex => $value) {
+                $sheet->getCell([$columnIndex + 1, $rowIndex + 1])
+                    ->setValueExplicit(
+                        $this->spreadsheetSafe((string) $value),
+                        DataType::TYPE_STRING,
+                    );
+            }
+        }
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $headerRow = count($metadata) + 2;
+        $headings = [
+            $labels['date'],
+            $labels['student'],
+            $labels['room'],
+            $labels['teacher'],
+            $labels['status'],
+            $labels['note'],
+        ];
+        foreach ($headings as $columnIndex => $heading) {
+            $sheet->getCell([$columnIndex + 1, $headerRow])
+                ->setValueExplicit($heading, DataType::TYPE_STRING);
+            $sheet->getColumnDimensionByColumn($columnIndex + 1)->setAutoSize(true);
+        }
+        $lastColumn = Coordinate::stringFromColumnIndex(count($headings));
+        $lastRow = $headerRow + $records->count();
+        $sheet->getStyle("A{$headerRow}:{$lastColumn}{$headerRow}")->getFont()->setBold(true);
+        $sheet->freezePane('A'.($headerRow + 1));
+        $sheet->setAutoFilter("A{$headerRow}:{$lastColumn}{$lastRow}");
+
+        foreach ($records as $rowIndex => $record) {
+            $row = [
+                $record->attendance_date,
+                $record->student_name,
+                $record->room_name,
+                $record->teacher_name,
+                $labels[$record->status] ?? $record->status,
+                $record->note,
+            ];
+            foreach ($row as $columnIndex => $value) {
+                $sheet->getCell([$columnIndex + 1, $headerRow + $rowIndex + 1])
+                    ->setValueExplicit($this->spreadsheetSafe((string) ($value ?? '')), DataType::TYPE_STRING);
+            }
+        }
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'quranschool-attendance-');
+        if ($temporaryFile === false) {
+            throw new \RuntimeException('Unable to create the attendance Excel export.');
+        }
+
+        try {
+            (new Xlsx($spreadsheet))->save($temporaryFile);
+            $contents = file_get_contents($temporaryFile);
+            if ($contents === false || ! str_starts_with($contents, 'PK')) {
+                throw new \RuntimeException('Unable to read the attendance Excel export.');
+            }
+        } finally {
+            if (is_file($temporaryFile) && ! unlink($temporaryFile)) {
+                throw new \RuntimeException('Unable to clean up the temporary attendance Excel export.');
+            }
+            $spreadsheet->disconnectWorksheets();
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @param  Collection<int, object>  $records
+     * @param  array<string, string>  $labels
+     * @param  array<string, string>  $filters
+     */
+    private function pdfContents(
+        Collection $records,
+        array $labels,
+        string $language,
+        string $schoolName,
+        string $yearLabel,
+        array $filters,
+        string $generatedAt,
+    ): string {
+        $temporaryDirectory = storage_path('framework/cache/mpdf');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $pdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'tempDir' => $temporaryDirectory,
+        ]);
+        $pdf->SetTitle($labels['title']);
+        $pdf->WriteHTML(view('exports.attendance', [
+            'language' => $language,
+            'labels' => $labels,
+            'schoolName' => $schoolName,
+            'yearLabel' => $yearLabel,
+            'records' => $records,
+            'filters' => $filters,
+            'generatedAt' => $generatedAt,
+        ])->render());
+        $contents = $pdf->Output('', Destination::STRING_RETURN);
+        if (! str_starts_with($contents, '%PDF-')) {
+            throw new \RuntimeException('The attendance PDF export is invalid.');
+        }
+
+        return $contents;
+    }
+
+    private function spreadsheetSafe(?string $value): string
+    {
+        $value = (string) ($value ?? '');
+
+        return preg_match('/^[\s]*[=+\-@\t\r]/u', $value) === 1 ? "'".$value : $value;
     }
 
     public function roster(Request $request): JsonResponse

@@ -25,7 +25,7 @@ function emptyFilters() {
 }
 
 export default function AttendanceTable({ routeParams = {} }) {
-    const { isRTL, t } = useLanguage();
+    const { isRTL, lang, t } = useLanguage();
     const toast = useToast();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [attendance, setAttendance] = useState([]);
@@ -48,6 +48,8 @@ export default function AttendanceTable({ routeParams = {} }) {
     const undoingBulk = React.useRef(false);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
+    const [exportingFormat, setExportingFormat] = useState(null);
+    const [sortState, setSortState] = useState({ key: '', direction: 'asc' });
 
     useEffect(() => {
         const syncYear = (event) => {
@@ -59,6 +61,7 @@ export default function AttendanceTable({ routeParams = {} }) {
             setCanCorrect(false);
             setCanMark(false);
             setCanFollowUp(false);
+            setSortState({ key: '', direction: 'asc' });
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -93,6 +96,10 @@ export default function AttendanceTable({ routeParams = {} }) {
             Object.entries(filters).forEach(([key, value]) => {
                 if (value) query.set(key, value);
             });
+            if (sortState.key) {
+                query.set('sort_key', sortState.key);
+                query.set('sort_direction', sortState.direction);
+            }
 
             const response = await apiFetch(`/attendance/table?${query.toString()}`, { signal });
             if (!response.ok) throw new Error('Failed to load attendance');
@@ -114,7 +121,7 @@ export default function AttendanceTable({ routeParams = {} }) {
         } finally {
             if (!signal?.aborted) setLoading(false);
         }
-    }, [filters, yearId]);
+    }, [filters, sortState, yearId]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -125,6 +132,60 @@ export default function AttendanceTable({ routeParams = {} }) {
     const handleFilterChange = (event) => {
         const { name, value } = event.target;
         setFilters((current) => ({ ...current, [name]: value }));
+    };
+
+    const exportAttendance = async (format) => {
+        setExportingFormat(format);
+        try {
+            const query = new URLSearchParams({
+                ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '')),
+                lang,
+                format,
+            });
+            if (yearId) query.set('year_id', String(yearId));
+            if (sortState.key) {
+                query.set('sort_key', sortState.key);
+                query.set('sort_direction', sortState.direction);
+            }
+
+            const response = await apiFetch(`/attendance/export?${query}`, {
+                headers: {
+                    Accept: {
+                        csv: 'text/csv',
+                        pdf: 'application/pdf',
+                        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    }[format],
+                },
+            });
+            if (response.status === 422) throw new Error('Attendance export was empty');
+            const expectedContentType = {
+                csv: 'text/csv',
+                pdf: 'application/pdf',
+                xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }[format];
+            if (!response.ok || !response.headers.get('Content-Type')?.toLowerCase().includes(expectedContentType)) {
+                throw new Error('Attendance export failed');
+            }
+            const exportCount = Number(response.headers.get('X-Export-Record-Count'));
+            if (!Number.isInteger(exportCount) || exportCount < 1) {
+                throw new Error('Attendance export count was invalid');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `attendance.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast.success(t.attendance.exported(format, exportCount));
+        } catch {
+            toast.error(t.attendance.exportError);
+        } finally {
+            setExportingFormat(null);
+        }
     };
 
     const openEntry = (record = null) => {
@@ -246,8 +307,24 @@ export default function AttendanceTable({ routeParams = {} }) {
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
     const toolbar = (
         <div className="flex flex-col gap-3">
-            {canMark && yearIsCurrent && (
-                <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
+                {['csv', 'pdf', 'xlsx'].map((format) => {
+                    const isExporting = exportingFormat === format;
+                    return (
+                        <button
+                            key={format}
+                            type="button"
+                            onClick={() => exportAttendance(format)}
+                            disabled={exportingFormat !== null || loading || attendance.length === 0}
+                            aria-busy={isExporting}
+                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
+                        >
+                            <Icon name={isExporting ? 'progress_activity' : 'download'} className={`text-[17px] ${isExporting ? 'animate-spin' : ''}`} />
+                            {isExporting ? t.attendance.exporting[format] : t.attendance.exportFormats[format]}
+                        </button>
+                    );
+                })}
+                {canMark && yearIsCurrent && (
                     <button
                         type="button"
                         onClick={() => {
@@ -258,8 +335,8 @@ export default function AttendanceTable({ routeParams = {} }) {
                         <Icon name="add" className="text-[17px]" />
                         {t.attendance.mark}
                     </button>
-                </div>
-            )}
+                )}
+            </div>
             <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
                 <div className="min-w-0 xl:flex-1">
                     <SelectInput name="room_id" value={filters.room_id} onChange={handleFilterChange} aria-label={t.attendance.filters.room} className={inputClass}>
@@ -325,6 +402,7 @@ export default function AttendanceTable({ routeParams = {} }) {
                     toolbar={toolbar}
                     actions={actions}
                     loading={loading}
+                    onSortChange={setSortState}
                 />
             </div>
             <div className="md:hidden">

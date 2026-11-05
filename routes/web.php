@@ -128,6 +128,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('attendance.table');
 
+    Route::get('/attendance/export', [AttendanceController::class, 'export'])
+        ->middleware('can:access-dashboard')
+        ->name('attendance.export');
+
     Route::get('/attendance/roster', [AttendanceController::class, 'roster'])
         ->middleware('can:access-dashboard')
         ->name('attendance.roster');

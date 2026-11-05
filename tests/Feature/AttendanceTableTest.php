@@ -14,6 +14,12 @@ class AttendanceTableTest extends TestCase
     {
         parent::setUp();
 
+        Schema::create('schools', function (Blueprint $table) {
+            $table->id();
+            $table->string('name_fr');
+            $table->string('name_ar');
+        });
+
         Schema::create('academic_years', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('school_id');
@@ -35,6 +41,20 @@ class AttendanceTableTest extends TestCase
             $table->unsignedInteger('role_id');
             $table->string('full_name');
             $table->boolean('is_active')->default(true);
+        });
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name');
+            $table->string('action_type');
+            $table->string('entity_type');
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key');
+            $table->json('changes')->nullable();
+            $table->timestamp('created_at')->nullable();
         });
 
         Schema::create('rooms', function (Blueprint $table) {
@@ -619,6 +639,107 @@ class AttendanceTableTest extends TestCase
             ->assertJsonPath('attendance.0.note', 'Family informed');
     }
 
+    public function test_admin_exports_filtered_attendance_csv_and_records_the_export(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/attendance/export?year_id=1&room_id=2&status=absent&lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringContainsString('Amina Benali', $response->getContent());
+        $this->assertStringContainsString('Family informed', $response->getContent());
+        $this->assertStringContainsString('Absent', $response->getContent());
+        $this->assertStringNotContainsString('Other Student', $response->getContent());
+
+        $this->assertDatabaseHas('audit_events', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'actor_user_id' => 10,
+            'action_type' => 'exported',
+            'entity_type' => 'attendance',
+            'summary_key' => 'attendance.exported',
+        ]);
+        $changes = json_decode(DB::table('audit_events')->value('changes'), true);
+        $this->assertSame('csv', $changes['format']);
+        $this->assertSame('attendance', $changes['page']);
+        $this->assertSame(1, $changes['record_count']);
+        $this->assertSame('Beta', $changes['filters']['room']);
+    }
+
+    public function test_admin_exports_attendance_as_pdf_and_xlsx_and_audits_each_format(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $pdf = $this->get('/attendance/export?year_id=1&room_id=2&status=absent&lang=ar&format=pdf');
+        $pdf->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', 'attachment; filename="attendance.pdf"')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringStartsWith('%PDF-', $pdf->getContent());
+
+        $xlsx = $this->get('/attendance/export?year_id=1&room_id=2&status=absent&lang=ar&format=xlsx');
+        $xlsx->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('Content-Disposition', 'attachment; filename="attendance.xlsx"')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringStartsWith('PK', $xlsx->getContent());
+
+        $formats = DB::table('audit_events')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($event) => json_decode($event->changes, true)['format'])
+            ->all();
+        $this->assertSame(['pdf', 'xlsx'], $formats);
+        $this->assertSame(2, DB::table('audit_events')->count());
+    }
+
+    public function test_teacher_attendance_export_keeps_assigned_room_scope_and_localizes_arabic(): void
+    {
+        $this->seedAttendance();
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $response = $this->get('/attendance/export?year_id=1&lang=ar');
+
+        $response->assertOk()->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringContainsString('سجل الحضور', $response->getContent());
+        $this->assertStringContainsString('حاضر', $response->getContent());
+        $this->assertStringContainsString('Zayd Ali', $response->getContent());
+        $this->assertStringNotContainsString('Amina Benali', $response->getContent());
+        $this->assertStringNotContainsString('Other Student', $response->getContent());
+    }
+
+    public function test_attendance_csv_escapes_spreadsheet_formula_values(): void
+    {
+        $this->seedAttendance();
+        DB::table('attendance')->where('id', 1)->update(['note' => '=HYPERLINK("https://example.test")']);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/attendance/export?year_id=1&room_id=1&lang=fr');
+
+        $response->assertOk();
+        $this->assertStringContainsString("'=HYPERLINK", $response->getContent());
+    }
+
+    public function test_attendance_export_rejects_foreign_filters_and_returns_no_file_for_empty_results(): void
+    {
+        $this->seedAttendance();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/attendance/export?year_id=1&student_id=3&lang=fr')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('student_id');
+
+        $this->getJson('/attendance/export?year_id=1&attendance_date=2026-11-05&lang=fr')
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'No attendance matches the selected filters.');
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
     public function test_attendance_table_rejects_an_invalid_status_filter(): void
     {
         $this->seedAttendance();
@@ -1037,6 +1158,10 @@ class AttendanceTableTest extends TestCase
 
     private function seedAttendance(): void
     {
+        DB::table('schools')->insert([
+            ['id' => 1, 'name_fr' => 'École A', 'name_ar' => 'المدرسة أ'],
+            ['id' => 2, 'name_fr' => 'École B', 'name_ar' => 'المدرسة ب'],
+        ]);
         DB::table('academic_years')->insert([
             ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
             ['id' => 2, 'school_id' => 2, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
