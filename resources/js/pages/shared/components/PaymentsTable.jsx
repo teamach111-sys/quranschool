@@ -10,6 +10,7 @@ import {
     getSelectedAcademicYearId,
 } from '../../../persisters/yearselector';
 import { useLanguage } from '../../../hooks/useLanguage';
+import { useToast } from '../../../components/ToastProvider';
 import { apiFetch } from '../../../lib/api';
 import DesktopTable from '../../../tables/desktoptable';
 import MobileTable from '../../../tables/mobiletable';
@@ -32,6 +33,7 @@ function displayDate(value, locale, withTime = false) {
 
 export default function PaymentsTable({ routeParams = {} }) {
     const { isRTL, lang, t } = useLanguage();
+    const toast = useToast();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [payments, setPayments] = useState([]);
     const [unpaidBalances, setUnpaidBalances] = useState([]);
@@ -43,7 +45,6 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [canRecord, setCanRecord] = useState(false);
     const [canGenerate, setCanGenerate] = useState(false);
     const [isSecretary, setIsSecretary] = useState(false);
-    const [copyFeedback, setCopyFeedback] = useState(null);
     const [entry, setEntry] = useState(null);
     const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
     const [focusedAlertPaymentId, setFocusedAlertPaymentId] = useState('');
@@ -51,7 +52,6 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [receiptExportingId, setReceiptExportingId] = useState(null);
-    const [receiptExportFeedback, setReceiptExportFeedback] = useState(null);
     const [canExportReceipts, setCanExportReceipts] = useState(false);
 
     useEffect(() => {
@@ -148,7 +148,6 @@ export default function PaymentsTable({ routeParams = {} }) {
     };
     const exportPaymentReceipt = async (payment) => {
         setReceiptExportingId(payment.id);
-        setReceiptExportFeedback(null);
 
         try {
             const query = new URLSearchParams({
@@ -171,9 +170,9 @@ export default function PaymentsTable({ routeParams = {} }) {
             link.click();
             link.remove();
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-            setReceiptExportFeedback('success');
+            toast.success(t.payments.receiptExported);
         } catch {
-            setReceiptExportFeedback('error');
+            toast.error(t.payments.receiptExportError);
         } finally {
             setReceiptExportingId(null);
         }
@@ -213,9 +212,9 @@ export default function PaymentsTable({ routeParams = {} }) {
         try {
             if (!navigator.clipboard?.writeText) throw new Error('Clipboard access is unavailable');
             await navigator.clipboard.writeText(payment.guardian_phone);
-            setCopyFeedback({ paymentId: payment.id, copied: true });
+            toast.success(t.payments.phoneCopied);
         } catch {
-            setCopyFeedback({ paymentId: payment.id, copied: false });
+            toast.error(t.payments.phoneCopyError);
         }
     };
     const columns = [
@@ -247,11 +246,6 @@ export default function PaymentsTable({ routeParams = {} }) {
                             <Icon name="content_copy" className="text-[16px]" />
                             {t.payments.copyPhone}
                         </button>
-                    )}
-                    {copyFeedback?.paymentId === payment.id && (
-                        <span role={copyFeedback.copied ? 'status' : 'alert'} className={`text-[11px] ${copyFeedback.copied ? 'text-primary dark:text-primary-fixed-dim' : 'text-error dark:text-error-container'}`}>
-                            {copyFeedback.copied ? t.payments.phoneCopied : t.payments.phoneCopyError}
-                        </span>
                     )}
                 </div>
             ),
@@ -539,18 +533,6 @@ export default function PaymentsTable({ routeParams = {} }) {
             {focusedAlertPayment && (
                 <p role="status" className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
                     {t.payments.alertRecordFocus(focusedAlertPayment.student_name)}
-                </p>
-            )}
-            {receiptExportFeedback && (
-                <p
-                    role={receiptExportFeedback === 'error' ? 'alert' : 'status'}
-                    className={`rounded-lg px-3 py-2 text-[12px] ${
-                        receiptExportFeedback === 'error'
-                            ? 'bg-error-container text-on-error-container'
-                            : 'bg-primary-fixed text-on-primary-fixed-variant'
-                    }`}
-                >
-                    {receiptExportFeedback === 'error' ? t.payments.receiptExportError : t.payments.receiptExported}
                 </p>
             )}
             <div className="hidden md:block">

@@ -38,6 +38,9 @@ export const translations = {
             { icon: 'person', key: 'mon-profil', label: 'Mon profil' },
         ],
         logout: 'Déconnexion',
+        toast: {
+            dismiss: 'Fermer la notification',
+        },
         exitBadge: 'Exit',
         dateGreg: 'Mercredi 15 Mai 2025',
         dateHijri: "17 Dhu al-Qi'dah 1446",
@@ -994,6 +997,9 @@ export const translations = {
             { icon: 'person', key: 'mon-profil', label: 'ملفي الشخصي' },
         ],
         logout: 'تسجيل الخروج',
+        toast: {
+            dismiss: 'إغلاق الإشعار',
+        },
         exitBadge: 'خروج',
         dateGreg: 'الأربعاء 15 مايو 2025',
         dateGregMobile: 'الأربعاء 15 ماي 2025',

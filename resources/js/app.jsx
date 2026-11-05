@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { LanguageProvider } from './persisters/languageswitch';
+import { ToastProvider } from './components/ToastProvider';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
@@ -19,7 +20,9 @@ if (rootElement) {
     createRoot(rootElement).render(
         <React.StrictMode>
             <LanguageProvider>
-                {page === 'dashboard' ? <Dashboard user={user} /> : <Login />}
+                <ToastProvider>
+                    {page === 'dashboard' ? <Dashboard user={user} /> : <Login />}
+                </ToastProvider>
             </LanguageProvider>
         </React.StrictMode>
     );

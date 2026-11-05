@@ -1,17 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
+import { useToast } from '../../../components/ToastProvider';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { apiFetch } from '../../../lib/api';
 
 export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
     const { isRTL, lang, t } = useLanguage();
+    const toast = useToast();
     const [students, setStudents] = useState(lesson.students);
     const [savingStudentIds, setSavingStudentIds] = useState([]);
     const [retryStatuses, setRetryStatuses] = useState({});
     const [rowErrors, setRowErrors] = useState({});
-    const [lastAction, setLastAction] = useState(null);
-    const [undoing, setUndoing] = useState(false);
-    const [undoError, setUndoError] = useState(false);
     const headingRef = useRef(null);
     const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
@@ -26,13 +25,6 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
     useEffect(() => {
         headingRef.current?.focus();
     }, []);
-
-    useEffect(() => {
-        if (!lastAction || undoing) return undefined;
-
-        const timeoutId = window.setTimeout(() => setLastAction(null), 5000);
-        return () => window.clearTimeout(timeoutId);
-    }, [lastAction, undoing]);
 
     const updateStudent = (studentId, update) => {
         setStudents((current) => current.map((student) => (
@@ -58,10 +50,9 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
 
         setSavingStudentIds((current) => [...current, studentId]);
         setRowErrors((current) => ({ ...current, [studentId]: null }));
-        setLastAction(null);
-        setUndoError(false);
         updateStudent(studentId, { status });
         let failureMessage = t.teacherDashboard.attendanceSaveError;
+        let isValidationFailure = false;
 
         try {
             const response = await apiFetch('/attendance', {
@@ -78,6 +69,7 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
 
             if (!response.ok) {
                 failureMessage = getSaveError(response, data);
+                isValidationFailure = response.status === 422;
                 throw new Error('attendance-save-failed');
             }
 
@@ -91,41 +83,43 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                 delete next[studentId];
                 return next;
             });
-            setLastAction({
+            const undoAction = {
                 studentId,
                 before: student,
                 attendanceId: data.attendance_id,
+            };
+            toast.success(t.teacherDashboard.attendanceSaved(student.student_name), {
+                label: t.teacherDashboard.undoAttendance,
+                onClick: () => undoLastAction(undoAction),
             });
-            setUndoError(false);
         } catch {
             updateStudent(studentId, { status: student.status });
             setRetryStatuses((current) => ({ ...current, [studentId]: status }));
-            setRowErrors((current) => ({
-                ...current,
-                [studentId]: failureMessage,
-            }));
+            if (isValidationFailure) {
+                setRowErrors((current) => ({
+                    ...current,
+                    [studentId]: failureMessage,
+                }));
+            } else {
+                toast.error(failureMessage);
+            }
         } finally {
             setSavingStudentIds((current) => current.filter((id) => id !== studentId));
         }
     };
 
-    const undoLastAction = async () => {
-        if (!lastAction || undoing) return;
-
-        setUndoing(true);
-        setUndoError(false);
-
+    const undoLastAction = async (action) => {
         try {
-            const response = lastAction.before.attendance_id === null
-                ? await apiFetch(`/attendance/${lastAction.attendanceId}`, { method: 'DELETE' })
+            const response = action.before.attendance_id === null
+                ? await apiFetch(`/attendance/${action.attendanceId}`, { method: 'DELETE' })
                 : await apiFetch('/attendance', {
                     method: 'POST',
                     body: JSON.stringify({
                         year_id: yearId,
-                        student_id: lastAction.studentId,
+                        student_id: action.studentId,
                         attendance_date: todayDate,
-                        status: lastAction.before.status,
-                        note: lastAction.before.note || null,
+                        status: action.before.status,
+                        note: action.before.note || null,
                     }),
                 });
 
@@ -133,12 +127,11 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                 throw new Error('Unable to undo attendance');
             }
 
-            updateStudent(lastAction.studentId, lastAction.before);
-            setLastAction(null);
+            updateStudent(action.studentId, action.before);
+            return true;
         } catch {
-            setUndoError(true);
-        } finally {
-            setUndoing(false);
+            toast.error(t.teacherDashboard.undoAttendanceError);
+            return false;
         }
     };
 
@@ -257,11 +250,13 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                                     </p>
                                 )}
 
-                                {rowErrors[student.student_id] && (
+                                {(rowErrors[student.student_id] || retryStatus) && (
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <p role="alert" className="text-[12px] leading-5 text-error dark:text-error-container">
-                                            {rowErrors[student.student_id]}
-                                        </p>
+                                        {rowErrors[student.student_id] && (
+                                            <p role="alert" className="text-[12px] leading-5 text-error dark:text-error-container">
+                                                {rowErrors[student.student_id]}
+                                            </p>
+                                        )}
                                         {retryStatus && (
                                             <button
                                                 type="button"
@@ -282,33 +277,6 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                 <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-[13px] leading-5 text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
                     {t.teacherDashboard.noStudentsInLesson}
                 </p>
-            )}
-
-            {(lastAction || undoError) && (
-                <div
-                    role={undoError ? 'alert' : 'status'}
-                    aria-live={undoError ? 'assertive' : 'polite'}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 dark:border-tertiary-container dark:bg-inverse-surface"
-                >
-                    <p className={`text-[13px] leading-5 ${undoError ? 'text-error dark:text-error-container' : 'text-on-surface dark:text-inverse-on-surface'}`}>
-                        {undoError
-                            ? t.teacherDashboard.undoAttendanceError
-                            : t.teacherDashboard.attendanceSaved(
-                                students.find((student) => student.student_id === lastAction.studentId)?.student_name ?? '',
-                            )}
-                    </p>
-                    {lastAction && (
-                        <button
-                            type="button"
-                            disabled={undoing}
-                            onClick={undoLastAction}
-                            className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-[13px] font-semibold text-primary hover:bg-surface-container focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60 dark:text-primary-fixed-dim dark:hover:bg-tertiary-container"
-                        >
-                            {undoing && <Icon name="progress_activity" className="animate-spin text-[18px]" />}
-                            {undoing ? t.teacherDashboard.undoingAttendance : t.teacherDashboard.undoAttendance}
-                        </button>
-                    )}
-                </div>
             )}
 
             <div className="sticky bottom-0 z-10 -mx-4 mt-2 border-t border-outline-variant bg-surface-container-lowest/95 p-4 backdrop-blur dark:border-tertiary-container dark:bg-inverse-surface/95">
