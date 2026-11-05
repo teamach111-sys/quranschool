@@ -20,6 +20,7 @@ USE quranschool;
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS cache_locks;
 DROP TABLE IF EXISTS cache;
+DROP TABLE IF EXISTS audit_events;
 DROP TABLE IF EXISTS role_change_history;
 DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS memorization_sessions;
@@ -348,6 +349,31 @@ CREATE TABLE role_change_history (
   INDEX idx_rch_user_date (user_id,created_at),
   INDEX idx_rch_changed_by (changed_by,created_at),
   INDEX idx_rch_school_date (school_id,created_at)
+) ENGINE=InnoDB;
+
+-- Unified append-only action events. Keep actor_name as a snapshot so history
+-- remains recognizable if the account is later renamed or deactivated.
+CREATE TABLE audit_events (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  school_id BIGINT UNSIGNED NOT NULL,
+  year_id BIGINT UNSIGNED,
+  actor_user_id BIGINT UNSIGNED NOT NULL,
+  actor_name VARCHAR(120) NOT NULL,
+  action_type VARCHAR(48) NOT NULL,
+  entity_type VARCHAR(64) NOT NULL,
+  entity_id BIGINT UNSIGNED,
+  summary_key VARCHAR(100) NOT NULL,
+  changes JSON,
+  reason VARCHAR(255),
+  request_id VARCHAR(100),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_audit_events_school FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_audit_events_year_school FOREIGN KEY (year_id,school_id) REFERENCES academic_years(id,school_id) ON DELETE RESTRICT,
+  CONSTRAINT fk_audit_events_actor_school FOREIGN KEY (actor_user_id,school_id) REFERENCES users(id,school_id) ON DELETE RESTRICT,
+  INDEX idx_audit_events_school_date (school_id,created_at,id),
+  INDEX idx_audit_events_school_year_date (school_id,year_id,created_at,id),
+  INDEX idx_audit_events_school_actor_date (school_id,actor_user_id,created_at),
+  INDEX idx_audit_events_school_entity (school_id,entity_type,entity_id,created_at)
 ) ENGINE=InnoDB;
 
 -- Laravel's configured database cache store.

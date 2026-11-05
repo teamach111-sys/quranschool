@@ -103,7 +103,7 @@ export default function PaymentFormModal({
                 else if (data?.errors?.amount) setError(t.payments.amountError);
                 else if (data?.errors?.paid_at || data?.errors?.payment_method || data?.errors?.reference) {
                     setError(t.payments.paymentDetailsError);
-                } else if (data?.errors?.notes) setError(t.payments.noteError);
+                } else if (data?.errors?.notes && form.status === 'waived') setError(t.payments.noteError);
                 else setError(t.payments.saveError);
                 return;
             }

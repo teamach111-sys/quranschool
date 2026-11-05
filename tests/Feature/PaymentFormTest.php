@@ -196,6 +196,26 @@ class PaymentFormTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_create_a_due_payment_with_null_notes(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'period_start' => '2026-12-01',
+            'period_end' => '2026-12-31',
+            'notes' => null,
+        ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('payments', [
+            'id' => $response->json('payment_id'),
+            'status' => 'due',
+            'notes' => null,
+        ]);
+    }
+
     public function test_admin_must_provide_valid_period_amount_and_status(): void
     {
         $this->seedPaymentData();
@@ -275,6 +295,26 @@ class PaymentFormTest extends TestCase
             'payment_method' => 'cash',
             'reference' => 'REC-2026-0002',
             'recorded_by' => 12,
+        ]);
+    }
+
+    public function test_secretary_can_record_a_payment_as_paid_with_null_notes(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+        $this->travelTo('2026-11-03 12:00:00');
+
+        $this->putJson('/payments/2', [
+            'year_id' => 1,
+            'status' => 'paid',
+            'payment_method' => 'cash',
+            'notes' => null,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('payments', [
+            'id' => 2,
+            'status' => 'paid',
+            'notes' => null,
         ]);
     }
 

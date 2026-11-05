@@ -8,8 +8,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 use stdClass;
 
 class PaymentsController extends Controller
@@ -179,10 +182,139 @@ class PaymentsController extends Controller
             'can_manage' => $user->role === 'admin' && (bool) $year->is_active,
             'can_record' => in_array($user->role, ['admin', 'secretary'], true)
                 && (bool) $year->is_active,
+            'can_export_receipts' => in_array($user->role, ['admin', 'secretary'], true),
             'is_secretary' => $user->role === 'secretary',
             'payments' => $payments,
             'students' => $students,
             'unpaid_balances' => $user->role === 'secretary' ? $unpaidBalances : [],
+        ]);
+    }
+
+    public function receipt(Request $request, int $paymentId)
+    {
+        [$user, $schoolId] = $this->staffContext();
+        $year = $this->resolveYear($request, $schoolId, $user->role);
+        $language = $request->validate([
+            'lang' => ['nullable', Rule::in(['fr', 'ar'])],
+        ])['lang'] ?? data_get($user, 'language', 'fr');
+        $language = in_array($language, ['fr', 'ar'], true) ? $language : 'fr';
+
+        $payment = DB::table('payments')
+            ->join('students', function (JoinClause $join) {
+                $join->on('students.id', '=', 'payments.student_id')
+                    ->on('students.school_id', '=', 'payments.school_id')
+                    ->on('students.year_id', '=', 'payments.year_id');
+            })
+            ->join('schools', 'schools.id', '=', 'payments.school_id')
+            ->join('academic_years', function (JoinClause $join) {
+                $join->on('academic_years.id', '=', 'payments.year_id')
+                    ->on('academic_years.school_id', '=', 'payments.school_id');
+            })
+            ->where('payments.id', $paymentId)
+            ->where('payments.school_id', $schoolId)
+            ->where('payments.year_id', $year->id)
+            ->where('payments.status', 'paid')
+            ->whereNotNull('payments.paid_at')
+            ->first([
+                'payments.id',
+                'payments.year_id',
+                'payments.period_start',
+                'payments.period_end',
+                'payments.amount',
+                'payments.currency',
+                'payments.paid_at',
+                'payments.payment_method',
+                'payments.reference',
+                'students.full_name as student_name',
+                'schools.name_fr as school_name_fr',
+                'schools.name_ar as school_name_ar',
+                'academic_years.year_label',
+            ]);
+        abort_unless($payment, 404);
+
+        $labels = $language === 'ar'
+            ? [
+                'title' => 'إيصال الدفع',
+                'paymentConfirmation' => 'يؤكد هذا المستند دفعة مسجلة فقط.',
+                'student' => 'الطالب',
+                'academicYear' => 'السنة الدراسية',
+                'billingPeriod' => 'فترة الاستحقاق',
+                'amountReceived' => 'المبلغ المستلم',
+                'paidAt' => 'تاريخ الدفع',
+                'paymentMethod' => 'طريقة الدفع',
+                'reference' => 'المرجع',
+                'generatedAt' => 'تاريخ الإنشاء',
+            ]
+            : [
+                'title' => 'Reçu de paiement',
+                'paymentConfirmation' => 'Ce document confirme uniquement un paiement enregistré.',
+                'student' => 'Élève',
+                'academicYear' => 'Année scolaire',
+                'billingPeriod' => 'Période de paiement',
+                'amountReceived' => 'Montant reçu',
+                'paidAt' => 'Payé le',
+                'paymentMethod' => 'Mode de paiement',
+                'reference' => 'Référence',
+                'generatedAt' => 'Généré le',
+            ];
+        $schoolName = $language === 'ar' ? $payment->school_name_ar : $payment->school_name_fr;
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        $temporaryDirectory = storage_path('framework/cache/mpdf');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $pdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'tempDir' => $temporaryDirectory,
+        ]);
+        $pdf->SetTitle($labels['title']);
+        $pdf->WriteHTML(view('exports.payment-receipt', [
+            'language' => $language,
+            'labels' => $labels,
+            'schoolName' => $schoolName,
+            'yearLabel' => $payment->year_label,
+            'studentName' => $payment->student_name,
+            'periodStart' => $payment->period_start,
+            'periodEnd' => $payment->period_end,
+            'amount' => number_format((float) $payment->amount, 2, '.', ','),
+            'currency' => $payment->currency,
+            'paidAt' => $payment->paid_at,
+            'paymentMethod' => $payment->payment_method,
+            'reference' => $payment->reference,
+            'generatedAt' => $generatedAt,
+        ])->render());
+        $contents = $pdf->Output('', Destination::STRING_RETURN);
+
+        $actorName = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', $user->id)
+            ->value('full_name');
+        abort_unless(is_string($actorName) && $actorName !== '', 403);
+
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => (int) $payment->year_id,
+            'actor_user_id' => (int) $user->id,
+            'actor_name' => $actorName,
+            'action_type' => 'exported',
+            'entity_type' => 'payment',
+            'entity_id' => (int) $payment->id,
+            'summary_key' => 'payment.receipt_exported',
+            'changes' => json_encode([
+                'format' => 'pdf',
+                'page' => 'payments',
+                'record_count' => 1,
+            ], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+        ]);
+
+        return response($contents, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="payment-receipt-'.$paymentId.'.pdf"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
@@ -832,7 +964,6 @@ class PaymentsController extends Controller
                 Rule::requiredIf($request->input('status') === 'waived'),
                 'nullable',
                 'string',
-                'filled',
                 'max:500',
             ],
         ]);
@@ -860,7 +991,6 @@ class PaymentsController extends Controller
                 Rule::requiredIf($request->input('status') === 'waived'),
                 'nullable',
                 'string',
-                'filled',
                 'max:500',
             ],
         ]);

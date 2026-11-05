@@ -46,6 +46,22 @@ class AdminUsersTableTest extends TestCase
             $table->string('reason', 255)->nullable();
             $table->timestamp('created_at')->nullable();
         });
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name', 120);
+            $table->string('action_type', 48);
+            $table->string('entity_type', 64);
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key', 100);
+            $table->json('changes')->nullable();
+            $table->string('reason', 255)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->nullable();
+        });
     }
 
     public function test_admin_lists_only_same_school_users_and_never_exposes_password_hashes(): void
@@ -163,6 +179,17 @@ class AdminUsersTableTest extends TestCase
             'new_role_id' => 3,
             'reason' => 'Moving to office administration.',
         ]);
+        $event = DB::table('audit_events')->where('entity_id', 20)->first();
+        $this->assertNotNull($event);
+        $this->assertSame(1, (int) $event->school_id);
+        $this->assertSame(10, (int) $event->actor_user_id);
+        $this->assertSame('Admin User', $event->actor_name);
+        $this->assertSame('user.role_changed', $event->summary_key);
+        $this->assertSame('Moving to office administration.', $event->reason);
+        $this->assertSame(
+            ['role_id' => ['before' => 2, 'after' => 3]],
+            json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR),
+        );
     }
 
     public function test_admin_cannot_change_a_role_without_a_reason(): void
@@ -287,6 +314,7 @@ class AdminUsersTableTest extends TestCase
             'new_role_id' => 3,
             'reason' => 'Moving to office administration.',
         ]);
+        $this->assertDatabaseCount('audit_events', 1);
     }
 
     public function test_admin_cannot_change_their_own_role(): void
@@ -314,6 +342,21 @@ class AdminUsersTableTest extends TestCase
         ])->assertNotFound();
 
         $this->assertDatabaseHas('users', ['id' => 30, 'school_id' => 2, 'role_id' => 1]);
+    }
+
+    public function test_role_change_rolls_back_when_its_audit_event_cannot_be_written(): void
+    {
+        $this->seedUsers();
+        $this->actingAs($this->admin());
+        Schema::drop('audit_events');
+
+        $this->patchJson('/admin/users/20/role', [
+            'role_id' => 3,
+            'reason' => 'Moving to office administration.',
+        ])->assertServerError();
+
+        $this->assertDatabaseHas('users', ['id' => 20, 'role_id' => 2]);
+        $this->assertDatabaseCount('role_change_history', 0);
     }
 
     public function test_admin_resets_a_user_password_without_returning_the_password(): void

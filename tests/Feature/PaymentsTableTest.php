@@ -17,6 +17,8 @@ class PaymentsTableTest extends TestCase
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
             $table->char('currency', 3);
+            $table->string('name_fr');
+            $table->string('name_ar');
         });
 
         Schema::create('academic_years', function (Blueprint $table) {
@@ -58,6 +60,22 @@ class PaymentsTableTest extends TestCase
             $table->string('payment_method', 40)->nullable();
             $table->string('reference', 100)->nullable();
             $table->string('notes', 500)->nullable();
+        });
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name', 120);
+            $table->string('action_type', 48);
+            $table->string('entity_type', 64);
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key', 100);
+            $table->json('changes')->nullable();
+            $table->string('reason', 255)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->nullable();
         });
     }
 
@@ -168,6 +186,67 @@ class PaymentsTableTest extends TestCase
         $this->getJson('/payments/table')->assertUnauthorized();
     }
 
+    public function test_admin_downloads_a_school_scoped_paid_payment_receipt_and_audits_the_export(): void
+    {
+        $this->seedPayments();
+        DB::table('schools')->where('id', 1)->update([
+            'name_fr' => 'École de test',
+            'name_ar' => 'مدرسة تجريبية',
+        ]);
+        DB::table('users')->where('id', 10)->update(['full_name' => 'Admin User']);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/payments/1/receipt?year_id=1&lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'attachment; filename="payment-receipt-1.pdf"');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $event = DB::table('audit_events')->first();
+        $this->assertNotNull($event);
+        $this->assertSame(1, (int) $event->school_id);
+        $this->assertSame(1, (int) $event->year_id);
+        $this->assertSame(10, (int) $event->actor_user_id);
+        $this->assertSame('Admin User', $event->actor_name);
+        $this->assertSame('exported', $event->action_type);
+        $this->assertSame('payment', $event->entity_type);
+        $this->assertSame(1, (int) $event->entity_id);
+        $this->assertSame('payment.receipt_exported', $event->summary_key);
+        $this->assertSame(
+            ['format' => 'pdf', 'page' => 'payments', 'record_count' => 1],
+            json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    public function test_secretary_can_download_an_arabic_receipt_but_unpaid_and_cross_school_records_are_hidden(): void
+    {
+        $this->seedPayments();
+        DB::table('schools')->where('id', 1)->update([
+            'name_fr' => 'Test School',
+            'name_ar' => 'مدرسة تجريبية',
+        ]);
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $this->get('/payments/1/receipt?year_id=1&lang=ar')
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'attachment; filename="payment-receipt-1.pdf"');
+        $this->assertDatabaseCount('audit_events', 1);
+
+        $this->get('/payments/2/receipt?year_id=1&lang=fr')->assertNotFound();
+        $this->get('/payments/6/receipt?year_id=1&lang=fr')->assertNotFound();
+        $this->assertDatabaseCount('audit_events', 1);
+    }
+
+    public function test_teacher_cannot_download_payment_receipts(): void
+    {
+        $this->seedPayments();
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->get('/payments/1/receipt?year_id=1&lang=fr')->assertForbidden();
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
     public function test_payments_table_rejects_invalid_and_out_of_scope_filters(): void
     {
         $this->seedPayments();
@@ -181,8 +260,8 @@ class PaymentsTableTest extends TestCase
     private function seedPayments(): void
     {
         DB::table('schools')->insert([
-            ['id' => 1, 'currency' => 'MAD'],
-            ['id' => 2, 'currency' => 'EUR'],
+            ['id' => 1, 'currency' => 'MAD', 'name_fr' => 'Test School', 'name_ar' => 'مدرسة الاختبار'],
+            ['id' => 2, 'currency' => 'EUR', 'name_fr' => 'Other School', 'name_ar' => 'مدرسة أخرى'],
         ]);
         DB::table('academic_years')->insert([
             ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'is_current' => true, 'is_active' => true],

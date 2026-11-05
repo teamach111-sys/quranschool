@@ -50,6 +50,9 @@ export default function PaymentsTable({ routeParams = {} }) {
     const openedAlertPaymentId = useRef(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
+    const [receiptExportingId, setReceiptExportingId] = useState(null);
+    const [receiptExportFeedback, setReceiptExportFeedback] = useState(null);
+    const [canExportReceipts, setCanExportReceipts] = useState(false);
 
     useEffect(() => {
         const syncYear = (event) => {
@@ -86,6 +89,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             setCurrency(data.currency ?? 'MAD');
             setCanManage(Boolean(data.can_manage));
             setCanRecord(Boolean(data.can_record));
+            setCanExportReceipts(Boolean(data.can_export_receipts));
             setCanGenerate(Boolean(data.year_is_active && data.year_is_current && data.can_record));
             setIsSecretary(Boolean(data.is_secretary));
         } catch (error) {
@@ -141,6 +145,38 @@ export default function PaymentsTable({ routeParams = {} }) {
     };
     const handlePeriodsGenerated = async () => {
         await loadPayments();
+    };
+    const exportPaymentReceipt = async (payment) => {
+        setReceiptExportingId(payment.id);
+        setReceiptExportFeedback(null);
+
+        try {
+            const query = new URLSearchParams({
+                year_id: String(yearId),
+                lang,
+            });
+            const response = await apiFetch(`/payments/${payment.id}/receipt?${query}`, {
+                headers: { Accept: 'application/pdf' },
+            });
+            if (!response.ok) throw new Error('Receipt export failed');
+
+            const blob = await response.blob();
+            if (blob.type !== 'application/pdf') throw new Error('Receipt response was not a PDF');
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `payment-receipt-${payment.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            setReceiptExportFeedback('success');
+        } catch {
+            setReceiptExportFeedback('error');
+        } finally {
+            setReceiptExportingId(null);
+        }
     };
 
     const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-FR';
@@ -310,6 +346,16 @@ export default function PaymentsTable({ routeParams = {} }) {
                 onClick: (payment) => setEntry({ payment }),
             }]
             : [];
+    if (canExportReceipts) {
+        actions.push({
+            key: 'receipt',
+            icon: 'download',
+            label: receiptExportingId ? t.payments.exportingReceipt : t.payments.exportReceipt,
+            disabled: () => receiptExportingId !== null,
+            hidden: (payment) => payment.status !== 'paid',
+            onClick: exportPaymentReceipt,
+        });
+    }
     const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="flex flex-col gap-3">
@@ -493,6 +539,18 @@ export default function PaymentsTable({ routeParams = {} }) {
             {focusedAlertPayment && (
                 <p role="status" className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
                     {t.payments.alertRecordFocus(focusedAlertPayment.student_name)}
+                </p>
+            )}
+            {receiptExportFeedback && (
+                <p
+                    role={receiptExportFeedback === 'error' ? 'alert' : 'status'}
+                    className={`rounded-lg px-3 py-2 text-[12px] ${
+                        receiptExportFeedback === 'error'
+                            ? 'bg-error-container text-on-error-container'
+                            : 'bg-primary-fixed text-on-primary-fixed-variant'
+                    }`}
+                >
+                    {receiptExportFeedback === 'error' ? t.payments.receiptExportError : t.payments.receiptExported}
                 </p>
             )}
             <div className="hidden md:block">

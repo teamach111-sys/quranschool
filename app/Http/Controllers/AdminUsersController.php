@@ -171,6 +171,13 @@ class AdminUsersController extends Controller
                     'reason' => $validated['reason'],
                     'created_at' => now(),
                 ]);
+                $this->recordRoleChangeAuditEvent(
+                    $schoolId,
+                    $userId,
+                    (int) $user->role_id,
+                    $validated['role_id'],
+                    $validated['reason'],
+                );
             }
 
             if ($statusChanged) {
@@ -293,6 +300,13 @@ class AdminUsersController extends Controller
                 'reason' => $validated['reason'],
                 'created_at' => now(),
             ]);
+            $this->recordRoleChangeAuditEvent(
+                $schoolId,
+                $userId,
+                (int) $user->role_id,
+                $roleId,
+                $validated['reason'],
+            );
         });
 
         return response()->json(['updated' => true]);
@@ -326,6 +340,43 @@ class AdminUsersController extends Controller
         abort_unless(data_get($user, 'role') === 'admin' && $schoolId, 403);
 
         return (int) $schoolId;
+    }
+
+    private function recordRoleChangeAuditEvent(
+        int $schoolId,
+        int $userId,
+        int $oldRoleId,
+        int $newRoleId,
+        string $reason,
+    ): void {
+        $actorId = (int) Auth::id();
+        $actorName = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', $actorId)
+            ->value('full_name');
+
+        if (! is_string($actorName) || $actorName === '') {
+            throw new \RuntimeException('Unable to resolve the authenticated actor for the audit event.');
+        }
+
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => null,
+            'actor_user_id' => $actorId,
+            'actor_name' => $actorName,
+            'action_type' => 'updated',
+            'entity_type' => 'user',
+            'entity_id' => $userId,
+            'summary_key' => 'user.role_changed',
+            'changes' => json_encode([
+                'role_id' => [
+                    'before' => $oldRoleId,
+                    'after' => $newRoleId,
+                ],
+            ], JSON_THROW_ON_ERROR),
+            'reason' => $reason,
+            'created_at' => now(),
+        ]);
     }
 
     /**

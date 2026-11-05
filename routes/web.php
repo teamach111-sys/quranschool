@@ -139,6 +139,11 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('payments.table');
 
+    Route::get('/payments/{paymentId}/receipt', [PaymentsController::class, 'receipt'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('paymentId')
+        ->name('payments.receipt');
+
     Route::get('/payments/generation-options', [PaymentsController::class, 'generationOptions'])
         ->middleware('can:access-dashboard')
         ->name('payments.generation-options');
