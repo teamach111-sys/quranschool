@@ -16,7 +16,7 @@ function today() {
 
 function initialValues(schedule, defaults = {}) {
     return {
-        room_id: schedule ? String(schedule.room_id) : '',
+        room_id: schedule ? String(schedule.room_id) : String(defaults.room_id ?? ''),
         teacher_id: schedule ? String(schedule.teacher_id) : '',
         day_of_week: schedule ? String(schedule.day_of_week) : String(defaults.day_of_week ?? '1'),
         starts_at: schedule?.starts_at ?? defaults.starts_at ?? '09:00',

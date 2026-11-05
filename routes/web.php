@@ -124,6 +124,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('schedules.table');
 
+    Route::get('/schedules/export', [SchedulesController::class, 'export'])
+        ->middleware('can:access-dashboard')
+        ->name('schedules.export');
+
     Route::get('/attendance/table', [AttendanceController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('attendance.table');

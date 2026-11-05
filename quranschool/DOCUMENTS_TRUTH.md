@@ -89,6 +89,11 @@ received.
 - **CSV** is the default for tabular data intended for spreadsheet use. Use
   UTF-8, stable column headers, correctly escaped values, and explicit date
   and amount formatting that does not silently change the underlying value.
+- **XLSX** may be offered as an additional tabular format when useful. Keep
+  the same authorized filters and scope, preserve RTL where applicable, and
+  write untrusted text as explicit strings.
+- A group timetable may offer a student-friendly PDF weekly view containing
+  only that selected group's schedule.
 - Use `schools.currency` for money. Never infer a currency from a locale.
 - A document/report identifies its subject, school, selected academic year
   when relevant, generation time, and applied date/filter scope. It does not
