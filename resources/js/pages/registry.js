@@ -8,6 +8,7 @@ import GroupesAttribution from './administrator/GroupesAttribution';
 import EmploiDuTemps from './administrator/EmploiDuTemps';
 import UtilisateursRoles from './administrator/UtilisateursRoles';
 import HistoriqueChangementsRole from './administrator/HistoriqueChangementsRole';
+import HistoriqueActions from './administrator/HistoriqueActions';
 
 import TableauDeBordEnseignant from './teacher/TableauDeBordEnseignant';
 import MesGroupesEleves from './teacher/MesGroupesEleves';
@@ -60,6 +61,7 @@ export const PAGE_GROUPS = [
         pages: [
             { key: 'utilisateurs-roles', icon: 'manage_accounts', label: { fr: 'Utilisateurs & rôles', ar: 'المستخدمون والأدوار' }, roles: ['admin'], component: UtilisateursRoles },
             { key: 'historique-changements-role', icon: 'history', label: { fr: 'Historique des rôles', ar: 'سجل الأدوار' }, roles: ['admin'], component: HistoriqueChangementsRole },
+            { key: 'historique-actions', icon: 'history', label: { fr: 'Historique des actions', ar: 'سجل الإجراءات' }, roles: ['admin'], component: HistoriqueActions },
         ],
     },
     {

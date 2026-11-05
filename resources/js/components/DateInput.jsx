@@ -41,6 +41,7 @@ export default function DateInput({
     required = false,
     readOnly = false,
     disabled = false,
+    placeholder,
     'aria-label': ariaLabel,
 }) {
     const { isRTL, lang } = useLanguage();
@@ -59,7 +60,7 @@ export default function DateInput({
             disabled={disabled}
             aria-label={ariaLabel}
             className={`date-input__field ${readOnly ? 'date-input__field--readonly' : ''}`}
-            placeholderText={isRTL ? 'يوم/شهر/سنة' : 'jj/mm/aaaa'}
+            placeholderText={placeholder ?? (isRTL ? 'يوم/شهر/سنة' : 'jj/mm/aaaa')}
             wrapperClassName={`date-input__wrapper w-full ${isRTL ? 'date-input__wrapper--rtl' : ''}`}
             popperClassName={`date-input__popper ${isRTL ? 'date-input__popper--rtl' : ''}`}
             portalId={`date-input-popper-${portalId}`}

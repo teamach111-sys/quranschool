@@ -3,6 +3,7 @@
 use App\Http\Controllers\AcademicYearController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminUsersController;
+use App\Http\Controllers\ActionHistoryController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemorizationSessionsController;
@@ -247,6 +248,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/role-change-history/table', [RoleChangeHistoryController::class, 'table'])
         ->middleware('can:access-admin')
         ->name('admin.role-change-history.table');
+
+    Route::get('/admin/action-history/table', [ActionHistoryController::class, 'table'])
+        ->middleware('can:access-admin')
+        ->name('admin.action-history.table');
 
     Route::post('/admin/users', [AdminUsersController::class, 'store'])
         ->middleware('can:access-admin')
