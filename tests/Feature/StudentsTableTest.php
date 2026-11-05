@@ -21,6 +21,12 @@ class StudentsTableTest extends TestCase
             $table->timestamps();
         });
 
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->string('full_name');
+        });
+
         Schema::create('academic_years', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('school_id');
@@ -102,6 +108,25 @@ class StudentsTableTest extends TestCase
             $table->string('status');
         });
 
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name');
+            $table->string('action_type');
+            $table->string('entity_type');
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key');
+            $table->json('changes')->nullable();
+            $table->timestamp('created_at')->nullable();
+        });
+
+        DB::table('users')->insert([
+            ['id' => 10, 'school_id' => 1, 'full_name' => 'Admin User'],
+            ['id' => 20, 'school_id' => 1, 'full_name' => 'Teacher User'],
+        ]);
+
         DB::table('schools')->insert([
             ['id' => 1, 'name_fr' => 'School A', 'name_ar' => 'مدرسة أ'],
             ['id' => 2, 'name_fr' => 'School B', 'name_ar' => 'مدرسة ب'],
@@ -161,6 +186,125 @@ class StudentsTableTest extends TestCase
             ->assertJsonPath('students.1.full_name', 'Zayd Ali');
     }
 
+    public function test_admin_exports_the_filtered_csv_and_records_the_export(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/students/export?year_id=1&search=benali&room_id=2&status=all&lang=fr&format=csv');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $rows = $this->parseCsv($response->getContent());
+        $this->assertSame(['Numéro', 'Nom complet', 'Groupe', 'Responsable', 'Statut'], $rows[6]);
+        $this->assertCount(5, $rows[7]);
+        $this->assertStringContainsString('Nom complet', $response->getContent());
+        $this->assertStringContainsString('Responsable', $response->getContent());
+        $this->assertStringContainsString('Amina Benali', $response->getContent());
+        $this->assertStringContainsString('Benali', $response->getContent());
+        $this->assertStringNotContainsString('Zayd Ali', $response->getContent());
+
+        $this->assertDatabaseHas('audit_events', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'actor_user_id' => 10,
+            'action_type' => 'exported',
+            'entity_type' => 'student',
+            'summary_key' => 'students.exported',
+        ]);
+        $changes = json_decode(DB::table('audit_events')->value('changes'), true);
+        $this->assertSame(1, $changes['record_count']);
+        $this->assertSame('students', $changes['page']);
+        $this->assertSame('Beta', $changes['filters']['room']);
+    }
+
+    public function test_teacher_export_is_limited_to_active_assigned_students_and_hides_guardian_data(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $response = $this->get('/students/export?year_id=1&status=all&lang=ar&format=csv');
+
+        $response->assertOk()->assertHeader('X-Export-Record-Count', '2');
+        $rows = $this->parseCsv($response->getContent());
+        $this->assertSame(['الرقم', 'الاسم الكامل', 'المجموعة', 'الحالة'], $rows[6]);
+        $this->assertCount(4, $rows[7]);
+        $this->assertStringContainsString('الاسم الكامل', $response->getContent());
+        $this->assertStringContainsString('نشط', $response->getContent());
+        $this->assertStringNotContainsString('ولي الأمر', $response->getContent());
+        $this->assertStringNotContainsString('0600000001', $response->getContent());
+        $this->assertStringNotContainsString('Imane Karim', $response->getContent());
+    }
+
+    public function test_student_csv_export_neutralizes_spreadsheet_formulas_and_rejects_foreign_rooms(): void
+    {
+        DB::table('students')->where('id', 1)->update(['full_name' => '=1+1']);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->get('/students/export?year_id=1&status=all&format=csv')
+            ->assertOk()
+            ->assertSee("'=1+1", false);
+
+        $this->getJson('/students/export?year_id=1&room_id=3')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('room_id');
+    }
+
+    public function test_student_csv_export_preserves_the_selected_sort_order(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/students/export?year_id=1&status=all&format=csv&sort_key=full_name&sort_direction=desc');
+
+        $rows = $this->parseCsv($response->getContent());
+        $this->assertSame('Zayd Ali', $rows[7][1]);
+        $this->assertSame('Imane Karim', $rows[8][1]);
+        $this->assertSame('Amina Benali', $rows[9][1]);
+    }
+
+    public function test_admin_exports_students_as_xlsx_and_pdf_and_audits_each_format(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->get('/students/export?year_id=1&status=all&format=xlsx&lang=fr')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('X-Export-Record-Count', '3')
+            ->assertSee('PK', false);
+
+        $this->get('/students/export?year_id=1&status=all&format=pdf&lang=fr')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('X-Export-Record-Count', '3')
+            ->assertSee('%PDF-', false);
+
+        $exports = DB::table('audit_events')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($event) => json_decode($event->changes, true)['format'])
+            ->all();
+        $this->assertSame(['xlsx', 'pdf'], $exports);
+    }
+
     public function test_admin_can_create_a_student_in_an_active_year(): void
     {
         $this->actingAs(new GenericUser([
@@ -192,6 +336,31 @@ class StudentsTableTest extends TestCase
             'student_number' => 'S-103',
             'full_name' => 'New Student',
         ]);
+    }
+
+    /**
+     * @return list<list<string|null>>
+     */
+    private function parseCsv(string $contents): array
+    {
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, $contents);
+        rewind($stream);
+        $rows = [];
+
+        while (($row = fgetcsv($stream)) !== false) {
+            if ($row === [null]) {
+                continue;
+            }
+            if ($rows === []) {
+                $row[0] = ltrim((string) $row[0], "\xEF\xBB\xBF");
+            }
+            $rows[] = $row;
+        }
+
+        fclose($stream);
+
+        return $rows;
     }
 
     public function test_admin_generates_the_next_student_number_when_none_is_provided(): void

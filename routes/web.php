@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\ActionHistoryController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminUsersController;
-use App\Http\Controllers\ActionHistoryController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemorizationSessionsController;
@@ -58,6 +58,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/students/table', [StudentsController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('students.table');
+
+    Route::get('/students/export', [StudentsController::class, 'export'])
+        ->middleware('can:access-dashboard')
+        ->name('students.export');
 
     Route::get('/students/options', [StudentsController::class, 'options'])
         ->middleware('can:access-dashboard')

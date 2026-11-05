@@ -3,6 +3,7 @@ import SelectInput from '../../components/SelectInput';
 import Icon from '../../components/Icon';
 import SearchInput from '../../components/SearchInput';
 import { useLanguage } from '../../hooks/useLanguage';
+import { useToast } from '../../components/ToastProvider';
 import { apiFetch } from '../../lib/api';
 import ConfirmDeleteModal from '../../modals/confirmdelete';
 import {
@@ -14,12 +15,14 @@ import DesktopTable from '../../tables/desktoptable';
 import MobileTable from '../../tables/mobiletable';
 
 export default function Eleves({ routeParams = {} }) {
-    const { isRTL, t } = useLanguage();
+    const { isRTL, lang, t } = useLanguage();
+    const toast = useToast();
     const [students, setStudents] = useState([]);
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('all');
     const [roomId, setRoomId] = useState('all');
+    const [sortState, setSortState] = useState({ key: '', direction: 'asc' });
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [canManage, setCanManage] = useState(false);
@@ -31,6 +34,7 @@ export default function Eleves({ routeParams = {} }) {
     const [archiveTarget, setArchiveTarget] = useState(null);
     const [archiveError, setArchiveError] = useState(null);
     const [archiving, setArchiving] = useState(false);
+    const [exportingFormat, setExportingFormat] = useState('');
 
     useEffect(() => {
         const syncYear = (event) => {
@@ -136,6 +140,59 @@ export default function Eleves({ routeParams = {} }) {
         updateStudentInList(student);
         closeForm();
     }, [closeForm, updateStudentInList]);
+    const exportStudents = async (format) => {
+        if (exportingFormat) return;
+        setExportingFormat(format);
+        try {
+            const query = new URLSearchParams({
+                search,
+                status,
+                lang,
+                sort_key: sortState.key || 'full_name',
+                sort_direction: sortState.direction,
+                format,
+            });
+            if (yearId) query.set('year_id', String(yearId));
+            if (roomId !== 'all') query.set('room_id', roomId);
+
+            const response = await apiFetch(`/students/export?${query}`, {
+                headers: {
+                    Accept: {
+                        csv: 'text/csv',
+                        pdf: 'application/pdf',
+                        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    }[format],
+                },
+            });
+            const expectedType = {
+                csv: 'text/csv',
+                pdf: 'application/pdf',
+                xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }[format];
+            if (!response.ok || !response.headers.get('Content-Type')?.toLowerCase().includes(expectedType)) {
+                throw new Error('Student export failed');
+            }
+            const exportCount = Number(response.headers.get('X-Export-Record-Count'));
+            if (!Number.isInteger(exportCount) || exportCount < 0) {
+                throw new Error('Student export count was invalid');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `students.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast.success(t.students.exported(format, exportCount));
+        } catch {
+            toast.error(t.students.exportError);
+        } finally {
+            setExportingFormat('');
+        }
+    };
     const openArchiveConfirmation = (student, nextStatus) => {
         setArchiveTarget({ student, status: nextStatus });
         setArchiveError(null);
@@ -268,18 +325,54 @@ export default function Eleves({ routeParams = {} }) {
         ] : []),
     ];
     const toolbar = (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative min-w-0 flex-1 sm:max-w-sm">
-                <SearchInput
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    isRTL={isRTL}
-                    placeholder={t.students.search}
-                    ariaLabel={t.students.search}
-                />
-            </label>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="min-w-0 sm:w-40">
+        <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                {['csv', 'pdf', 'xlsx'].map((format) => {
+                    const labels = {
+                        csv: [t.students.exportCsv, t.students.exportingCsv, 'download'],
+                        pdf: [t.students.exportPdf, t.students.exportingPdf, 'picture_as_pdf'],
+                        xlsx: [t.students.exportXlsx, t.students.exportingXlsx, 'table_view'],
+                    }[format];
+                    return (
+                        <button
+                            key={format}
+                            type="button"
+                            onClick={() => exportStudents(format)}
+                            disabled={exportingFormat !== '' || loading || !yearId || filteredStudents.length === 0}
+                            aria-busy={exportingFormat === format}
+                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
+                        >
+                            <Icon
+                                name={exportingFormat === format ? 'progress_activity' : labels[2]}
+                                className={`text-[17px] ${exportingFormat === format ? 'animate-spin' : ''}`}
+                            />
+                            {exportingFormat === format ? labels[1] : labels[0]}
+                        </button>
+                    );
+                })}
+                {canManage && yearIsWritable && (
+                    <button
+                        type="button"
+                        onClick={() => openForm()}
+                        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                    >
+                        <Icon name="add" className="text-[17px]" />
+                        {t.students.form.createTitle}
+                    </button>
+                )}
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <label className="relative min-w-0">
+                    <SearchInput
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        isRTL={isRTL}
+                        placeholder={t.students.search}
+                        ariaLabel={t.students.search}
+                        maxLength={120}
+                    />
+                </label>
+                <div className="w-full min-w-0">
                     <SelectInput
                         value={status}
                         onChange={(event) => setStatus(event.target.value)}
@@ -291,7 +384,7 @@ export default function Eleves({ routeParams = {} }) {
                         <option value="withdrawn">{statusLabel('withdrawn')}</option>
                     </SelectInput>
                 </div>
-                <div className="min-w-0 sm:w-40">
+                <div className="w-full min-w-0">
                     <SelectInput
                         value={roomId}
                         onChange={(event) => setRoomId(event.target.value)}
@@ -301,16 +394,6 @@ export default function Eleves({ routeParams = {} }) {
                         {rooms.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
                     </SelectInput>
                 </div>
-                {canManage && yearIsWritable && (
-                    <button
-                        type="button"
-                        onClick={() => openForm()}
-                        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
-                    >
-                        <Icon name="add" className="text-[17px]" />
-                        {t.students.form.createTitle}
-                    </button>
-                )}
             </div>
         </div>
     );
@@ -335,6 +418,7 @@ export default function Eleves({ routeParams = {} }) {
                     actions={rowActions}
                     toolbar={toolbar}
                     loading={loading}
+                    onSortChange={setSortState}
                 />
             </div>
             <div className="md:hidden">

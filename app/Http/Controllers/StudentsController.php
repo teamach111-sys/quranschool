@@ -3,10 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class StudentsController extends Controller
 {
@@ -80,6 +88,213 @@ class StudentsController extends Controller
             'students' => $students,
             'can_manage' => in_array($role, ['admin', 'secretary'], true),
             'is_teacher_view' => $role === 'teacher',
+        ]);
+    }
+
+    public function export(Request $request): Response
+    {
+        $user = Auth::user();
+        abort_unless($user, 403);
+
+        $schoolId = (int) data_get($user, 'school_id');
+        abort_unless($schoolId, 403);
+
+        $role = $user->role ?? null;
+        abort_unless(in_array($role, ['admin', 'teacher', 'secretary'], true), 403);
+
+        $yearId = $this->resolveYearId($request, $schoolId);
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'status' => ['nullable', Rule::in($role === 'teacher'
+                ? ['all', 'active', 'paused']
+                : ['all', 'active', 'paused', 'withdrawn'])],
+            'room_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('rooms', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'lang' => ['nullable', Rule::in(['fr', 'ar'])],
+            'sort_key' => ['nullable', Rule::in(['full_name', 'student_number', 'room_name', 'status'])],
+            'sort_direction' => ['nullable', Rule::in(['asc', 'desc'])],
+            'format' => ['required', Rule::in(['csv', 'pdf', 'xlsx'])],
+        ]);
+        $language = $filters['lang'] ?? 'fr';
+        $query = $this->baseStudentQuery($request, $user, $schoolId, $yearId);
+
+        if (! empty($filters['room_id'])) {
+            $query->where('students.room_id', (int) $filters['room_id']);
+        }
+
+        $canManage = in_array($role, ['admin', 'secretary'], true);
+        $sortColumns = [
+            'full_name' => 'students.full_name',
+            'student_number' => 'students.student_number',
+            'room_name' => 'rooms.name',
+            'status' => 'students.status',
+        ];
+        $sortKey = $filters['sort_key'] ?? 'full_name';
+        $sortDirection = $filters['sort_direction'] ?? 'asc';
+        $students = $query
+            ->select([
+                'students.student_number',
+                'students.full_name',
+                'students.status',
+                'students.guardian_name',
+                'students.guardian_phone',
+                'students.guardian_email',
+                'rooms.name as room_name',
+            ])
+            ->orderBy($sortColumns[$sortKey], $sortDirection)
+            ->get();
+
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->first(['name_fr', 'name_ar']);
+        $year = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('id', $yearId)
+            ->value('year_label');
+        $roomName = isset($filters['room_id'])
+            ? DB::table('rooms')
+                ->where('id', $filters['room_id'])
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->value('name')
+            : null;
+        $labels = $language === 'ar'
+            ? [
+                'title' => 'قائمة الطلاب',
+                'school' => 'المدرسة',
+                'year' => 'السنة الدراسية',
+                'count' => 'عدد الطلاب',
+                'generated' => 'تاريخ التصدير',
+                'filters' => 'عوامل التصفية',
+                'number' => 'الرقم',
+                'name' => 'الاسم الكامل',
+                'room' => 'المجموعة',
+                'guardian' => 'ولي الأمر',
+                'status' => 'الحالة',
+                'active' => 'نشط',
+                'paused' => 'متوقف مؤقتًا',
+                'withdrawn' => 'منسحب',
+            ]
+            : [
+                'title' => 'Liste des élèves',
+                'school' => 'Établissement',
+                'year' => 'Année scolaire',
+                'count' => 'Nombre d’élèves',
+                'generated' => 'Date d’export',
+                'filters' => 'Filtres',
+                'number' => 'Numéro',
+                'name' => 'Nom complet',
+                'room' => 'Groupe',
+                'guardian' => 'Responsable',
+                'status' => 'Statut',
+                'active' => 'Actif',
+                'paused' => 'En pause',
+                'withdrawn' => 'Retiré',
+            ];
+        $schoolName = $language === 'ar' ? $school->name_ar : $school->name_fr;
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        $filterSummary = array_filter([
+            trim((string) ($filters['search'] ?? '')) !== '' ? trim((string) $filters['search']) : null,
+            isset($filters['status']) && $filters['status'] !== 'all' ? $labels[$filters['status']] : null,
+            $roomName,
+        ]);
+        $headers = [$labels['number'], $labels['name'], $labels['room']];
+        if ($canManage) {
+            $headers[] = $labels['guardian'];
+        }
+        $headers[] = $labels['status'];
+        $rows = $students->map(function ($student) use ($canManage, $labels) {
+            $row = [$student->student_number, $student->full_name, $student->room_name];
+            if ($canManage) {
+                $row[] = $student->guardian_name ?: ($student->guardian_phone ?: $student->guardian_email);
+            }
+            $row[] = $labels[$student->status] ?? $student->status;
+
+            return $row;
+        });
+        $format = $filters['format'];
+        $contents = match ($format) {
+            'csv' => $this->studentsCsv(
+                $labels,
+                $schoolName,
+                (string) $year,
+                $students->count(),
+                $generatedAt,
+                $filterSummary,
+                $headers,
+                $rows->all(),
+            ),
+            'xlsx' => $this->studentsXlsx(
+                $labels,
+                $language,
+                $schoolName,
+                (string) $year,
+                $students->count(),
+                $generatedAt,
+                $filterSummary,
+                $headers,
+                $rows->all(),
+            ),
+            default => $this->studentsPdf(
+                $labels,
+                $language,
+                $schoolName,
+                (string) $year,
+                $students->count(),
+                $generatedAt,
+                $filterSummary,
+                $headers,
+                $rows->all(),
+            ),
+        };
+
+        $actor = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', Auth::id())
+            ->first(['id', 'full_name']);
+        abort_unless($actor && is_string($actor->full_name) && $actor->full_name !== '', 403);
+
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => $yearId,
+            'actor_user_id' => (int) $actor->id,
+            'actor_name' => $actor->full_name,
+            'action_type' => 'exported',
+            'entity_type' => 'student',
+            'entity_id' => null,
+            'summary_key' => 'students.exported',
+            'changes' => json_encode([
+                'format' => $format,
+                'page' => 'students',
+                'record_count' => $students->count(),
+                'filters' => [
+                    'search' => trim((string) ($filters['search'] ?? '')) !== '',
+                    'status' => $filters['status'] ?? 'all',
+                    'room' => $roomName,
+                ],
+                'sort_key' => $sortKey,
+                'sort_direction' => $sortDirection,
+            ], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+        ]);
+
+        $mimeType = match ($format) {
+            'csv' => 'text/csv; charset=UTF-8',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            default => 'application/pdf',
+        };
+
+        return response($contents, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'attachment; filename="students.'.$format.'"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Export-Record-Count' => (string) $students->count(),
         ]);
     }
 
@@ -744,6 +959,179 @@ class StudentsController extends Controller
         return (int) $year->id;
     }
 
+    /**
+     * @param  array<string, string>  $labels
+     * @param  array<int, string|null>  $filters
+     * @param  array<int, string>  $headers
+     * @param  array<int, array<int, string|null>>  $rows
+     */
+    private function studentsCsv(
+        array $labels,
+        string $schoolName,
+        string $year,
+        int $count,
+        string $generatedAt,
+        array $filters,
+        array $headers,
+        array $rows,
+    ): string {
+        $stream = fopen('php://temp', 'r+');
+        if ($stream === false) {
+            throw new \RuntimeException('Unable to create the student CSV export.');
+        }
+
+        fwrite($stream, "\xEF\xBB\xBF");
+        fputcsv($stream, [$labels['title']]);
+        fputcsv($stream, [$labels['school'], $this->spreadsheetSafe($schoolName)]);
+        fputcsv($stream, [$labels['year'], $this->spreadsheetSafe($year)]);
+        fputcsv($stream, [$labels['count'], $count]);
+        fputcsv($stream, [$labels['generated'], $generatedAt]);
+        fputcsv($stream, [$labels['filters'], $this->spreadsheetSafe(implode(' | ', $filters))]);
+        fputcsv($stream, []);
+        fputcsv($stream, $headers);
+
+        foreach ($rows as $row) {
+            fputcsv($stream, array_map(fn ($value) => $this->spreadsheetSafe($value), $row));
+        }
+
+        rewind($stream);
+        $contents = stream_get_contents($stream);
+        fclose($stream);
+        if ($contents === false) {
+            throw new \RuntimeException('Unable to read the student CSV export.');
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @param  array<string, string>  $labels
+     * @param  array<int, string>  $filters
+     * @param  array<int, string>  $headers
+     * @param  array<int, array<int, string|null>>  $rows
+     */
+    private function studentsXlsx(
+        array $labels,
+        string $language,
+        string $schoolName,
+        string $year,
+        int $count,
+        string $generatedAt,
+        array $filters,
+        array $headers,
+        array $rows,
+    ): string {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle($language === 'ar' ? 'قائمة الطلاب' : 'Élèves');
+        $sheet->setRightToLeft($language === 'ar');
+
+        $metadata = [
+            [$labels['title']],
+            [$labels['school'], $schoolName],
+            [$labels['year'], $year],
+            [$labels['count'], (string) $count],
+            [$labels['generated'], $generatedAt],
+            [$labels['filters'], implode(' | ', $filters)],
+        ];
+        foreach ($metadata as $rowIndex => $row) {
+            foreach ($row as $columnIndex => $value) {
+                $sheet->getCell([$columnIndex + 1, $rowIndex + 1])
+                    ->setValueExplicit(
+                        $this->spreadsheetSafe($value),
+                        DataType::TYPE_STRING,
+                    );
+            }
+        }
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $headerRow = count($metadata) + 2;
+        foreach ($headers as $columnIndex => $heading) {
+            $sheet->getCell([$columnIndex + 1, $headerRow])
+                ->setValueExplicit($heading, DataType::TYPE_STRING);
+            $sheet->getColumnDimensionByColumn($columnIndex + 1)->setAutoSize(true);
+        }
+        $lastColumn = Coordinate::stringFromColumnIndex(count($headers));
+        $lastRow = $headerRow + count($rows);
+        $sheet->getStyle("A{$headerRow}:{$lastColumn}{$headerRow}")->getFont()->setBold(true);
+        $sheet->freezePane('A'.($headerRow + 1));
+        $sheet->setAutoFilter("A{$headerRow}:{$lastColumn}{$lastRow}");
+
+        foreach ($rows as $rowIndex => $row) {
+            foreach ($row as $columnIndex => $value) {
+                $sheet->getCell([$columnIndex + 1, $headerRow + $rowIndex + 1])
+                    ->setValueExplicit($this->spreadsheetSafe($value), DataType::TYPE_STRING);
+            }
+        }
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'quranschool-students-');
+        if ($temporaryFile === false) {
+            throw new \RuntimeException('Unable to create the student Excel export.');
+        }
+
+        try {
+            (new Xlsx($spreadsheet))->save($temporaryFile);
+            $contents = file_get_contents($temporaryFile);
+            if ($contents === false || ! str_starts_with($contents, 'PK')) {
+                throw new \RuntimeException('Unable to read the student Excel export.');
+            }
+        } finally {
+            if (is_file($temporaryFile) && ! unlink($temporaryFile)) {
+                throw new \RuntimeException('Unable to clean up the temporary student Excel export.');
+            }
+            $spreadsheet->disconnectWorksheets();
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @param  array<string, string>  $labels
+     * @param  array<int, string>  $filters
+     * @param  array<int, string>  $headers
+     * @param  array<int, array<int, string|null>>  $rows
+     */
+    private function studentsPdf(
+        array $labels,
+        string $language,
+        string $schoolName,
+        string $year,
+        int $count,
+        string $generatedAt,
+        array $filters,
+        array $headers,
+        array $rows,
+    ): string {
+        $temporaryDirectory = storage_path('framework/cache/mpdf');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $pdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'tempDir' => $temporaryDirectory,
+        ]);
+        $pdf->SetTitle($labels['title']);
+        $pdf->WriteHTML(view('exports.students', [
+            'language' => $language,
+            'labels' => $labels,
+            'schoolName' => $schoolName,
+            'year' => $year,
+            'count' => $count,
+            'generatedAt' => $generatedAt,
+            'filters' => $filters,
+            'headers' => $headers,
+            'rows' => $rows,
+        ])->render());
+        $contents = $pdf->Output('', Destination::STRING_RETURN);
+        if (! str_starts_with($contents, '%PDF-')) {
+            throw new \RuntimeException('The student PDF export is invalid.');
+        }
+
+        return $contents;
+    }
+
     private function baseStudentQuery(Request $request, object $user, int $schoolId, int $yearId)
     {
         $role = $user->role ?? null;
@@ -767,7 +1155,7 @@ class StudentsController extends Controller
 
             $query->whereIn('students.room_id', $roomIds);
 
-            if (! $request->has('status')) {
+            if (! $request->has('status') || $request->input('status') === 'all') {
                 $query->whereIn('students.status', ['active', 'paused']);
             } elseif ($request->input('status') !== 'all') {
                 $query->where('students.status', $request->input('status'));
@@ -790,6 +1178,17 @@ class StudentsController extends Controller
             }
         }
 
+        if ($request->filled('room_id')) {
+            $query->where('students.room_id', $request->input('room_id'));
+        }
+
         return $query;
+    }
+
+    private function spreadsheetSafe(?string $value): string
+    {
+        $value = (string) ($value ?? '');
+
+        return preg_match('/^[\s]*[=+\-@\t\r]/u', $value) === 1 ? "'".$value : $value;
     }
 }
