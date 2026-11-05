@@ -613,6 +613,7 @@ class ActionHistoryController extends Controller
         $labels = [
             'user' => ['fr' => 'Utilisateur', 'ar' => 'مستخدم'],
             'payment' => ['fr' => 'Paiement', 'ar' => 'دفعة'],
+            'memorization_session' => ['fr' => 'Séance de mémorisation', 'ar' => 'حصة حفظ'],
             'audit_event' => ['fr' => 'Événement d’audit', 'ar' => 'حدث تدقيق'],
         ];
 
@@ -626,6 +627,7 @@ class ActionHistoryController extends Controller
             'user.status_changed' => ['fr' => 'Statut du compte modifié', 'ar' => 'تغيير حالة الحساب'],
             'payment.table_exported' => ['fr' => 'Liste des paiements exportée', 'ar' => 'تصدير قائمة المدفوعات'],
             'payment.receipt_exported' => ['fr' => 'Reçu de paiement exporté', 'ar' => 'تصدير إيصال الدفع'],
+            'memorization.exported' => ['fr' => 'Séances de mémorisation exportées', 'ar' => 'تصدير حصص الحفظ'],
             'action_history.exported' => ['fr' => 'Historique des actions exporté', 'ar' => 'تصدير سجل الإجراءات'],
         ];
 

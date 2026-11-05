@@ -140,6 +140,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('memorization-sessions.table');
 
+    Route::get('/memorization-sessions/export', [MemorizationSessionsController::class, 'export'])
+        ->middleware('can:access-dashboard')
+        ->name('memorization-sessions.export');
+
     Route::get('/memorization-sessions/progress', [MemorizationSessionsController::class, 'progress'])
         ->middleware('can:access-dashboard')
         ->name('memorization-sessions.progress');

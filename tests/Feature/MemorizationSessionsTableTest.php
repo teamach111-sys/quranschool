@@ -6,6 +6,7 @@ use Illuminate\Auth\GenericUser;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class MemorizationSessionsTableTest extends TestCase
@@ -22,6 +23,26 @@ class MemorizationSessionsTableTest extends TestCase
             $table->date('end_date');
             $table->boolean('is_current');
             $table->boolean('is_active');
+        });
+
+        Schema::create('schools', function (Blueprint $table) {
+            $table->id();
+            $table->string('name_fr');
+            $table->string('name_ar');
+        });
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name');
+            $table->string('action_type');
+            $table->string('entity_type');
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key');
+            $table->text('changes');
+            $table->dateTime('created_at');
         });
 
         Schema::create('roles', function (Blueprint $table) {
@@ -183,8 +204,131 @@ class MemorizationSessionsTableTest extends TestCase
             ->assertJsonValidationErrors('session_date');
     }
 
+    public function test_admin_exports_filtered_memorization_sessions_and_records_the_export(): void
+    {
+        $this->seedMemorizationSessions();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/memorization-sessions/export?year_id=1&room_id=2&student_id=2&session_date=2026-10-10&lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('Content-Disposition', 'attachment; filename="memorization-sessions.csv"')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $response->getContent());
+        $this->assertStringContainsString('Mariam Ali', $response->getContent());
+        $this->assertStringContainsString('Al-Baqarah, verses 1-5', $response->getContent());
+        $this->assertStringContainsString('Excellent', $response->getContent());
+        $this->assertStringNotContainsString('Other Student', $response->getContent());
+        $this->assertStringNotContainsString('Repeat next class', $response->getContent());
+
+        $this->assertDatabaseHas('audit_events', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'actor_user_id' => 10,
+            'action_type' => 'exported',
+            'entity_type' => 'memorization_session',
+            'summary_key' => 'memorization.exported',
+        ]);
+        $changes = json_decode(DB::table('audit_events')->value('changes'), true);
+        $this->assertSame('csv', $changes['format']);
+        $this->assertSame('memorization_sessions', $changes['page']);
+        $this->assertSame(1, $changes['record_count']);
+        $this->assertSame('Beta', $changes['filters']['room']);
+        $this->assertSame('Mariam Ali', $changes['filters']['student']);
+    }
+
+    public function test_teacher_export_keeps_assigned_room_scope_and_localizes_arabic(): void
+    {
+        $this->seedMemorizationSessions();
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $response = $this->get('/memorization-sessions/export?year_id=1&lang=ar');
+
+        $response->assertOk()->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringContainsString('سجل جلسات الحفظ', $response->getContent());
+        $this->assertStringContainsString('Zayd Ali', $response->getContent());
+        $this->assertStringContainsString('جيد', $response->getContent());
+        $this->assertStringNotContainsString('Mariam Ali', $response->getContent());
+        $this->assertStringNotContainsString('Other Student', $response->getContent());
+    }
+
+    public function test_memorization_pdf_and_xlsx_exports_are_valid_and_audited_by_format(): void
+    {
+        $this->seedMemorizationSessions();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $pdf = $this->get('/memorization-sessions/export?year_id=1&room_id=2&lang=fr&format=pdf');
+        $pdf->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', 'attachment; filename="memorization-sessions.pdf"')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringStartsWith('%PDF-', $pdf->getContent());
+
+        $xlsx = $this->get('/memorization-sessions/export?year_id=1&room_id=2&lang=ar&format=xlsx');
+        $xlsx->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('Content-Disposition', 'attachment; filename="memorization-sessions.xlsx"')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringStartsWith('PK', $xlsx->getContent());
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'memorization-test-');
+        $this->assertNotFalse($temporaryFile);
+        file_put_contents($temporaryFile, $xlsx->getContent());
+        try {
+            $sheet = IOFactory::load($temporaryFile)->getActiveSheet();
+            $this->assertSame('سجل الحفظ', $sheet->getTitle());
+            $this->assertTrue($sheet->getRightToLeft());
+            $this->assertSame('سجل جلسات الحفظ', $sheet->getCell('A1')->getValue());
+            $this->assertSame('Mariam Ali', $sheet->getCell('B9')->getValue());
+            $this->assertSame('ممتاز', $sheet->getCell('F9')->getValue());
+        } finally {
+            unlink($temporaryFile);
+        }
+
+        $formats = DB::table('audit_events')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($event) => json_decode($event->changes, true)['format'])
+            ->all();
+        $this->assertSame(['pdf', 'xlsx'], $formats);
+    }
+
+    public function test_memorization_export_rejects_foreign_filters_and_has_no_file_for_empty_results(): void
+    {
+        $this->seedMemorizationSessions();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/memorization-sessions/export?year_id=1&room_id=3&lang=fr')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('room_id');
+
+        $this->getJson('/memorization-sessions/export?year_id=1&session_date=2026-11-05&lang=fr')
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'No memorization sessions match the selected filters.');
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
+    public function test_memorization_csv_escapes_spreadsheet_formula_values(): void
+    {
+        $this->seedMemorizationSessions();
+        DB::table('memorization_sessions')->where('id', 1)->update([
+            'portion_label' => '=HYPERLINK("https://example.test")',
+        ]);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/memorization-sessions/export?year_id=1&room_id=1&lang=fr');
+
+        $response->assertOk();
+        $this->assertStringContainsString("'=HYPERLINK", $response->getContent());
+    }
+
     private function seedMemorizationSessions(): void
     {
+        DB::table('schools')->insert([
+            ['id' => 1, 'name_fr' => 'École exemple', 'name_ar' => 'مدرسة تجريبية'],
+            ['id' => 2, 'name_fr' => 'Autre école', 'name_ar' => 'مدرسة أخرى'],
+        ]);
         DB::table('academic_years')->insert([
             ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
             ['id' => 2, 'school_id' => 2, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
