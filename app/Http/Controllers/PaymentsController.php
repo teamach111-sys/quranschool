@@ -213,9 +213,11 @@ class PaymentsController extends Controller
             ],
             'sort_direction' => ['nullable', Rule::in(['asc', 'desc'])],
             'lang' => ['nullable', Rule::in(['fr', 'ar'])],
+            'format' => ['nullable', Rule::in(['csv', 'pdf', 'xlsx'])],
         ]);
         $language = $filters['lang'] ?? data_get($user, 'language', 'fr');
         $language = in_array($language, ['fr', 'ar'], true) ? $language : 'fr';
+        $format = $filters['format'] ?? 'xlsx';
         $search = trim($filters['search'] ?? '');
 
         $paymentsQuery = $this->paymentsListQuery(
@@ -390,41 +392,64 @@ class PaymentsController extends Controller
             $labels['notes'],
             $labels['recordedBy'],
         ];
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle($language === 'ar' ? 'المدفوعات' : 'Paiements');
-        $sheet->setRightToLeft($language === 'ar');
-        $metadataRows = [
-            [$labels['report']],
+        $metadata = [
             [$labels['school'], $schoolName],
             [$labels['academicYear'], $year->year_label],
             [$labels['generatedAt'], now()->format(DATE_ATOM)],
             [$labels['filters'], implode(' | ', $appliedFilters)],
             [$labels['recordCount'], $payments->count()],
         ];
-        foreach ($metadataRows as $rowIndex => $row) {
-            foreach ($row as $columnIndex => $value) {
-                $sheet->getCell([$columnIndex + 1, $rowIndex + 1])
-                    ->setValueExplicit((string) $value, DataType::TYPE_STRING);
+        if ($format === 'csv') {
+            $stream = fopen('php://temp', 'r+');
+            if ($stream === false) {
+                throw new \RuntimeException('Unable to create the payments CSV export.');
             }
-        }
-        $headerRow = count($metadataRows) + 2;
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-        $sheet->getStyle("A{$headerRow}:".Coordinate::stringFromColumnIndex(count($headings)).$headerRow)
-            ->getFont()
-            ->setBold(true);
-        foreach ($headings as $columnIndex => $heading) {
-            $sheet->getCell([$columnIndex + 1, $headerRow])
-                ->setValueExplicit($heading, DataType::TYPE_STRING);
-            $sheet->getColumnDimensionByColumn($columnIndex + 1)->setAutoSize(true);
-        }
-        $sheet->freezePane('A'.($headerRow + 1));
-        $lastColumn = Coordinate::stringFromColumnIndex(count($headings));
-        $lastRow = $headerRow + $payments->count();
-        $sheet->setAutoFilter("A{$headerRow}:{$lastColumn}{$lastRow}");
-
-        foreach ($payments as $rowIndex => $payment) {
-            $row = [
+            $spreadsheetSafe = fn ($value) => preg_match('/^[\t\r ]*[=+\-@]/u', (string) $value)
+                ? "'".(string) $value
+                : (string) ($value ?? '');
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, [$labels['report']]);
+            foreach ($metadata as $row) {
+                fputcsv($stream, array_map($spreadsheetSafe, $row));
+            }
+            fputcsv($stream, []);
+            fputcsv($stream, $headings);
+            foreach ($payments as $payment) {
+                fputcsv($stream, array_map($spreadsheetSafe, [
+                    $payment->student_name,
+                    $payment->student_number,
+                    ...($user->role === 'secretary' ? [$payment->guardian_phone] : []),
+                    $payment->period_start,
+                    $payment->period_end,
+                    $this->decimalAmount((string) $payment->amount),
+                    $payment->currency,
+                    $labels['statuses'][$payment->status] ?? $payment->status,
+                    $payment->paid_at,
+                    $payment->payment_method,
+                    $payment->reference,
+                    $payment->notes,
+                    $payment->recorded_by_name,
+                ]));
+            }
+            rewind($stream);
+            $contents = stream_get_contents($stream);
+            fclose($stream);
+            if ($contents === false) {
+                throw new \RuntimeException('Unable to read the payments CSV export.');
+            }
+        } elseif ($format === 'pdf') {
+            $temporaryDirectory = storage_path('framework/cache/mpdf');
+            File::ensureDirectoryExists($temporaryDirectory);
+            $pdf = new Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4-L',
+                'default_font' => 'dejavusans',
+                'autoScriptToLang' => true,
+                'autoLangToFont' => true,
+                'tempDir' => $temporaryDirectory,
+            ]);
+            $pdf->SetTitle($labels['report']);
+            $rows = $payments->map(fn ($payment) => [
                 $payment->student_name,
                 $payment->student_number,
                 ...($user->role === 'secretary' ? [$payment->guardian_phone] : []),
@@ -438,36 +463,98 @@ class PaymentsController extends Controller
                 $payment->reference,
                 $payment->notes,
                 $payment->recorded_by_name,
+            ])->all();
+            $pdf->WriteHTML(view('exports.payments', [
+                'language' => $language,
+                'title' => $labels['report'],
+                'schoolName' => $schoolName,
+                'metadata' => $metadata,
+                'headings' => $headings,
+                'rows' => $rows,
+            ])->render());
+            $contents = $pdf->Output('', Destination::STRING_RETURN);
+        }
+
+        if ($format === 'xlsx') {
+            $spreadsheet = new Spreadsheet;
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle($language === 'ar' ? 'المدفوعات' : 'Paiements');
+            $sheet->setRightToLeft($language === 'ar');
+            $metadataRows = [
+                [$labels['report']],
+                [$labels['school'], $schoolName],
+                [$labels['academicYear'], $year->year_label],
+                [$labels['generatedAt'], now()->format(DATE_ATOM)],
+                [$labels['filters'], implode(' | ', $appliedFilters)],
+                [$labels['recordCount'], $payments->count()],
             ];
-            $excelRow = $headerRow + $rowIndex + 1;
-            foreach ($row as $columnIndex => $value) {
-                $cell = $sheet->getCell([$columnIndex + 1, $excelRow]);
-                if ($columnIndex === ($user->role === 'secretary' ? 5 : 4)) {
-                    $cell->setValueExplicit((float) $value, DataType::TYPE_NUMERIC);
-                    $cell->getStyle()->getNumberFormat()->setFormatCode('0.00');
-
-                    continue;
+            foreach ($metadataRows as $rowIndex => $row) {
+                foreach ($row as $columnIndex => $value) {
+                    $sheet->getCell([$columnIndex + 1, $rowIndex + 1])
+                        ->setValueExplicit((string) $value, DataType::TYPE_STRING);
                 }
-                $cell->setValueExplicit((string) ($value ?? ''), DataType::TYPE_STRING);
             }
-        }
+            $headerRow = count($metadataRows) + 2;
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+            $sheet->getStyle("A{$headerRow}:".Coordinate::stringFromColumnIndex(count($headings)).$headerRow)
+                ->getFont()
+                ->setBold(true);
+            foreach ($headings as $columnIndex => $heading) {
+                $sheet->getCell([$columnIndex + 1, $headerRow])
+                    ->setValueExplicit($heading, DataType::TYPE_STRING);
+                $sheet->getColumnDimensionByColumn($columnIndex + 1)->setAutoSize(true);
+            }
+            $sheet->freezePane('A'.($headerRow + 1));
+            $lastColumn = Coordinate::stringFromColumnIndex(count($headings));
+            $lastRow = $headerRow + $payments->count();
+            $sheet->setAutoFilter("A{$headerRow}:{$lastColumn}{$lastRow}");
 
-        $temporaryFile = tempnam(sys_get_temp_dir(), 'quranschool-payments-');
-        if ($temporaryFile === false) {
-            throw new \RuntimeException('Unable to create the payments Excel export.');
-        }
-        try {
-            (new Xlsx($spreadsheet))->save($temporaryFile);
-            $contents = file_get_contents($temporaryFile);
-            if ($contents === false) {
-                throw new \RuntimeException('Unable to read the payments Excel export.');
+            foreach ($payments as $rowIndex => $payment) {
+                $row = [
+                    $payment->student_name,
+                    $payment->student_number,
+                    ...($user->role === 'secretary' ? [$payment->guardian_phone] : []),
+                    $payment->period_start,
+                    $payment->period_end,
+                    $this->decimalAmount((string) $payment->amount),
+                    $payment->currency,
+                    $labels['statuses'][$payment->status] ?? $payment->status,
+                    $payment->paid_at,
+                    $payment->payment_method,
+                    $payment->reference,
+                    $payment->notes,
+                    $payment->recorded_by_name,
+                ];
+                $excelRow = $headerRow + $rowIndex + 1;
+                foreach ($row as $columnIndex => $value) {
+                    $cell = $sheet->getCell([$columnIndex + 1, $excelRow]);
+                    if ($columnIndex === ($user->role === 'secretary' ? 5 : 4)) {
+                        $cell->setValueExplicit((float) $value, DataType::TYPE_NUMERIC);
+                        $cell->getStyle()->getNumberFormat()->setFormatCode('0.00');
+
+                        continue;
+                    }
+                    $cell->setValueExplicit((string) ($value ?? ''), DataType::TYPE_STRING);
+                }
             }
-        } finally {
-            if (is_file($temporaryFile) && ! unlink($temporaryFile)) {
-                throw new \RuntimeException('Unable to clean up the temporary payments Excel export.');
+
+            $temporaryFile = tempnam(sys_get_temp_dir(), 'quranschool-payments-');
+            if ($temporaryFile === false) {
+                throw new \RuntimeException('Unable to create the payments Excel export.');
             }
+            try {
+                (new Xlsx($spreadsheet))->save($temporaryFile);
+                $contents = file_get_contents($temporaryFile);
+                if ($contents === false) {
+                    throw new \RuntimeException('Unable to read the payments Excel export.');
+                }
+            } finally {
+                if (is_file($temporaryFile) && ! unlink($temporaryFile)) {
+                    throw new \RuntimeException('Unable to clean up the temporary payments Excel export.');
+                }
+            }
+            $spreadsheet->disconnectWorksheets();
         }
-        $spreadsheet->disconnectWorksheets();
 
         $actorName = DB::table('users')
             ->where('school_id', $schoolId)
@@ -485,7 +572,7 @@ class PaymentsController extends Controller
             'entity_id' => null,
             'summary_key' => 'payment.table_exported',
             'changes' => json_encode([
-                'format' => 'xlsx',
+                'format' => $format,
                 'page' => 'payments',
                 'record_count' => $payments->count(),
                 'filters' => [
@@ -502,9 +589,16 @@ class PaymentsController extends Controller
             'created_at' => now(),
         ]);
 
+        $contentType = match ($format) {
+            'csv' => 'text/csv; charset=UTF-8',
+            'pdf' => 'application/pdf',
+            default => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        };
+        $filename = ($language === 'ar' ? 'المدفوعات' : 'paiements').'.'.$format;
+
         return response($contents, 200, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="payments.xlsx"',
+            'Content-Type' => $contentType,
+            'Content-Disposition' => "attachment; filename*=UTF-8''".rawurlencode($filename),
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
             'X-Export-Record-Count' => (string) $payments->count(),

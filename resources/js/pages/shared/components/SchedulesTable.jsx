@@ -253,34 +253,33 @@ export default function SchedulesTable() {
     const toolbar = (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-end gap-2">
-                {['csv', 'pdf', 'xlsx'].map((format) => {
-                    const isExporting = exportingFormat === format;
-                    return (
-                        <button
-                            key={format}
-                            type="button"
-                            onClick={() => exportSchedules(format)}
-                            disabled={exportingFormat !== null || loading || visibleSchedules.length === 0}
-                            aria-busy={isExporting}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                        >
-                            <Icon name={isExporting ? 'progress_activity' : 'download'} className={`text-[17px] ${isExporting ? 'animate-spin' : ''}`} />
-                            {isExporting ? t.schedules.exporting[format] : t.schedules.exportFormats[format]}
-                        </button>
-                    );
-                })}
-                    {selectedRoom && (
-                        <button
-                            type="button"
-                            onClick={() => exportSchedules('pdf', true)}
-                            disabled={exportingFormat !== null || loading || visibleSchedules.length === 0}
-                            aria-busy={exportingFormat === 'student-pdf'}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                        >
-                            <Icon name={exportingFormat === 'student-pdf' ? 'progress_activity' : 'school'} className={`text-[17px] ${exportingFormat === 'student-pdf' ? 'animate-spin' : ''}`} />
-                            {exportingFormat === 'student-pdf' ? t.schedules.exportingStudentPdf : t.schedules.exportStudentPdf}
-                        </button>
-                    )}
+                <div className="w-full sm:w-auto sm:min-w-52">
+                    <SelectInput
+                        value={exportingFormat ?? ''}
+                        aria-label={t.exportSelect}
+                        onChange={(event) => {
+                            if (event.target.value === 'student-pdf') {
+                                exportSchedules('pdf', true);
+                            } else if (event.target.value) {
+                                exportSchedules(event.target.value);
+                            }
+                        }}
+                        disabled={exportingFormat !== null || loading || visibleSchedules.length === 0}
+                        className="w-full"
+                    >
+                        <option value="">{t.exportSelect}</option>
+                        {['csv', 'pdf', 'xlsx'].map((format) => (
+                            <option key={format} value={format}>
+                                {exportingFormat === format ? t.schedules.exporting[format] : t.schedules.exportFormats[format]}
+                            </option>
+                        ))}
+                        {selectedRoom && (
+                            <option value="student-pdf">
+                                {exportingFormat === 'student-pdf' ? t.schedules.exportingStudentPdf : t.schedules.exportStudentPdf}
+                            </option>
+                        )}
+                    </SelectInput>
+                </div>
                     {canManage && yearIsWritable && (
                     <button
                         type="button"

@@ -308,22 +308,24 @@ export default function AttendanceTable({ routeParams = {} }) {
     const toolbar = (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap justify-end gap-2">
-                {['csv', 'pdf', 'xlsx'].map((format) => {
-                    const isExporting = exportingFormat === format;
-                    return (
-                        <button
-                            key={format}
-                            type="button"
-                            onClick={() => exportAttendance(format)}
-                            disabled={exportingFormat !== null || loading || attendance.length === 0}
-                            aria-busy={isExporting}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                        >
-                            <Icon name={isExporting ? 'progress_activity' : 'download'} className={`text-[17px] ${isExporting ? 'animate-spin' : ''}`} />
-                            {isExporting ? t.attendance.exporting[format] : t.attendance.exportFormats[format]}
-                        </button>
-                    );
-                })}
+                <div className="w-full sm:w-auto sm:min-w-52">
+                    <SelectInput
+                        value={exportingFormat ?? ''}
+                        aria-label={t.exportSelect}
+                        onChange={(event) => {
+                            if (event.target.value) exportAttendance(event.target.value);
+                        }}
+                        disabled={exportingFormat !== null || loading || attendance.length === 0}
+                        className="w-full"
+                    >
+                        <option value="">{t.exportSelect}</option>
+                        {['csv', 'pdf', 'xlsx'].map((format) => (
+                            <option key={format} value={format}>
+                                {exportingFormat === format ? t.attendance.exporting[format] : t.attendance.exportFormats[format]}
+                            </option>
+                        ))}
+                    </SelectInput>
+                </div>
                 {canMark && yearIsCurrent && (
                     <button
                         type="button"

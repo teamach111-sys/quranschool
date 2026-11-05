@@ -263,7 +263,7 @@ class PaymentsTableTest extends TestCase
 
         $response->assertOk()
             ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            ->assertHeader('content-disposition', 'attachment; filename="payments.xlsx"')
+            ->assertHeader('content-disposition', "attachment; filename*=UTF-8''paiements.xlsx")
             ->assertHeader('cache-control', 'no-store, private')
             ->assertHeader('X-Export-Record-Count', '1');
         $content = $response->getContent();
@@ -353,9 +353,49 @@ class PaymentsTableTest extends TestCase
 
         $response->assertOk()
             ->assertHeader('X-Export-Record-Count', '4')
-            ->assertHeader('content-disposition', 'attachment; filename="payments.xlsx"');
+            ->assertHeader('content-disposition', "attachment; filename*=UTF-8''paiements.xlsx");
         $rows = $this->readExcelRows($response->getContent());
         $this->assertSame('Zayd Ali', $rows[8][0]);
+    }
+
+    public function test_payment_csv_export_is_safe_localized_and_audited(): void
+    {
+        $this->seedPayments();
+        DB::table('payments')->where('id', 1)->update([
+            'reference' => '=HYPERLINK("https://example.invalid","Open")',
+        ]);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/payments/export?year_id=1&format=csv&lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8')
+            ->assertHeader('content-disposition', "attachment; filename*=UTF-8''paiements.csv")
+            ->assertHeader('X-Export-Record-Count', '4');
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $response->getContent());
+        $this->assertStringContainsString('Élève', $response->getContent());
+        $this->assertStringContainsString("'=HYPERLINK", $response->getContent());
+        $this->assertDatabaseHas('audit_events', [
+            'summary_key' => 'payment.table_exported',
+        ]);
+        $event = DB::table('audit_events')->first();
+        $this->assertSame('csv', json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR)['format']);
+    }
+
+    public function test_payment_pdf_export_returns_a_localized_audited_report(): void
+    {
+        $this->seedPayments();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $response = $this->get('/payments/export?year_id=1&format=pdf&lang=ar');
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', "attachment; filename*=UTF-8''".rawurlencode('المدفوعات.pdf'))
+            ->assertHeader('X-Export-Record-Count', '3');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $event = DB::table('audit_events')->first();
+        $this->assertSame('pdf', json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR)['format']);
     }
 
     public function test_payment_excel_export_rejects_unauthorized_users_invalid_sort_and_empty_results(): void
@@ -368,6 +408,9 @@ class PaymentsTableTest extends TestCase
         $this->get('/payments/export')->assertForbidden();
 
         $this->actingAs($this->user(10, 1, 'admin'));
+        $this->getJson('/payments/export?year_id=1&format=xml')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['format']);
         $this->getJson('/payments/export?year_id=1&sort_by=payments.id')
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['sort_by']);

@@ -241,42 +241,22 @@ export default function ActionHistoryTable() {
     const toolbar = (
         <div className="flex flex-col gap-3">
             <div className={`flex flex-wrap gap-2 ${isRTL ? 'justify-start' : 'justify-end'}`}>
-                <button
-                    type="button"
-                    onClick={() => exportHistory('csv')}
-                    disabled={loading || events.length === 0 || Boolean(exportingFormat)}
-                    aria-busy={exportingFormat === 'csv'}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                >
-                    {exportingFormat === 'csv'
-                        ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
-                        : <Icon name="download" className="text-[17px]" />}
-                    {exportingFormat === 'csv' ? t.actionHistory.exportingCsv : t.actionHistory.exportCsv}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => exportHistory('pdf')}
-                    disabled={loading || events.length === 0 || Boolean(exportingFormat)}
-                    aria-busy={exportingFormat === 'pdf'}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                >
-                    {exportingFormat === 'pdf'
-                        ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
-                        : <Icon name="picture_as_pdf" className="text-[17px]" />}
-                    {exportingFormat === 'pdf' ? t.actionHistory.exportingPdf : t.actionHistory.exportPdf}
-                </button>
-                <button
-                    type="button"
-                    onClick={() => exportHistory('xlsx')}
-                    disabled={loading || events.length === 0 || Boolean(exportingFormat)}
-                    aria-busy={exportingFormat === 'xlsx'}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                >
-                    {exportingFormat === 'xlsx'
-                        ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
-                        : <Icon name="table_view" className="text-[17px]" />}
-                    {exportingFormat === 'xlsx' ? t.actionHistory.exportingXlsx : t.actionHistory.exportXlsx}
-                </button>
+                <div className="w-full sm:w-auto sm:min-w-52">
+                    <SelectInput
+                        value={exportingFormat}
+                        aria-label={t.exportSelect}
+                        onChange={(event) => {
+                            if (event.target.value) exportHistory(event.target.value);
+                        }}
+                        disabled={loading || events.length === 0 || Boolean(exportingFormat)}
+                        className="w-full"
+                    >
+                        <option value="">{t.exportSelect}</option>
+                        <option value="csv">{exportingFormat === 'csv' ? t.actionHistory.exportingCsv : t.actionHistory.exportCsv}</option>
+                        <option value="pdf">{exportingFormat === 'pdf' ? t.actionHistory.exportingPdf : t.actionHistory.exportPdf}</option>
+                        <option value="xlsx">{exportingFormat === 'xlsx' ? t.actionHistory.exportingXlsx : t.actionHistory.exportXlsx}</option>
+                    </SelectInput>
+                </div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <div className="min-w-0">

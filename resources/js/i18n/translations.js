@@ -41,6 +41,7 @@ export const translations = {
         toast: {
             dismiss: 'Fermer la notification',
         },
+        exportSelect: 'Choisir un format d’export',
         modal: {
             loading: 'Chargement…',
         },
@@ -632,6 +633,19 @@ export const translations = {
             exportingReceipt: 'Préparation du reçu PDF…',
             receiptExported: 'Le reçu PDF a été téléchargé.',
             receiptExportError: 'Impossible de télécharger le reçu. Réessayez.',
+            exportFormats: {
+                csv: (count) => `Exporter ${count} ligne${count === 1 ? '' : 's'} en CSV`,
+                pdf: (count) => `Exporter ${count} ligne${count === 1 ? '' : 's'} en PDF`,
+                xlsx: (count) => `Exporter ${count} ligne${count === 1 ? '' : 's'} en Excel`,
+            },
+            exportingFormats: {
+                csv: 'Préparation du CSV…',
+                pdf: 'Préparation du PDF…',
+                xlsx: 'Préparation du fichier Excel…',
+            },
+            exported: (format, count) => `Les paiements (${count} ligne${count === 1 ? '' : 's'}) ont été téléchargés en ${format.toUpperCase()}.`,
+            exportError: 'Impossible d’exporter les paiements. Réessayez.',
+            exportEmpty: 'Aucun paiement ne correspond aux filtres sélectionnés.',
             exportExcel: (count) => `Exporter ${count} ligne${count === 1 ? '' : 's'} en Excel`,
             exportingExcel: 'Préparation du fichier Excel…',
             excelExported: (count) => `Le fichier Excel des paiements correspondant aux filtres (${count} ligne${count === 1 ? '' : 's'}) a été téléchargé.`,
@@ -1137,6 +1151,7 @@ export const translations = {
         toast: {
             dismiss: 'إغلاق الإشعار',
         },
+        exportSelect: 'اختر صيغة التصدير',
         modal: {
             loading: 'جارٍ التحميل…',
         },
@@ -1729,6 +1744,19 @@ export const translations = {
             exportingReceipt: 'جارٍ إعداد إيصال PDF…',
             receiptExported: 'تم تنزيل إيصال PDF.',
             receiptExportError: 'تعذر تنزيل الإيصال. حاول مرة أخرى.',
+            exportFormats: {
+                csv: (count) => `تصدير ${count} سجل بصيغة CSV`,
+                pdf: (count) => `تصدير ${count} سجل بصيغة PDF`,
+                xlsx: (count) => `تصدير ${count} سجل إلى Excel`,
+            },
+            exportingFormats: {
+                csv: 'جارٍ إعداد CSV…',
+                pdf: 'جارٍ إعداد PDF…',
+                xlsx: 'جارٍ إعداد ملف Excel…',
+            },
+            exported: (format, count) => `تم تنزيل ${count} سجل من المدفوعات بصيغة ${format.toUpperCase()}.`,
+            exportError: 'تعذر تصدير المدفوعات. حاول مرة أخرى.',
+            exportEmpty: 'لا توجد مدفوعات تطابق عوامل التصفية المحددة.',
             exportExcel: (count) => `تصدير ${count} سجل إلى Excel`,
             exportingExcel: 'جارٍ إعداد ملف Excel…',
             excelExported: (count) => `تم تنزيل ملف Excel للمدفوعات المطابقة لعوامل التصفية، ويحتوي على ${count} سجل.`,

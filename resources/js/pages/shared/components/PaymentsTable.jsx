@@ -52,7 +52,7 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [receiptExportingId, setReceiptExportingId] = useState(null);
-    const [excelExporting, setExcelExporting] = useState(false);
+    const [exportingFormat, setExportingFormat] = useState('');
     const [canExportPayments, setCanExportPayments] = useState(false);
     const [canExportReceipts, setCanExportReceipts] = useState(false);
     const [tableSort, setTableSort] = useState({ key: '', direction: 'asc' });
@@ -182,14 +182,15 @@ export default function PaymentsTable({ routeParams = {} }) {
         }
     };
 
-    const exportPaymentsExcel = async () => {
-        if (excelExporting || displayedPayments.length === 0) return;
-        setExcelExporting(true);
+    const exportPayments = async (format) => {
+        if (exportingFormat || displayedPayments.length === 0) return;
+        setExportingFormat(format);
 
         try {
             const query = new URLSearchParams({
                 year_id: String(yearId),
                 lang,
+                format,
             });
             if (focusedAlertPayment) query.set('payment_id', String(focusedAlertPayment.id));
             Object.entries(filters).forEach(([key, value]) => {
@@ -202,10 +203,16 @@ export default function PaymentsTable({ routeParams = {} }) {
             }
 
             const response = await apiFetch(`/payments/export?${query}`, {
-                headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+                headers: {
+                    Accept: {
+                        csv: 'text/csv',
+                        pdf: 'application/pdf',
+                        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    }[format],
+                },
             });
             if (response.status === 422) {
-                toast.error(t.payments.excelExportEmpty);
+                toast.error(t.payments.exportEmpty);
                 return;
             }
             if (!response.ok) throw new Error('Payment export failed');
@@ -215,23 +222,28 @@ export default function PaymentsTable({ routeParams = {} }) {
             }
 
             const blob = await response.blob();
-            if (!blob.type.toLowerCase().includes('spreadsheetml')) {
-                throw new Error('Payment export response was not an Excel workbook');
+            const expectedContentType = {
+                csv: 'text/csv',
+                pdf: 'application/pdf',
+                xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }[format];
+            if (!blob.type.toLowerCase().includes(expectedContentType)) {
+                throw new Error('Payment export response had an unexpected content type');
             }
 
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'payments.xlsx';
+            link.download = `${lang === 'ar' ? 'المدفوعات' : 'paiements'}.${format}`;
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-            toast.success(t.payments.excelExported(exportCount));
+            toast.success(t.payments.exported(format, exportCount));
         } catch {
-            toast.error(t.payments.excelExportError);
+            toast.error(t.payments.exportError);
         } finally {
-            setExcelExporting(false);
+            setExportingFormat('');
         }
     };
 
@@ -516,20 +528,26 @@ export default function PaymentsTable({ routeParams = {} }) {
                         </button>
                     )}
                     {canExportPayments && (
-                        <button
-                            type="button"
-                            disabled={loading || excelExporting || displayedPayments.length === 0}
-                            onClick={exportPaymentsExcel}
-                            aria-busy={excelExporting}
-                            className="order-first inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                        >
-                            {excelExporting
-                                ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
-                                : <Icon name="download" className="text-[17px]" />}
-                            {excelExporting
-                                ? t.payments.exportingExcel
-                                : t.payments.exportExcel(displayedPayments.length)}
-                        </button>
+                        <div className="order-first w-full sm:w-auto sm:min-w-52">
+                            <SelectInput
+                                value={exportingFormat}
+                                aria-label={t.exportSelect}
+                                onChange={(event) => {
+                                    if (event.target.value) exportPayments(event.target.value);
+                                }}
+                                disabled={loading || Boolean(exportingFormat) || displayedPayments.length === 0}
+                                className="w-full"
+                            >
+                                <option value="">{t.exportSelect}</option>
+                                {['csv', 'pdf', 'xlsx'].map((format) => (
+                                    <option key={format} value={format}>
+                                        {exportingFormat === format
+                                            ? t.payments.exportingFormats[format]
+                                            : t.payments.exportFormats[format](displayedPayments.length)}
+                                    </option>
+                                ))}
+                            </SelectInput>
+                        </div>
                     )}
                 </div>
             )}

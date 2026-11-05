@@ -327,29 +327,22 @@ export default function Eleves({ routeParams = {} }) {
     const toolbar = (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-end gap-2">
-                {['csv', 'pdf', 'xlsx'].map((format) => {
-                    const labels = {
-                        csv: [t.students.exportCsv, t.students.exportingCsv, 'download'],
-                        pdf: [t.students.exportPdf, t.students.exportingPdf, 'picture_as_pdf'],
-                        xlsx: [t.students.exportXlsx, t.students.exportingXlsx, 'table_view'],
-                    }[format];
-                    return (
-                        <button
-                            key={format}
-                            type="button"
-                            onClick={() => exportStudents(format)}
-                            disabled={exportingFormat !== '' || loading || !yearId || filteredStudents.length === 0}
-                            aria-busy={exportingFormat === format}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                        >
-                            <Icon
-                                name={exportingFormat === format ? 'progress_activity' : labels[2]}
-                                className={`text-[17px] ${exportingFormat === format ? 'animate-spin' : ''}`}
-                            />
-                            {exportingFormat === format ? labels[1] : labels[0]}
-                        </button>
-                    );
-                })}
+                <div className="w-full sm:w-auto sm:min-w-52">
+                    <SelectInput
+                        value={exportingFormat}
+                        aria-label={t.exportSelect}
+                        onChange={(event) => {
+                            if (event.target.value) exportStudents(event.target.value);
+                        }}
+                        disabled={exportingFormat !== '' || loading || !yearId || filteredStudents.length === 0}
+                        className="w-full"
+                    >
+                        <option value="">{t.exportSelect}</option>
+                        <option value="csv">{exportingFormat === 'csv' ? t.students.exportingCsv : t.students.exportCsv}</option>
+                        <option value="pdf">{exportingFormat === 'pdf' ? t.students.exportingPdf : t.students.exportPdf}</option>
+                        <option value="xlsx">{exportingFormat === 'xlsx' ? t.students.exportingXlsx : t.students.exportXlsx}</option>
+                    </SelectInput>
+                </div>
                 {canManage && yearIsWritable && (
                     <button
                         type="button"

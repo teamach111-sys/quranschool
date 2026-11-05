@@ -331,7 +331,12 @@ export default function RoomsTable({ routeParams = {} }) {
             if (yearId) query.set('year_id', String(yearId));
             if (!isTeacherView && focusedAlertRoomId) query.set('room_id', focusedAlertRoomId);
 
-            const contentType = format === 'pdf' ? 'application/pdf' : 'text/csv';
+            const contentTypes = {
+                csv: 'text/csv',
+                xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                pdf: 'application/pdf',
+            };
+            const contentType = contentTypes[format];
             const response = await apiFetch(`/rooms/export?${query}`, {
                 headers: { Accept: contentType },
             });
@@ -364,23 +369,23 @@ export default function RoomsTable({ routeParams = {} }) {
         }
     };
     const exportActions = (
-        <div role="group" aria-label={t.rooms.exportActions} className="flex flex-wrap justify-end gap-2">
-            {['csv', 'xlsx', 'pdf'].map((format) => {
-                const isExporting = exportingFormat === format;
-                return (
-                    <button
-                        key={format}
-                        type="button"
-                        onClick={() => exportRooms(format)}
-                        disabled={exportingFormat !== null || loading || exportCount === 0}
-                        aria-busy={isExporting}
-                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
-                    >
-                        <Icon name={isExporting ? 'progress_activity' : 'download'} className={`text-[17px] ${isExporting ? 'animate-spin' : ''}`} />
-                        {isExporting ? t.rooms.exporting[format] : t.rooms.exportFormats[format]}
-                    </button>
-                );
-            })}
+        <div className="w-full sm:w-auto sm:min-w-52">
+            <SelectInput
+                value={exportingFormat ?? ''}
+                aria-label={t.rooms.exportActions}
+                onChange={(event) => {
+                    if (event.target.value) exportRooms(event.target.value);
+                }}
+                className="w-full"
+                disabled={exportingFormat !== null || loading || exportCount === 0}
+            >
+                <option value="">{t.exportSelect}</option>
+                {['csv', 'xlsx', 'pdf'].map((format) => (
+                    <option key={format} value={format}>
+                        {exportingFormat === format ? t.rooms.exporting[format] : t.rooms.exportFormats[format]}
+                    </option>
+                ))}
+            </SelectInput>
         </div>
     );
     const controlClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
