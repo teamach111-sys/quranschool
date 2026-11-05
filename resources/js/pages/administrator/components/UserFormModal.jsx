@@ -115,6 +115,7 @@ export default function UserFormModal({ open, user = null, roles = [], onClose, 
             title={title}
             icon="manage_accounts"
             onClose={handleClose}
+            loading={saving}
             isRTL={isRTL}
             closeLabel={t.users.cancel}
             maxWidth="max-w-[680px]"

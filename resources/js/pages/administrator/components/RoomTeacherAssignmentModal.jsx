@@ -101,6 +101,7 @@ export default function RoomTeacherAssignmentModal({
             title={t.rooms.assignmentModalTitle}
             icon="assignment_ind"
             onClose={handleClose}
+            loading={saving}
             isRTL={isRTL}
             closeLabel={t.rooms.cancel}
             maxWidth="max-w-[520px]"

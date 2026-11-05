@@ -15,6 +15,7 @@ export default function RoomTeacherAssignmentTable({
     assignments = [],
     yearId,
     yearIsWritable,
+    loading = false,
     onChanged,
 }) {
     const { isRTL, t } = useLanguage();
@@ -131,6 +132,7 @@ export default function RoomTeacherAssignmentTable({
                     rows={assignments}
                     actions={actions}
                     rowKey="key"
+                    loading={loading}
                 />
             </div>
             <div className="md:hidden">
@@ -143,6 +145,7 @@ export default function RoomTeacherAssignmentTable({
                     rows={assignments}
                     actions={actions}
                     rowKey="key"
+                    loading={loading}
                 />
             </div>
             <ConfirmDeleteModal

@@ -312,14 +312,6 @@ export default function AttendanceTable({ routeParams = {} }) {
         );
     }
 
-    if (loading) {
-        return (
-            <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
-                <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.attendance.loading}</p>
-            </section>
-        );
-    }
-
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             <div className="hidden md:block">
@@ -332,6 +324,7 @@ export default function AttendanceTable({ routeParams = {} }) {
                     rows={attendance}
                     toolbar={toolbar}
                     actions={actions}
+                    loading={loading}
                 />
             </div>
             <div className="md:hidden">
@@ -344,6 +337,7 @@ export default function AttendanceTable({ routeParams = {} }) {
                     rows={attendance}
                     toolbar={toolbar}
                     actions={actions}
+                    loading={loading}
                 />
             </div>
             {rosterOpen && (

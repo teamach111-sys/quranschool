@@ -320,10 +320,6 @@ export default function UsersTable({ routeParams = {} }) {
         return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.users.loadError}</p>;
     }
 
-    if (loading) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.users.loading}</p>;
-    }
-
     const emptyState = users.length > 0 ? t.users.noResults : t.users.empty;
     const actionTitle = action?.type === 'role'
         ? t.users.roleTitle(action.user.full_name)
@@ -341,6 +337,7 @@ export default function UsersTable({ routeParams = {} }) {
                     rows={filteredUsers}
                     toolbar={toolbar}
                     actions={actions}
+                    loading={loading}
                 />
             </div>
             <div className="md:hidden">
@@ -353,6 +350,7 @@ export default function UsersTable({ routeParams = {} }) {
                     rows={filteredUsers}
                     toolbar={toolbar}
                     actions={actions}
+                    loading={loading}
                 />
             </div>
             {formState && (
@@ -372,6 +370,7 @@ export default function UsersTable({ routeParams = {} }) {
                 title={actionTitle}
                 icon={action?.type === 'role' ? 'manage_accounts' : 'key'}
                 onClose={closeAction}
+                loading={saving}
                 isRTL={isRTL}
                 closeLabel={t.users.cancel}
                 maxWidth="max-w-[520px]"

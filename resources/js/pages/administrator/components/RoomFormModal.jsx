@@ -104,6 +104,7 @@ export default function RoomFormModal({ open, room = null, yearId, onClose, onSa
             title={title}
             icon="door_front"
             onClose={handleClose}
+            loading={saving}
             isRTL={isRTL}
             closeLabel={t.rooms.cancel}
         >

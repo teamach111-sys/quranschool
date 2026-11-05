@@ -319,10 +319,6 @@ export default function Eleves({ routeParams = {} }) {
         return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.students.loadError}</p>;
     }
 
-    if (loading) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.students.loading}</p>;
-    }
-
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             <p className={`text-[12px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim ${textAlign}`} aria-live="polite">
@@ -338,6 +334,7 @@ export default function Eleves({ routeParams = {} }) {
                     rows={filteredStudents}
                     actions={rowActions}
                     toolbar={toolbar}
+                    loading={loading}
                 />
             </div>
             <div className="md:hidden">
@@ -350,6 +347,7 @@ export default function Eleves({ routeParams = {} }) {
                     rows={filteredStudents}
                     actions={rowActions}
                     toolbar={toolbar}
+                    loading={loading}
                 />
             </div>
             <StudentFormModal

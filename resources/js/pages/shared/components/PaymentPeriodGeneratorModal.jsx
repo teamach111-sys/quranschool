@@ -227,6 +227,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
             title={step === 'review' ? t.payments.previewTitle : t.payments.generateTitle}
             icon="payments"
             onClose={handleClose}
+            loading={loading || saving}
             isRTL={isRTL}
             closeLabel={t.payments.cancel}
             maxWidth="max-w-[760px]"

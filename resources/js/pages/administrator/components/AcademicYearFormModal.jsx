@@ -118,7 +118,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                 dir={isRTL ? 'rtl' : 'ltr'}
                 className="max-h-[calc(100vh-1.5rem)] w-full max-w-[500px] overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-ambient outline-none dark:border-[#384d43] dark:bg-[#202f29] dark:shadow-2xl sm:p-7"
             >
-                <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+                <form className="relative flex flex-col gap-5" onSubmit={handleSubmit} aria-busy={saving}>
                     <header className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-start gap-3">
                             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary dark:bg-primary-container dark:text-on-primary-container">
@@ -231,6 +231,16 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                             {saving ? t.academicYears.saving : t.academicYears.save}
                         </button>
                     </footer>
+                    {saving && (
+                        <div
+                            role="status"
+                            aria-label={t.academicYears.saving}
+                            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl bg-surface-container-lowest/90 text-on-surface-variant dark:bg-[#202f29]/90 dark:text-tertiary-fixed-dim"
+                        >
+                            <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
+                            <span className="text-center text-[13px] leading-5">{t.academicYears.saving}</span>
+                        </div>
+                    )}
                 </form>
             </section>
         </div>

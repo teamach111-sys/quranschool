@@ -41,6 +41,9 @@ export const translations = {
         toast: {
             dismiss: 'Fermer la notification',
         },
+        modal: {
+            loading: 'Chargement…',
+        },
         exitBadge: 'Exit',
         dateGreg: 'Mercredi 15 Mai 2025',
         dateHijri: "17 Dhu al-Qi'dah 1446",
@@ -999,6 +1002,9 @@ export const translations = {
         logout: 'تسجيل الخروج',
         toast: {
             dismiss: 'إغلاق الإشعار',
+        },
+        modal: {
+            loading: 'جارٍ التحميل…',
         },
         exitBadge: 'خروج',
         dateGreg: 'الأربعاء 15 مايو 2025',

@@ -376,10 +376,6 @@ export default function RoomsTable({ routeParams = {} }) {
         return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.rooms.loadError}</p>;
     }
 
-    if (loading) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.rooms.loading}</p>;
-    }
-
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             {canManage && yearIsWritable && (
@@ -420,7 +416,7 @@ export default function RoomsTable({ routeParams = {} }) {
     );
 
     return (
-        <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
+        <section aria-busy={loading} className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {error && !archiveRoom && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
             {focusedAlertRoom && (
                 <p role="status" className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
@@ -428,7 +424,12 @@ export default function RoomsTable({ routeParams = {} }) {
                 </p>
             )}
             {isTeacherView ? (
-                rooms.length > 0 ? teacherRooms : (
+                loading ? (
+                    <div role="status" className="flex min-h-40 flex-col items-center justify-center gap-3 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                        <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
+                        <span className="text-[13px]">{t.modal.loading}</span>
+                    </div>
+                ) : rooms.length > 0 ? teacherRooms : (
                     <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
                         {t.rooms.empty}
                     </p>
@@ -445,6 +446,7 @@ export default function RoomsTable({ routeParams = {} }) {
                             rows={displayedRooms}
                             actions={actions}
                             toolbar={toolbar}
+                            loading={loading}
                         />
                     </div>
                     <div className="md:hidden">
@@ -457,6 +459,7 @@ export default function RoomsTable({ routeParams = {} }) {
                             rows={displayedRooms}
                             actions={actions}
                             toolbar={toolbar}
+                            loading={loading}
                         />
                     </div>
                 </>
@@ -466,6 +469,7 @@ export default function RoomsTable({ routeParams = {} }) {
                     assignments={assignments}
                     yearId={yearId}
                     yearIsWritable={yearIsWritable}
+                    loading={loading}
                     onChanged={loadRooms}
                 />
             )}
@@ -476,6 +480,7 @@ export default function RoomsTable({ routeParams = {} }) {
                 onClose={() => {
                     if (!savingPlacement) setPlacementOpen(false);
                 }}
+                loading={savingPlacement}
                 isRTL={isRTL}
                 footer={(
                     <>

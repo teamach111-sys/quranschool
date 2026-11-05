@@ -166,10 +166,6 @@ export default function RoleChangeHistoryTable() {
         return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.roleHistory.loadError}</p>;
     }
 
-    if (loading) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.roleHistory.loading}</p>;
-    }
-
     const emptyState = history.length > 0 ? t.roleHistory.noResults : t.roleHistory.empty;
 
     return (
@@ -183,6 +179,7 @@ export default function RoleChangeHistoryTable() {
                     labels={labels}
                     rows={filteredHistory}
                     toolbar={toolbar}
+                    loading={loading}
                 />
             </div>
             <div className="md:hidden">
@@ -194,6 +191,7 @@ export default function RoleChangeHistoryTable() {
                     labels={labels}
                     rows={filteredHistory}
                     toolbar={toolbar}
+                    loading={loading}
                 />
             </div>
         </section>

@@ -414,6 +414,7 @@ export default function MemorizationSessionFormModal({
             title={isEditing ? t.memorization.editTitle : t.memorization.createTitle}
             icon="menu_book"
             onClose={handleClose}
+            loading={saving}
             isRTL={isRTL}
             closeLabel={t.memorization.cancel}
             maxWidth="max-w-[760px]"

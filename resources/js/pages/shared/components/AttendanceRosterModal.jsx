@@ -137,6 +137,7 @@ export default function AttendanceRosterModal({ open, yearId, onClose, onSaved }
             title={t.attendance.rosterTitle}
             icon="fact_check"
             onClose={onClose}
+            loading={loading || saving}
             isRTL={isRTL}
             closeLabel={t.attendance.cancel}
             maxWidth="max-w-[680px]"

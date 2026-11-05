@@ -519,10 +519,6 @@ export default function PaymentsTable({ routeParams = {} }) {
         return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.payments.loadError}</p>;
     }
 
-    if (loading) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.payments.loading}</p>;
-    }
-
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {!canRecord && (
@@ -545,6 +541,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     rows={displayedPayments}
                     toolbar={toolbar}
                     actions={actions}
+                    loading={loading}
                 />
             </div>
             <div className="md:hidden">
@@ -557,6 +554,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     rows={displayedPayments}
                     toolbar={toolbar}
                     actions={actions}
+                    loading={loading}
                 />
             </div>
             {entry && (

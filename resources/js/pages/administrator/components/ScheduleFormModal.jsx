@@ -145,6 +145,7 @@ export default function ScheduleFormModal({
             title={isEditing ? t.schedules.editTitle : t.schedules.createTitle}
             icon="event"
             onClose={handleClose}
+            loading={saving}
             isRTL={isRTL}
             closeLabel={t.schedules.cancel}
             maxWidth="max-w-[680px]"

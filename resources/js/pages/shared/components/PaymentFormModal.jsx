@@ -133,6 +133,7 @@ export default function PaymentFormModal({
             title={title}
             icon="payments"
             onClose={handleClose}
+            loading={saving}
             isRTL={isRTL}
             closeLabel={t.payments.cancel}
             maxWidth="max-w-[760px]"

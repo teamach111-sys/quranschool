@@ -153,10 +153,6 @@ export default function SchedulesTable() {
         return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.schedules.loadError}</p>;
     }
 
-    if (loading) {
-        return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.schedules.loading}</p>;
-    }
-
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             {canManage && yearIsWritable && (
@@ -177,7 +173,7 @@ export default function SchedulesTable() {
             {error && !formOpen && (
                 <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>
             )}
-            {schedules.length === 0 && (
+            {!loading && schedules.length === 0 && (
                 <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
                     {t.schedules.empty}
                 </p>
@@ -191,7 +187,13 @@ export default function SchedulesTable() {
                         {t.schedules.gridHint}
                     </p>
                 </div>
-                <div className="overflow-x-auto rounded-lg border border-outline-variant bg-surface-container-lowest dark:border-[#384d43] dark:bg-[#182620]">
+                <div aria-busy={loading} className="relative overflow-x-auto rounded-lg border border-outline-variant bg-surface-container-lowest dark:border-[#384d43] dark:bg-[#182620]">
+                    {loading && (
+                        <div role="status" className="absolute inset-0 z-20 flex min-h-40 items-center justify-center gap-3 bg-surface-container-lowest/90 text-on-surface-variant dark:bg-[#182620]/90 dark:text-[#9bb2a8]">
+                            <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
+                            <span className="text-[13px]">{t.modal.loading}</span>
+                        </div>
+                    )}
                     <div
                         role="region"
                         aria-label={t.schedules.weeklyGrid}

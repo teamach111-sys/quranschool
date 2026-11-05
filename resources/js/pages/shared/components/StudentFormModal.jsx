@@ -364,8 +364,8 @@ export default function StudentFormModal({
         );
 
         content = (
-            <div className="flex flex-col gap-5">
-                <section className="rounded-lg border border-outline-variant bg-surface-container-low p-4 dark:border-[#384d43] dark:bg-[#182620]">
+            <div className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start">
+                <section className="order-1 rounded-lg border border-outline-variant bg-surface-container-low p-4 dark:border-[#384d43] dark:bg-[#182620]">
                     <h3 className="mb-3 text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.students.profile.identity}
                     </h3>
@@ -422,51 +422,84 @@ export default function StudentFormModal({
                     </div>
                 </section>
 
-                <section className="flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
-                    <div>
-                        <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                            {t.students.profile.attendance}
-                        </h3>
-                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
-                            {t.students.profile.last30Days}
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-10 gap-2" aria-label={t.students.profile.attendance}>
-                        {attendanceDays.map((day) => {
-                            const style = attendanceStyles[day.status] ?? attendanceStyles.none;
+                <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-5">
+                    <section className="order-2 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                        <div>
+                            <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                                {t.students.profile.attendance}
+                            </h3>
+                            <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                                {t.students.profile.last30Days}
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-10 gap-2" aria-label={t.students.profile.attendance}>
+                            {attendanceDays.map((day) => {
+                                const style = attendanceStyles[day.status] ?? attendanceStyles.none;
 
-                            return (
-                                <span
-                                    key={day.date}
-                                    role="img"
-                                    aria-label={attendanceLabel(day)}
-                                    title={attendanceLabel(day)}
-                                    className={`flex size-6 items-center justify-center rounded-full border ${style.className}`}
-                                >
-                                    <Icon name={style.icon} className="text-[14px]" />
+                                return (
+                                    <span
+                                        key={day.date}
+                                        role="img"
+                                        aria-label={attendanceLabel(day)}
+                                        title={attendanceLabel(day)}
+                                        className={`flex size-6 items-center justify-center rounded-full border ${style.className}`}
+                                    >
+                                        <Icon name={style.icon} className="text-[14px]" />
+                                    </span>
+                                );
+                            })}
+                        </div>
+                        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c2d1c8]">
+                            {Object.entries(t.students.profile.attendanceStatuses).map(([status, label]) => (
+                                <li key={status} className="inline-flex items-center gap-1.5">
+                                    <span className={`flex size-5 items-center justify-center rounded-full border ${attendanceStyles[status].className}`}>
+                                        <Icon name={attendanceStyles[status].icon} className="text-[12px]" />
+                                    </span>
+                                    {label}
+                                </li>
+                            ))}
+                            <li className="inline-flex items-center gap-1.5">
+                                <span className={`flex size-5 items-center justify-center rounded-full border ${attendanceStyles.none.className}`}>
+                                    <Icon name={attendanceStyles.none.icon} className="text-[12px]" />
                                 </span>
-                            );
-                        })}
-                    </div>
-                    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c2d1c8]">
-                        {Object.entries(t.students.profile.attendanceStatuses).map(([status, label]) => (
-                            <li key={status} className="inline-flex items-center gap-1.5">
-                                <span className={`flex size-5 items-center justify-center rounded-full border ${attendanceStyles[status].className}`}>
-                                    <Icon name={attendanceStyles[status].icon} className="text-[12px]" />
-                                </span>
-                                {label}
+                                {t.students.profile.noAttendance}
                             </li>
-                        ))}
-                        <li className="inline-flex items-center gap-1.5">
-                            <span className={`flex size-5 items-center justify-center rounded-full border ${attendanceStyles.none.className}`}>
-                                <Icon name={attendanceStyles.none.icon} className="text-[12px]" />
-                            </span>
-                            {t.students.profile.noAttendance}
-                        </li>
-                    </ul>
-                </section>
+                        </ul>
+                    </section>
+                    {!teachingProfile && (
+                        <section className="order-4 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                            <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                                {t.students.profile.payments}
+                            </h3>
+                            {profile?.payment_summary?.length
+                                ? profile.payment_summary.map((summary) => (
+                                    <div key={summary.currency} className="flex flex-col gap-2 rounded-md bg-surface-container-low p-3 dark:bg-[#182620] sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="text-[12px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                                {t.students.profile.outstanding}
+                                            </p>
+                                            <p className="text-[20px] leading-7 font-semibold text-on-surface dark:text-inverse-on-surface">
+                                                {formatCurrency(summary.outstanding_amount, summary.currency, lang)}
+                                            </p>
+                                        </div>
+                                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                                            {t.students.profile.paymentBreakdown(
+                                                formatCurrency(summary.due_amount, summary.currency, lang),
+                                                formatNumber(summary.due_count, lang),
+                                                formatCurrency(summary.late_amount, summary.currency, lang),
+                                                formatNumber(summary.late_count, lang),
+                                                formatCurrency(summary.waived_amount ?? '0', summary.currency, lang),
+                                                formatNumber(summary.waived_count ?? 0, lang),
+                                            )}
+                                        </p>
+                                    </div>
+                                ))
+                                : <p className="text-[13px] text-on-surface-variant dark:text-[#c2d1c8]">{t.students.profile.noPayments}</p>}
+                        </section>
+                    )}
+                </div>
 
-                <section className="flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                <section className="order-3 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43] lg:order-none lg:col-span-2 lg:row-start-2">
                     <div>
                         <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
                             {t.students.profile.memorization}
@@ -555,37 +588,6 @@ export default function StudentFormModal({
                     )}
                 </section>
 
-                {!teachingProfile && (
-                    <section className="flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
-                        <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
-                            {t.students.profile.payments}
-                        </h3>
-                        {profile?.payment_summary?.length
-                            ? profile.payment_summary.map((summary) => (
-                                <div key={summary.currency} className="flex flex-col gap-2 rounded-md bg-surface-container-low p-3 dark:bg-[#182620] sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <p className="text-[12px] text-on-surface-variant dark:text-[#9bb2a8]">
-                                            {t.students.profile.outstanding}
-                                        </p>
-                                        <p className="text-[20px] leading-7 font-semibold text-on-surface dark:text-inverse-on-surface">
-                                            {formatCurrency(summary.outstanding_amount, summary.currency, lang)}
-                                        </p>
-                                    </div>
-                                    <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
-                                        {t.students.profile.paymentBreakdown(
-                                            formatCurrency(summary.due_amount, summary.currency, lang),
-                                            formatNumber(summary.due_count, lang),
-                                            formatCurrency(summary.late_amount, summary.currency, lang),
-                                            formatNumber(summary.late_count, lang),
-                                            formatCurrency(summary.waived_amount ?? '0', summary.currency, lang),
-                                            formatNumber(summary.waived_count ?? 0, lang),
-                                        )}
-                                    </p>
-                                </div>
-                            ))
-                            : <p className="text-[13px] text-on-surface-variant dark:text-[#c2d1c8]">{t.students.profile.noPayments}</p>}
-                    </section>
-                )}
             </div>
         );
     } else if (error && !loading) {
@@ -690,6 +692,8 @@ export default function StudentFormModal({
             icon={readOnly ? 'person' : isEditing ? 'edit' : 'person_add'}
             onClose={onClose}
             footer={footer}
+            loading={loading || saving}
+            maxWidth={readOnly ? 'max-w-7xl' : 'max-w-[600px]'}
             isRTL={isRTL}
             closeLabel={t.students.form.close}
         >

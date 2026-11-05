@@ -210,6 +210,7 @@ export default function AttendanceEntryModal({
             title={title}
             icon="fact_check"
             onClose={handleClose}
+            loading={saving}
             isRTL={isRTL}
             closeLabel={t.attendance.cancel}
             maxWidth="max-w-[600px]"

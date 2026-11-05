@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
+import { useLanguage } from '../persisters/languageswitch';
 
 function getValue(row, column) {
     return typeof column.value === 'function' ? column.value(row) : row[column.key];
@@ -43,7 +44,9 @@ export default function DesktopTable({
     actions = [],
     pageSize = 10,
     ariaLabel,
+    loading = false,
 }) {
+    const { t } = useLanguage();
     const [page, setPage] = useState(1);
     const [sortKey, setSortKey] = useState('');
     const [sortDirection, setSortDirection] = useState('asc');
@@ -108,14 +111,25 @@ export default function DesktopTable({
     const lastItem = Math.min(visiblePage * pageSize, sortedRows.length);
 
     return (
-        <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-ambient dark:border-[#384c43] dark:bg-[#22302a]">
+        <div aria-busy={loading} className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-ambient dark:border-[#384c43] dark:bg-[#22302a]">
             {toolbar && (
                 <div className="border-b border-outline-variant bg-surface-container-lowest p-3 dark:border-[#384c43] dark:bg-[#22302a] sm:p-4">
                     {toolbar}
+                    {loading && (
+                        <div aria-hidden="true" className="mt-3 inline-flex items-center gap-2 text-[12px] text-on-surface-variant dark:text-tertiary-fixed-dim">
+                            <Icon name="progress_activity" className="animate-spin text-[16px] text-primary" />
+                            <span>{t.modal.loading}</span>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {pageRows.length === 0 ? (
+            {loading ? (
+                <div role="status" aria-label={t.modal.loading} className="flex min-h-40 flex-col items-center justify-center gap-3 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                    <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
+                    <span className="text-[13px]">{t.modal.loading}</span>
+                </div>
+            ) : pageRows.length === 0 ? (
                 <div className={`p-6 text-[13px] text-on-surface-variant dark:text-[#c2d1c8] ${textAlign}`}>
                     {emptyState}
                 </div>

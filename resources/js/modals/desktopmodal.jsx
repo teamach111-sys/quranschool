@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import Icon from '../components/Icon';
+import { useLanguage } from '../persisters/languageswitch';
 
 export default function Modal({
     open,
@@ -8,10 +9,12 @@ export default function Modal({
     onClose,
     children,
     footer,
+    loading = false,
     maxWidth = 'max-w-[600px]',
     isRTL = false,
     closeLabel = 'Close',
 }) {
+    const { t } = useLanguage();
     const dialogId = useId();
     const dialogRef = useRef(null);
     const onCloseRef = useRef(onClose);
@@ -76,7 +79,16 @@ export default function Modal({
                             <Icon name="close" className="text-[18px]" />
                         </button>
                     </header>
-                    {children}
+                    {loading ? (
+                        <div
+                            role="status"
+                            aria-label={t.modal.loading}
+                            className="flex min-h-40 flex-col items-center justify-center gap-3 text-on-surface-variant dark:text-tertiary-fixed-dim"
+                        >
+                            <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
+                            <span className="text-center text-[13px] leading-5">{t.modal.loading}</span>
+                        </div>
+                    ) : children}
                     {footer && (
                         <footer className="flex flex-col gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:flex-row">
                             {footer}

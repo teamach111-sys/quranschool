@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Icon from '../components/Icon';
+import { useLanguage } from '../persisters/languageswitch';
 
 function pageNumbers(currentPage, totalPages) {
     const start = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
@@ -25,7 +26,9 @@ export default function MobileTable({
     actions = [],
     pageSize = 10,
     ariaLabel,
+    loading = false,
 }) {
+    const { t } = useLanguage();
     const [page, setPage] = useState(1);
     const [selectedIds, setSelectedIds] = useState([]);
     const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
@@ -66,14 +69,25 @@ export default function MobileTable({
     const lastItem = Math.min(visiblePage * pageSize, rows.length);
 
     return (
-        <div className="flex flex-col gap-2.5">
+        <div aria-busy={loading} className="flex flex-col gap-2.5">
             {toolbar && (
                 <div className="rounded-xl bg-surface-container-low p-3 dark:bg-[#22302a]">
                     {toolbar}
+                    {loading && (
+                        <div aria-hidden="true" className="mt-3 inline-flex items-center gap-2 text-[12px] text-on-surface-variant dark:text-tertiary-fixed-dim">
+                            <Icon name="progress_activity" className="animate-spin text-[16px] text-primary" />
+                            <span>{t.modal.loading}</span>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {pageRows.length === 0 ? (
+            {loading ? (
+                <div role="status" aria-label={t.modal.loading} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface-variant dark:border-[#384c43] dark:bg-[#22302a] dark:text-tertiary-fixed-dim">
+                    <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
+                    <span className="text-[13px]">{t.modal.loading}</span>
+                </div>
+            ) : pageRows.length === 0 ? (
                 <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-[#384c43] dark:bg-[#22302a] dark:text-[#c2d1c8]">
                     {emptyState}
                 </div>
