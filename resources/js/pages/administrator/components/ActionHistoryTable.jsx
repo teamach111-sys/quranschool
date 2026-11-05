@@ -1,14 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DateInput from '../../../components/DateInput';
+import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
 import SelectInput from '../../../components/SelectInput';
+import Modal from '../../../modals/desktopmodal';
 import { useLanguage } from '../../../hooks/useLanguage';
+import { useToast } from '../../../components/ToastProvider';
 import { apiFetch } from '../../../lib/api';
 import DesktopTable from '../../../tables/desktoptable';
 import MobileTable from '../../../tables/mobiletable';
 
 export default function ActionHistoryTable() {
     const { isRTL, lang, t } = useLanguage();
+    const toast = useToast();
     const [events, setEvents] = useState([]);
     const [actors, setActors] = useState([]);
     const [actions, setActions] = useState([]);
@@ -17,6 +21,12 @@ export default function ActionHistoryTable() {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [retryToken, setRetryToken] = useState(0);
+    const [selectedEventId, setSelectedEventId] = useState(null);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [detailError, setDetailError] = useState(false);
+    const [detailRetry, setDetailRetry] = useState(0);
+    const [exportingFormat, setExportingFormat] = useState('');
     const [filters, setFilters] = useState({
         search: '',
         actor_id: '',
@@ -62,6 +72,33 @@ export default function ActionHistoryTable() {
         return () => controller.abort();
     }, [filters, retryToken]);
 
+    useEffect(() => {
+        if (selectedEventId === null) return undefined;
+        const controller = new AbortController();
+
+        const loadEvent = async () => {
+            setDetailLoading(true);
+            setDetailError(false);
+            setSelectedEvent(null);
+
+            try {
+                const response = await apiFetch(`/admin/action-history/${selectedEventId}`, {
+                    signal: controller.signal,
+                });
+                if (!response.ok) throw new Error('Failed to load action event');
+                const data = await response.json();
+                if (!controller.signal.aborted) setSelectedEvent(data.event);
+            } catch (error) {
+                if (error.name !== 'AbortError') setDetailError(true);
+            } finally {
+                if (!controller.signal.aborted) setDetailLoading(false);
+            }
+        };
+
+        loadEvent();
+        return () => controller.abort();
+    }, [selectedEventId, detailRetry]);
+
     const locale = lang === 'ar' ? 'ar' : 'fr';
     const formatDate = (value) => new Intl.DateTimeFormat(locale, {
         dateStyle: 'medium',
@@ -70,6 +107,65 @@ export default function ActionHistoryTable() {
     const actionLabel = (action) => t.actionHistory.actions[action] ?? action;
     const entityLabel = (entity) => t.actionHistory.entities[entity] ?? entity;
     const summaryLabel = (summary) => t.actionHistory.summaries[summary] ?? summary;
+    const displayValue = (value) => {
+        if (value === null || value === undefined) return t.actionHistory.emptyValue;
+        if (typeof value === 'boolean') return value ? t.actionHistory.values.true : t.actionHistory.values.false;
+        if (typeof value === 'object') return JSON.stringify(value);
+
+        return String(value);
+    };
+
+    const exportHistory = async (format) => {
+        if (exportingFormat || events.length === 0) return;
+        setExportingFormat(format);
+
+        try {
+            const query = new URLSearchParams({
+                ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== '')),
+                format,
+                lang,
+            });
+            const response = await apiFetch(`/admin/action-history/export?${query}`, {
+                headers: {
+                    Accept: {
+                        csv: 'text/csv',
+                        pdf: 'application/pdf',
+                        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    }[format],
+                },
+            });
+            if (response.status === 422) throw new Error('Action history export was empty');
+            if (!response.ok) throw new Error('Action history export failed');
+
+            const expectedType = {
+                csv: 'text/csv',
+                pdf: 'application/pdf',
+                xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }[format];
+            if (!response.headers.get('Content-Type')?.toLowerCase().includes(expectedType)) {
+                throw new Error('Action history export response had an invalid format');
+            }
+            const exportCount = Number(response.headers.get('X-Export-Record-Count'));
+            if (!Number.isInteger(exportCount) || exportCount < 1) {
+                throw new Error('Action history export count was invalid');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `action-history.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast.success(t.actionHistory.exported(format, exportCount));
+        } catch {
+            toast.error(t.actionHistory.exportError);
+        } finally {
+            setExportingFormat('');
+        }
+    };
 
     const columns = useMemo(() => [
         {
@@ -131,12 +227,58 @@ export default function ActionHistoryTable() {
         sortBy: (label) => t.actionHistory.table.sortBy(label),
         range: (first, last, total) => t.actionHistory.table.range(first, last, total),
     };
+    const actionsForRow = [{
+        key: 'details',
+        icon: 'visibility',
+        label: t.actionHistory.viewDetails,
+        disabled: () => detailLoading,
+        onClick: (event) => setSelectedEventId(event.id),
+    }];
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
     const updateFilter = (key) => (event) => {
         setFilters((current) => ({ ...current, [key]: event.target.value }));
     };
     const toolbar = (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="flex flex-col gap-3">
+            <div className={`flex flex-wrap gap-2 ${isRTL ? 'justify-start' : 'justify-end'}`}>
+                <button
+                    type="button"
+                    onClick={() => exportHistory('csv')}
+                    disabled={loading || events.length === 0 || Boolean(exportingFormat)}
+                    aria-busy={exportingFormat === 'csv'}
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
+                >
+                    {exportingFormat === 'csv'
+                        ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
+                        : <Icon name="download" className="text-[17px]" />}
+                    {exportingFormat === 'csv' ? t.actionHistory.exportingCsv : t.actionHistory.exportCsv}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => exportHistory('pdf')}
+                    disabled={loading || events.length === 0 || Boolean(exportingFormat)}
+                    aria-busy={exportingFormat === 'pdf'}
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
+                >
+                    {exportingFormat === 'pdf'
+                        ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
+                        : <Icon name="picture_as_pdf" className="text-[17px]" />}
+                    {exportingFormat === 'pdf' ? t.actionHistory.exportingPdf : t.actionHistory.exportPdf}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => exportHistory('xlsx')}
+                    disabled={loading || events.length === 0 || Boolean(exportingFormat)}
+                    aria-busy={exportingFormat === 'xlsx'}
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
+                >
+                    {exportingFormat === 'xlsx'
+                        ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
+                        : <Icon name="table_view" className="text-[17px]" />}
+                    {exportingFormat === 'xlsx' ? t.actionHistory.exportingXlsx : t.actionHistory.exportXlsx}
+                </button>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <div className="min-w-0">
                 <SearchInput
                     value={filters.search}
@@ -182,6 +324,7 @@ export default function ActionHistoryTable() {
                     className={inputClass}
                 />
             </div>
+            </div>
         </div>
     );
 
@@ -215,6 +358,7 @@ export default function ActionHistoryTable() {
                             labels={labels}
                             rows={events}
                             toolbar={toolbar}
+                            actions={actionsForRow}
                             loading={loading}
                         />
                     </div>
@@ -227,11 +371,105 @@ export default function ActionHistoryTable() {
                             labels={labels}
                             rows={events}
                             toolbar={toolbar}
+                            actions={actionsForRow}
                             loading={loading}
                         />
                     </div>
                 </>
             )}
+            <Modal
+                open={selectedEventId !== null}
+                title={selectedEvent ? summaryLabel(selectedEvent.summary_key) : t.actionHistory.detailTitle}
+                icon="history"
+                onClose={() => {
+                    setSelectedEventId(null);
+                    setSelectedEvent(null);
+                    setDetailError(false);
+                }}
+                loading={detailLoading}
+                isRTL={isRTL}
+                closeLabel={t.actionHistory.close}
+                maxWidth="max-w-[720px]"
+            >
+                {detailError ? (
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-[13px] leading-5 text-error dark:text-error-container">
+                        <span>{t.actionHistory.detailError}</span>
+                        <button
+                            type="button"
+                            onClick={() => setDetailRetry((current) => current + 1)}
+                            className="min-h-10 rounded-lg border border-outline-variant px-3 font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384c43] dark:text-inverse-on-surface dark:hover:bg-[#34483f]"
+                        >
+                            {t.actionHistory.retry}
+                        </button>
+                    </div>
+                ) : selectedEvent && (
+                    <div className="flex flex-col gap-4">
+                        <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {[
+                                [t.actionHistory.columns.action, actionLabel(selectedEvent.action_type)],
+                                [t.actionHistory.columns.record, selectedEvent.entity_id === null
+                                    ? entityLabel(selectedEvent.entity_type)
+                                    : `${entityLabel(selectedEvent.entity_type)} #${selectedEvent.entity_id}`],
+                                [t.actionHistory.columns.actor, selectedEvent.actor_name],
+                                [t.actionHistory.columns.year, years.find((year) => year.id === selectedEvent.year_id)?.label
+                                    ?? t.actionHistory.allYears],
+                                [t.actionHistory.columns.date, formatDate(selectedEvent.created_at)],
+                            ].map(([label, value]) => (
+                                <div key={label} className="min-w-0 rounded-lg bg-surface-container-low p-3 dark:bg-[#182620]">
+                                    <dt className="text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">{label}</dt>
+                                    <dd className="break-words text-[13px] font-medium text-on-surface dark:text-inverse-on-surface">{value}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                        <section className="flex flex-col gap-2">
+                            <h3 className="text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                                {t.actionHistory.changes}
+                            </h3>
+                            {selectedEvent.changes && Object.keys(selectedEvent.changes).length > 0 ? (
+                                <dl className="flex flex-col gap-2">
+                                    {Object.entries(selectedEvent.changes).map(([field, change]) => {
+                                        const hasComparison = change !== null
+                                            && typeof change === 'object'
+                                            && ('before' in change || 'after' in change);
+
+                                        return (
+                                            <div key={field} className="grid grid-cols-1 gap-2 rounded-lg border border-outline-variant p-3 dark:border-[#384c43] sm:grid-cols-3">
+                                                <dt className="text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
+                                                    {t.actionHistory.fields[field] ?? field}
+                                                </dt>
+                                                {hasComparison ? (
+                                                    <>
+                                                        <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                                                            <span className="font-semibold">{t.actionHistory.before}:</span> {displayValue(change.before)}
+                                                        </dd>
+                                                        <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                                                            <span className="font-semibold">{t.actionHistory.after}:</span> {displayValue(change.after)}
+                                                        </dd>
+                                                    </>
+                                                ) : (
+                                                    <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c2d1c8] sm:col-span-2">
+                                                        {displayValue(change)}
+                                                    </dd>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </dl>
+                            ) : (
+                                <p className="text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                                    {t.actionHistory.noChanges}
+                                </p>
+                            )}
+                        </section>
+                        <div className="rounded-lg bg-surface-container-low p-3 dark:bg-[#182620]">
+                            <h3 className="mb-1 text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">{t.actionHistory.reason}</h3>
+                            <p className="break-words text-[13px] text-on-surface dark:text-inverse-on-surface">
+                                {selectedEvent.reason || t.actionHistory.emptyValue}
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </section>
     );
 }

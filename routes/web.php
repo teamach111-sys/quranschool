@@ -253,6 +253,15 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-admin')
         ->name('admin.action-history.table');
 
+    Route::get('/admin/action-history/export', [ActionHistoryController::class, 'export'])
+        ->middleware('can:access-admin')
+        ->name('admin.action-history.export');
+
+    Route::get('/admin/action-history/{eventId}', [ActionHistoryController::class, 'show'])
+        ->middleware('can:access-admin')
+        ->whereNumber('eventId')
+        ->name('admin.action-history.show');
+
     Route::post('/admin/users', [AdminUsersController::class, 'store'])
         ->middleware('can:access-admin')
         ->name('admin.users.store');
