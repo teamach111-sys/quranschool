@@ -67,6 +67,10 @@ export default function DateInput({
             locale={lang}
             dateFormat={isRTL ? 'yyyy/MM/dd' : 'dd/MM/yyyy'}
             calendarStartDay={isRTL ? 6 : 1}
+            showYearDropdown
+            dropdownMode="select"
+            scrollableYearDropdown
+            yearDropdownItemNumber={100}
             showIcon
             icon={<Icon name="calendar_month" />}
             calendarIconClassName="date-input__icon"
