@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
 import StatCard from '../../components/StatCard';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
-import TodayAttendance from './components/TodayAttendance';
 import {
     ACADEMIC_YEAR_CHANGED_EVENT,
     getSelectedAcademicYearId,
@@ -19,18 +18,15 @@ export default function TableauDeBordEnseignant() {
     const { isRTL, lang, t } = useLanguage();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [dashboard, setDashboard] = useState(null);
-    const [activeLesson, setActiveLesson] = useState(null);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [refreshCount, setRefreshCount] = useState(0);
     const [refreshedAt, setRefreshedAt] = useState(null);
-    const attendanceTriggerRef = useRef(null);
 
     useEffect(() => {
         const syncYear = (event) => {
             const nextId = Number(event?.detail?.id ?? getSelectedAcademicYearId());
             setYearId(Number.isInteger(nextId) && nextId > 0 ? nextId : null);
-            setActiveLesson(null);
             setDashboard(null);
             setRefreshedAt(null);
         };
@@ -70,13 +66,6 @@ export default function TableauDeBordEnseignant() {
         };
     }, [refreshCount, yearId]);
 
-    useEffect(() => {
-        if (!activeLesson && attendanceTriggerRef.current) {
-            attendanceTriggerRef.current.focus();
-            attendanceTriggerRef.current = null;
-        }
-    }, [activeLesson]);
-
     const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
     const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
@@ -100,21 +89,6 @@ export default function TableauDeBordEnseignant() {
         ?.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT) ?? [];
     const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00Z`));
     const refreshDashboard = () => setRefreshCount((current) => current + 1);
-
-    if (activeLesson) {
-        return (
-            <TodayAttendance
-                key={`${activeLesson.id}-${dashboard.today}`}
-                lesson={activeLesson}
-                todayDate={dashboard.today}
-                yearId={dashboard.year_id}
-                onBack={() => {
-                    setActiveLesson(null);
-                    refreshDashboard();
-                }}
-            />
-        );
-    }
 
     if (loading && !dashboard) {
         return (
@@ -258,17 +232,13 @@ export default function TableauDeBordEnseignant() {
                                         {lesson.starts_at} – {lesson.ends_at}
                                     </span>
                                     {(lesson.id === dashboard.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id)) && (
-                                        <button
-                                            type="button"
-                                            onClick={(event) => {
-                                                attendanceTriggerRef.current = event.currentTarget;
-                                                setActiveLesson(lesson);
-                                            }}
+                                        <a
+                                            href={`#/presences?room_id=${lesson.room_id}&attendance_date=${dashboard.today}`}
                                             className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-primary-container dark:text-on-primary-container"
                                         >
                                             <Icon name="fact_check" className="text-[18px]" />
                                             {t.teacherDashboard.startTodayAttendance}
-                                        </button>
+                                        </a>
                                     )}
                                 </li>
                             ))}

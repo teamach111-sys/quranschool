@@ -38,13 +38,19 @@ export default function Dashboard({ user }) {
         return () => mediaQuery.removeEventListener('change', syncLayout);
     }, []);
 
-    const activePage = findPage(route);
     const role = user?.role;
-    const allowedPage = canSeePage(activePage, role) ? activePage : null;
-    const ActivePageComponent = allowedPage ? allowedPage.component : null;
-    const showPastYearBanner = role === 'admin' && yearScopedPageKeys.has(allowedPage?.key);
     const defaultPageKey = ROLE_DEFAULT_PAGE[role] || 'tableau-de-bord-admin';
+    const activePage = findPage(route);
+    const allowedPage = canSeePage(activePage, role) ? activePage : findPage(defaultPageKey);
+    const ActivePageComponent = allowedPage?.component ?? null;
+    const showPastYearBanner = role === 'admin' && yearScopedPageKeys.has(allowedPage?.key);
     const pageInfo = t.pages[allowedPage?.key] || t.pages[defaultPageKey] || { title: '', subtitle: '' };
+
+    useEffect(() => {
+        if (role && !canSeePage(activePage, role)) {
+            navigate(defaultPageKey);
+        }
+    }, [activePage, defaultPageKey, navigate, role]);
 
     const handlePageChange = (key) => {
         navigate(key);
