@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
+import { useToast } from '../../../components/ToastProvider';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
 import RoomFormModal from '../../administrator/components/RoomFormModal';
@@ -16,7 +17,8 @@ import DesktopTable from '../../../tables/desktoptable';
 import MobileTable from '../../../tables/mobiletable';
 
 export default function RoomsTable({ routeParams = {} }) {
-    const { isRTL, t } = useLanguage();
+    const { lang, isRTL, t } = useLanguage();
+    const toast = useToast();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [rooms, setRooms] = useState([]);
     const [assignments, setAssignments] = useState([]);
@@ -27,6 +29,7 @@ export default function RoomsTable({ routeParams = {} }) {
     const [isTeacherView, setIsTeacherView] = useState(false);
     const [yearIsWritable, setYearIsWritable] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [exportingFormat, setExportingFormat] = useState(null);
     const [loadError, setLoadError] = useState(false);
     const [error, setError] = useState(null);
     const [roomEditorOpen, setRoomEditorOpen] = useState(false);
@@ -46,6 +49,8 @@ export default function RoomsTable({ routeParams = {} }) {
             const nextYearId = event?.detail?.id ?? getSelectedAcademicYearId();
             setYearId(nextYearId ? Number(nextYearId) : null);
             setYearIsWritable(false);
+            setFocusedAlertRoomId('');
+            openedAlertRoomId.current = null;
             setRoomEditorOpen(false);
             setEditingRoom(null);
             setArchiveRoom(null);
@@ -197,6 +202,7 @@ export default function RoomsTable({ routeParams = {} }) {
         ? rooms.find((room) => String(room.id) === focusedAlertRoomId)
         : null;
     const displayedRooms = focusedAlertRoom ? [focusedAlertRoom] : rooms;
+    const exportCount = isTeacherView ? rooms.length : displayedRooms.length;
     const selectedStudent = students.find((student) => String(student.id) === placementForm.student_id);
     const placementTargetRoom = activeRooms.find((room) => String(room.id) === placementForm.room_id);
     const placementRoomHasAgeRange = placementTargetRoom !== undefined
@@ -315,6 +321,68 @@ export default function RoomsTable({ routeParams = {} }) {
         sortBy: (label) => t.rooms.table.sortBy(label),
         range: (first, last, total) => t.rooms.table.range(first, last, total),
     };
+    const exportRooms = async (format) => {
+        setExportingFormat(format);
+        try {
+            const query = new URLSearchParams({
+                format,
+                lang,
+            });
+            if (yearId) query.set('year_id', String(yearId));
+            if (!isTeacherView && focusedAlertRoomId) query.set('room_id', focusedAlertRoomId);
+
+            const contentType = format === 'pdf' ? 'application/pdf' : 'text/csv';
+            const response = await apiFetch(`/rooms/export?${query}`, {
+                headers: { Accept: contentType },
+            });
+            if (response.status === 422) {
+                toast.error(t.rooms.exportEmpty);
+                return;
+            }
+            if (!response.ok || !response.headers.get('Content-Type')?.toLowerCase().includes(contentType)) {
+                throw new Error('Group export failed');
+            }
+
+            const count = Number(response.headers.get('X-Export-Record-Count'));
+            if (!Number.isInteger(count) || count < 1) {
+                throw new Error('Group export count was invalid');
+            }
+
+            const url = URL.createObjectURL(await response.blob());
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${lang === 'ar' ? 'المجموعات' : 'groupes'}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast.success(t.rooms.exported(format, count));
+        } catch {
+            toast.error(t.rooms.exportError);
+        } finally {
+            setExportingFormat(null);
+        }
+    };
+    const exportActions = (
+        <div role="group" aria-label={t.rooms.exportActions} className="flex flex-wrap justify-end gap-2">
+            {['csv', 'xlsx', 'pdf'].map((format) => {
+                const isExporting = exportingFormat === format;
+                return (
+                    <button
+                        key={format}
+                        type="button"
+                        onClick={() => exportRooms(format)}
+                        disabled={exportingFormat !== null || loading || exportCount === 0}
+                        aria-busy={isExporting}
+                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
+                    >
+                        <Icon name={isExporting ? 'progress_activity' : 'download'} className={`text-[17px] ${isExporting ? 'animate-spin' : ''}`} />
+                        {isExporting ? t.rooms.exporting[format] : t.rooms.exportFormats[format]}
+                    </button>
+                );
+            })}
+        </div>
+    );
     const controlClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
     const teacherRooms = (
         <ul aria-label={t.rooms.listLabel} className="grid w-full grid-cols-1 gap-3 xl:grid-cols-2">
@@ -378,6 +446,7 @@ export default function RoomsTable({ routeParams = {} }) {
 
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            {exportActions}
             {canManage && yearIsWritable && (
                 <button
                     type="button"
@@ -424,16 +493,19 @@ export default function RoomsTable({ routeParams = {} }) {
                 </p>
             )}
             {isTeacherView ? (
-                loading ? (
-                    <div role="status" className="flex min-h-40 flex-col items-center justify-center gap-3 text-on-surface-variant dark:text-tertiary-fixed-dim">
-                        <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
-                        <span className="text-[13px]">{t.modal.loading}</span>
-                    </div>
-                ) : rooms.length > 0 ? teacherRooms : (
-                    <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
-                        {t.rooms.empty}
-                    </p>
-                )
+                <>
+                    <div className="flex justify-end">{exportActions}</div>
+                    {loading ? (
+                        <div role="status" className="flex min-h-40 flex-col items-center justify-center gap-3 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                            <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
+                            <span className="text-[13px]">{t.modal.loading}</span>
+                        </div>
+                    ) : rooms.length > 0 ? teacherRooms : (
+                        <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
+                            {t.rooms.empty}
+                        </p>
+                    )}
+                </>
             ) : (
                 <>
                     <div className="hidden md:block">

@@ -90,6 +90,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('rooms.table');
 
+    Route::get('/rooms/export', [RoomsController::class, 'export'])
+        ->middleware('can:access-dashboard')
+        ->name('rooms.export');
+
     Route::post('/rooms', [RoomsController::class, 'store'])
         ->middleware('can:access-dashboard')
         ->name('rooms.store');

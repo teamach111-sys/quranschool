@@ -615,6 +615,7 @@ class ActionHistoryController extends Controller
             'payment' => ['fr' => 'Paiement', 'ar' => 'دفعة'],
             'memorization_session' => ['fr' => 'Séance de mémorisation', 'ar' => 'حصة حفظ'],
             'schedule' => ['fr' => 'Horaire', 'ar' => 'موعد'],
+            'room' => ['fr' => 'Groupe', 'ar' => 'مجموعة'],
             'audit_event' => ['fr' => 'Événement d’audit', 'ar' => 'حدث تدقيق'],
         ];
 
@@ -630,6 +631,7 @@ class ActionHistoryController extends Controller
             'payment.receipt_exported' => ['fr' => 'Reçu de paiement exporté', 'ar' => 'تصدير إيصال الدفع'],
             'memorization.exported' => ['fr' => 'Séances de mémorisation exportées', 'ar' => 'تصدير حصص الحفظ'],
             'schedules.exported' => ['fr' => 'Emploi du temps exporté', 'ar' => 'تصدير الجدول الزمني'],
+            'rooms.exported' => ['fr' => 'Liste des groupes exportée', 'ar' => 'تصدير قائمة المجموعات'],
             'action_history.exported' => ['fr' => 'Historique des actions exporté', 'ar' => 'تصدير سجل الإجراءات'],
         ];
 

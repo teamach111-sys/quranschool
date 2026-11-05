@@ -961,6 +961,20 @@ export const translations = {
         },
         rooms: {
             listLabel: 'Liste des groupes',
+            exportActions: 'Exporter les groupes',
+            exportFormats: {
+                csv: 'Exporter CSV',
+                xlsx: 'Exporter Excel',
+                pdf: 'Exporter PDF',
+            },
+            exporting: {
+                csv: 'Préparation du CSV…',
+                xlsx: 'Préparation du fichier Excel…',
+                pdf: 'Préparation du PDF…',
+            },
+            exported: (format, count) => `${count} ${count > 1 ? 'groupes exportés' : 'groupe exporté'} en ${format.toUpperCase()}.`,
+            exportEmpty: 'Aucun groupe à exporter pour cette année scolaire.',
+            exportError: 'Impossible d’exporter les groupes. Réessayez.',
             alertRecordFocus: (roomName) => `Groupe lié à l’alerte : ${roomName}`,
             loading: 'Chargement des groupes…',
             loadError: 'Impossible de charger les groupes.',
@@ -2044,6 +2058,20 @@ export const translations = {
         },
         rooms: {
             listLabel: 'قائمة المجموعات',
+            exportActions: 'تصدير المجموعات',
+            exportFormats: {
+                csv: 'تصدير CSV',
+                xlsx: 'تصدير Excel',
+                pdf: 'تصدير PDF',
+            },
+            exporting: {
+                csv: 'جارٍ إعداد CSV…',
+                xlsx: 'جارٍ إعداد ملف Excel…',
+                pdf: 'جارٍ إعداد PDF…',
+            },
+            exported: (format, count) => `تم تصدير ${count} من المجموعات بصيغة ${format.toUpperCase()}.`,
+            exportEmpty: 'لا توجد مجموعات لتصديرها في هذه السنة الدراسية.',
+            exportError: 'تعذر تصدير المجموعات. حاول مرة أخرى.',
             alertRecordFocus: (roomName) => `المجموعة المرتبطة بالتنبيه: ${roomName}`,
             loading: 'جارٍ تحميل المجموعات…',
             loadError: 'تعذر تحميل المجموعات.',

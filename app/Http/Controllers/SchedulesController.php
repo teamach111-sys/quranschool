@@ -130,6 +130,7 @@ class SchedulesController extends Controller
                 'schedules.valid_from',
                 'schedules.valid_until',
                 'schedules.label',
+                'schedules.room_id',
                 'rooms.name as room_name',
                 'users.full_name as teacher_name',
             ]);
@@ -209,7 +210,7 @@ class SchedulesController extends Controller
                 'scope' => $user->role === 'teacher' ? 'own_schedule' : 'school_schedule',
                 'filters' => ['room' => $roomId === null ? null : $roomName],
                 'audience' => $studentWeeklyView ? 'students' : null,
-                'view' => $studentWeeklyView ? 'weekly' : 'list',
+                'view' => $studentWeeklyView ? 'weekly' : ($format === 'pdf' ? 'calendar' : 'list'),
             ], JSON_THROW_ON_ERROR),
             'created_at' => now(),
         ]);
@@ -228,7 +229,7 @@ class SchedulesController extends Controller
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
             'X-Export-Record-Count' => (string) $records->count(),
-            'X-Export-View' => $studentWeeklyView ? 'student-weekly' : 'list',
+            'X-Export-View' => $studentWeeklyView ? 'student-weekly' : ($format === 'pdf' ? 'calendar' : 'list'),
         ]);
     }
 
@@ -410,6 +411,7 @@ class SchedulesController extends Controller
                 'label' => $this->dayLabel($day, $labels),
             ]),
             'periods' => $studentWeeklyView ? $this->studentCalendarPeriods($records) : [],
+            'calendar' => $studentWeeklyView ? null : $this->weeklyCalendar($records),
         ])->render());
         $contents = $pdf->Output('', Destination::STRING_RETURN);
         if (! str_starts_with($contents, '%PDF-')) {
@@ -447,6 +449,104 @@ class SchedulesController extends Controller
         [$hours, $minutes] = array_map('intval', explode(':', substr($time, 0, 5)));
 
         return $hours * 60 + $minutes;
+    }
+
+    /**
+     * @param  Collection<int, object>  $records
+     * @return array<string, mixed>
+     */
+    private function weeklyCalendar(Collection $records): array
+    {
+        $eventsByDay = [];
+        $earliest = 7 * 60;
+        $latest = 22 * 60;
+        $palette = [
+            ['background' => '#dbeafe', 'border' => '#60a5fa', 'text' => '#1e3a8a'],
+            ['background' => '#fff3c4', 'border' => '#eab308', 'text' => '#713f12'],
+            ['background' => '#ffe4e6', 'border' => '#fb7185', 'text' => '#881337'],
+            ['background' => '#ede9fe', 'border' => '#a78bfa', 'text' => '#4c1d95'],
+            ['background' => '#cffafe', 'border' => '#22d3ee', 'text' => '#164e63'],
+            ['background' => '#ffedd5', 'border' => '#fb923c', 'text' => '#7c2d12'],
+        ];
+
+        foreach (range(1, 7) as $day) {
+            $dayRecords = $records
+                ->where('day_of_week', $day)
+                ->sortBy(fn ($record) => sprintf(
+                    '%05d-%05d-%s',
+                    $this->timeToMinutes($record->starts_at),
+                    $this->timeToMinutes($record->ends_at),
+                    $record->room_name,
+                ));
+            $laneEnds = [];
+            $eventsByDay[$day] = [];
+
+            foreach ($dayRecords as $record) {
+                $startMinutes = $this->timeToMinutes($record->starts_at);
+                $endMinutes = $this->timeToMinutes($record->ends_at);
+                $startHour = intdiv($startMinutes, 60);
+                $endHour = max($startHour + 1, intdiv($endMinutes + 59, 60));
+                $earliest = min($earliest, $startMinutes);
+                $latest = max($latest, $endMinutes);
+                $lane = 0;
+                while (isset($laneEnds[$lane]) && $laneEnds[$lane] > $startHour) {
+                    $lane++;
+                }
+
+                $laneEnds[$lane] = $endHour;
+                $color = $palette[abs((int) $record->room_id) % count($palette)];
+                $eventsByDay[$day][] = [
+                    'record' => $record,
+                    'lane' => $lane,
+                    'startHour' => $startHour,
+                    'endHour' => $endHour,
+                    'rowspan' => $endHour - $startHour,
+                    ...$color,
+                ];
+            }
+        }
+
+        $startHour = max(0, min(7, intdiv($earliest, 60)));
+        $endHour = min(24, max(22, intdiv($latest + 59, 60)));
+        $laneCount = max(1, collect($eventsByDay)->flatten(1)->max('lane') + 1);
+        $hours = [];
+
+        for ($hour = $startHour; $hour < $endHour; $hour++) {
+            $dayCells = [];
+            foreach (range(1, 7) as $day) {
+                $lanes = array_fill(0, $laneCount, [
+                    'continuation' => false,
+                    'record' => null,
+                    'rowspan' => 1,
+                    'background' => '',
+                    'border' => '',
+                    'text' => '',
+                ]);
+                foreach ($eventsByDay[$day] as $event) {
+                    if ($event['startHour'] === $hour) {
+                        $lanes[$event['lane']] = [
+                            'continuation' => false,
+                            'record' => $event['record'],
+                            'rowspan' => $event['rowspan'],
+                            'background' => $event['background'],
+                            'border' => $event['border'],
+                            'text' => $event['text'],
+                        ];
+                    } elseif ($event['startHour'] < $hour && $event['endHour'] > $hour) {
+                        $lanes[$event['lane']]['continuation'] = true;
+                    }
+                }
+                $dayCells[] = $lanes;
+            }
+            $hours[] = ['hour' => $hour, 'days' => $dayCells];
+        }
+
+        return [
+            'startHour' => $startHour,
+            'endHour' => $endHour,
+            'laneCount' => $laneCount,
+            'hours' => $hours,
+        ];
     }
 
     private function exportFilename(string $language, string $format, bool $studentWeeklyView): string

@@ -3,76 +3,133 @@
 <head>
     <meta charset="utf-8">
     <style>
+        * {
+            text-decoration: none !important;
+        }
+
         body {
             color: #173d32;
             font-family: dejavusans, sans-serif;
-            font-size: 9pt;
-        }
-
-        h1 {
-            color: #174e3c;
-            font-size: 18pt;
-            margin: 0 0 12px;
+            font-size: 7pt;
+            text-decoration: none;
         }
 
         .metadata {
-            border: 1px solid #c8d8ce;
-            margin-bottom: 16px;
-            padding: 10px;
-        }
-
-        .metadata p {
-            margin: 3px 0;
+            color: #52635a;
+            font-size: 7pt;
+            margin-bottom: 5mm;
+            text-align: center;
         }
 
         table {
             border-collapse: collapse;
+            table-layout: fixed;
             width: 100%;
         }
 
         th,
         td {
-            border: 1px solid #c8d8ce;
-            padding: 6px;
+            border: 0.6px solid #bac8bf;
+            padding: 1.2mm;
             vertical-align: top;
         }
 
-        th {
-            background: #e7f0e9;
-            color: #174e3c;
+        thead th {
+            background: #e8f0eb;
+            color: #263b31;
+            font-size: 7pt;
             font-weight: bold;
+            height: 7mm;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .time-column {
+            background: #f5f8f6;
+            color: #63736a;
+            font-family: dejavusans, sans-serif;
+            font-size: 6.5pt;
+            text-align: center;
+            vertical-align: middle;
+            width: 14mm;
+        }
+
+        .hour-cell {
+            height: 9mm;
+        }
+
+        .lesson {
+            border: 0 !important;
+            background: transparent !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+            font-size: 6pt;
+            line-height: 1.3;
+            padding: 0;
+            text-align: start;
+            text-decoration: none !important;
+        }
+
+        .lesson * {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+        }
+
+        .lesson-label {
+            font-size: 6.5pt;
+            font-weight: bold;
+        }
+
+        .lesson-details {
+            font-size: 5.5pt;
         }
     </style>
 </head>
 <body>
-    <h1>{{ $labels['title'] }}</h1>
-    <section class="metadata">
-        <p><strong>{{ $labels['school'] }}:</strong> {{ $schoolName }}</p>
-        <p><strong>{{ $labels['year'] }}:</strong> {{ $yearLabel }}</p>
-        <p><strong>{{ $labels['room'] }}:</strong> {{ $roomName }}</p>
-        <p><strong>{{ $labels['count'] }}:</strong> {{ $records->count() }}</p>
-        <p><strong>{{ $labels['generated'] }}:</strong> {{ $generatedAt }}</p>
-    </section>
+    <div class="metadata">
+        {{ $labels['school'] }}: {{ $schoolName }}
+        &nbsp;|&nbsp; {{ $labels['year'] }}: {{ $yearLabel }}
+        &nbsp;|&nbsp; {{ $labels['room'] }}: {{ $roomName }}
+        &nbsp;|&nbsp; {{ $labels['generated'] }}: {{ $generatedAt }}
+    </div>
     <table>
         <thead>
             <tr>
-                <th>{{ $labels['day'] }}</th>
-                <th>{{ $labels['time'] }}</th>
-                <th>{{ $labels['room'] }}</th>
-                <th>{{ $labels['teacher'] }}</th>
-                <th>{{ $labels['course'] }}</th>
-                <th>{{ $labels['validity'] }}</th>
+                <th class="time-column">{{ $labels['time'] }}</th>
+                @foreach ($days as $day)
+                    <th colspan="{{ $calendar['laneCount'] }}">{{ $day['label'] }}</th>
+                @endforeach
             </tr>
         </thead>
         <tbody>
-            @foreach ($records as $record)
+            @foreach ($calendar['hours'] as $hourRow)
                 <tr>
-                    <td>{{ $dayLabel((int) $record->day_of_week) }}</td>
-                    <td>{{ substr($record->starts_at, 0, 5) }}–{{ substr($record->ends_at, 0, 5) }}</td>
-                    <td>{{ $record->room_name }}</td>
-                    <td>{{ $record->teacher_name }}</td>
-                    <td>{{ $record->label }}</td>
-                    <td>{{ $record->valid_from }} – {{ $record->valid_until ?: $labels['noEndDate'] }}</td>
+                    <th class="time-column">{{ sprintf('%02d:00', $hourRow['hour']) }}</th>
+                    @foreach ($hourRow['days'] as $lanes)
+                        @foreach ($lanes as $cell)
+                            @if (!$cell['continuation'])
+                                <td
+                                    class="hour-cell"
+                                    @if ($cell['rowspan'] > 1) rowspan="{{ $cell['rowspan'] }}" @endif
+                                    @if ($cell['record'])
+                                        style="background-color: {{ $cell['background'] }}; border-color: {{ $cell['border'] }};"
+                                    @endif
+                                >
+                                    @if ($cell['record'])
+                                        <div class="lesson" style="color: {{ $cell['text'] }};">
+                                            <span class="lesson-label">{{ $cell['record']->label }}</span><br>
+                                            <span class="lesson-details">
+                                                {{ substr($cell['record']->starts_at, 0, 5) }}–{{ substr($cell['record']->ends_at, 0, 5) }}<br>
+                                                {{ $cell['record']->room_name }} · {{ $cell['record']->teacher_name }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </td>
+                            @endif
+                        @endforeach
+                    @endforeach
                 </tr>
             @endforeach
         </tbody>

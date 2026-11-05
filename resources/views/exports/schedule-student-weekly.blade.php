@@ -3,10 +3,15 @@
 <head>
     <meta charset="utf-8">
     <style>
+        * {
+            text-decoration: none !important;
+        }
+
         body {
             color: #242a27;
             font-family: dejavusans, sans-serif;
             font-size: 9pt;
+            text-decoration: none !important;
         }
 
         h1 {
@@ -22,7 +27,7 @@
             font-weight: bold;
             margin: 0 0 15px;
             text-align: center;
-            text-decoration: underline;
+            text-decoration: none !important;
         }
 
         .metadata {

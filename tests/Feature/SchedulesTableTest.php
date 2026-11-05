@@ -184,13 +184,13 @@ class SchedulesTableTest extends TestCase
             ],
             [
                 'id' => 2,
-                'room_id' => 1,
-                'teacher_id' => 20,
+                'room_id' => 2,
+                'teacher_id' => 21,
                 'school_id' => 1,
                 'year_id' => 1,
-                'day_of_week' => 2,
-                'starts_at' => '11:00:00',
-                'ends_at' => '12:00:00',
+                'day_of_week' => 1,
+                'starts_at' => '09:00:00',
+                'ends_at' => '10:00:00',
                 'valid_from' => '2026-09-01',
                 'valid_until' => null,
                 'label' => '=HYPERLINK("https://example.test")',
@@ -215,7 +215,8 @@ class SchedulesTableTest extends TestCase
         $pdf->assertOk()
             ->assertHeader('Content-Type', 'application/pdf')
             ->assertHeader('Content-Disposition', "attachment; filename*=UTF-8''%D8%A7%D9%84%D8%AC%D8%AF%D9%88%D9%84-%D8%A7%D9%84%D8%A3%D8%B3%D8%A8%D9%88%D8%B9%D9%8A.pdf")
-            ->assertHeader('X-Export-Record-Count', '2');
+            ->assertHeader('X-Export-Record-Count', '2')
+            ->assertHeader('X-Export-View', 'calendar');
         $this->assertStringStartsWith('%PDF-', $pdf->getContent());
         $this->assertDatabaseCount('audit_events', 2);
         $formats = DB::table('audit_events')
@@ -356,7 +357,10 @@ class SchedulesTableTest extends TestCase
 
         $this->get('/schedules/export?year_id=1&lang=fr&format=pdf&room_id=1')
             ->assertOk()
-            ->assertHeader('X-Export-View', 'list');
+            ->assertHeader('X-Export-View', 'calendar');
+
+        $calendarAudit = json_decode(DB::table('audit_events')->orderByDesc('id')->value('changes'), true);
+        $this->assertSame('calendar', $calendarAudit['view']);
     }
 
     public function test_teacher_schedule_export_includes_only_own_schedule_and_validates_year_scope(): void

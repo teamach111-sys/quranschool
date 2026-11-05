@@ -4,15 +4,261 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class RoomsController extends Controller
 {
+    public function export(Request $request): Response|JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        $role = $user->role;
+        $yearId = $this->resolveYearId($request, $schoolId);
+        $filters = $request->validate([
+            'format' => ['required', Rule::in(['csv', 'xlsx', 'pdf'])],
+            'lang' => ['required', Rule::in(['fr', 'ar'])],
+            'room_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('rooms', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+        ]);
+        $academicYear = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('id', $yearId)
+            ->first(['year_label', 'start_date', 'end_date']);
+        abort_unless($academicYear, 404);
+
+        $today = now()->toDateString();
+        $studentCounts = DB::table('students')
+            ->select('room_id')
+            ->selectRaw('COUNT(*) AS student_count')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->whereIn('status', ['active', 'paused'])
+            ->groupBy('room_id');
+        $roomQuery = DB::table('rooms')
+            ->leftJoinSub($studentCounts, 'student_counts', function ($join) {
+                $join->on('student_counts.room_id', '=', 'rooms.id');
+            })
+            ->where('rooms.school_id', $schoolId)
+            ->where('rooms.year_id', $yearId);
+
+        if ($role === 'teacher') {
+            $roomQuery
+                ->where('rooms.is_active', true)
+                ->whereExists(function ($assignments) use ($schoolId, $yearId, $user, $today) {
+                    $assignments->selectRaw('1')
+                        ->from('room_teachers')
+                        ->whereColumn('room_teachers.room_id', 'rooms.id')
+                        ->where('room_teachers.school_id', $schoolId)
+                        ->where('room_teachers.year_id', $yearId)
+                        ->where('room_teachers.teacher_id', $user->id)
+                        ->where('room_teachers.assigned_from', '<=', $today)
+                        ->where(function ($dates) use ($today) {
+                            $dates->whereNull('room_teachers.assigned_until')
+                                ->orWhere('room_teachers.assigned_until', '>=', $today);
+                        });
+                });
+        }
+
+        if (isset($filters['room_id'])) {
+            $roomQuery->where('rooms.id', $filters['room_id']);
+        }
+
+        $rooms = $roomQuery
+            ->select([
+                'rooms.id',
+                'rooms.name',
+                'rooms.level',
+                'rooms.age_min',
+                'rooms.age_max',
+                'rooms.capacity',
+                'rooms.is_active',
+                'student_counts.student_count',
+            ])
+            ->orderBy('rooms.name')
+            ->get();
+
+        if ($rooms->isEmpty()) {
+            return response()->json(['message' => 'There are no groups to export.'], 422);
+        }
+
+        $labels = $this->exportLabels($filters['lang']);
+        $roomIds = $rooms->pluck('id')->all();
+        $teachersByRoom = collect();
+        if ($role === 'admin') {
+            $teachersByRoom = DB::table('room_teachers')
+                ->join('users', function ($join) {
+                    $join->on('users.id', '=', 'room_teachers.teacher_id')
+                        ->on('users.school_id', '=', 'room_teachers.school_id');
+                })
+                ->where('room_teachers.school_id', $schoolId)
+                ->where('room_teachers.year_id', $yearId)
+                ->whereIn('room_teachers.room_id', $roomIds)
+                ->where('room_teachers.assigned_from', '<=', $academicYear->end_date)
+                ->where(function ($dates) use ($academicYear) {
+                    $dates->whereNull('room_teachers.assigned_until')
+                        ->orWhere('room_teachers.assigned_until', '>=', $academicYear->start_date);
+                })
+                ->orderBy('users.full_name')
+                ->get(['room_teachers.room_id', 'users.full_name'])
+                ->groupBy('room_id');
+        }
+
+        $studentsByRoom = collect();
+        if ($role === 'teacher') {
+            $studentsByRoom = DB::table('students')
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->whereIn('room_id', $roomIds)
+                ->whereIn('status', ['active', 'paused'])
+                ->orderBy('full_name')
+                ->get(['room_id', 'student_number', 'full_name', 'status'])
+                ->groupBy('room_id');
+        }
+
+        $headers = [
+            $labels['name'],
+            $labels['level'],
+            $labels['age_range'],
+            $labels['capacity'],
+            $labels['status'],
+        ];
+        if ($role === 'admin') {
+            $headers[] = $labels['teachers'];
+        }
+        if ($role === 'teacher') {
+            array_push($headers, $labels['student'], $labels['student_number'], $labels['student_status']);
+        }
+
+        $rows = $rooms->flatMap(function ($room) use ($labels, $role, $teachersByRoom, $studentsByRoom) {
+            $baseRow = [
+                $room->name,
+                $labels['levels'][$room->level] ?? $room->level,
+                $room->age_min === null && $room->age_max === null
+                    ? $labels['all_ages']
+                    : ($room->age_min ?? '—').' – '.($room->age_max ?? '—').$labels['years_suffix'],
+                (int) ($room->student_count ?? 0).' / '.(int) $room->capacity,
+                $room->is_active ? $labels['active'] : $labels['archived'],
+            ];
+
+            if ($role === 'admin') {
+                $teacherNames = ($teachersByRoom->get($room->id) ?? collect())
+                    ->pluck('full_name')
+                    ->implode(', ');
+
+                return [array_merge($baseRow, [$teacherNames ?: $labels['no_teachers']])];
+            }
+
+            if ($role === 'teacher') {
+                $students = $studentsByRoom->get($room->id) ?? collect();
+                if ($students->isEmpty()) {
+                    return [array_merge($baseRow, ['', '', ''])];
+                }
+
+                return $students->map(fn ($student) => array_merge($baseRow, [
+                    $student->full_name,
+                    $student->student_number ?? '',
+                    $labels[$student->status] ?? $student->status,
+                ]))->all();
+            }
+
+            return [$baseRow];
+        })->values()->all();
+
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->first(['name_fr', 'name_ar']);
+        abort_unless($school, 404);
+        $schoolName = $filters['lang'] === 'ar' ? $school->name_ar : $school->name_fr;
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        $contents = match ($filters['format']) {
+            'csv' => $this->roomsCsv(
+                $labels,
+                $schoolName,
+                $academicYear->year_label,
+                $generatedAt,
+                $rooms->count(),
+                $headers,
+                $rows,
+            ),
+            'xlsx' => $this->roomsXlsx(
+                $filters['lang'],
+                $labels,
+                $schoolName,
+                $academicYear->year_label,
+                $generatedAt,
+                $rooms->count(),
+                $headers,
+                $rows,
+            ),
+            default => $this->roomsPdf(
+                $filters['lang'],
+                $labels,
+                $schoolName,
+                $academicYear->year_label,
+                $generatedAt,
+                $rooms->count(),
+                $headers,
+                $rows,
+            ),
+        };
+
+        $actor = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', Auth::id())
+            ->first(['id', 'full_name']);
+        abort_unless($actor && is_string($actor->full_name) && $actor->full_name !== '', 403);
+
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => $yearId,
+            'actor_user_id' => (int) $actor->id,
+            'actor_name' => $actor->full_name,
+            'action_type' => 'exported',
+            'entity_type' => 'room',
+            'entity_id' => null,
+            'summary_key' => 'rooms.exported',
+            'changes' => json_encode([
+                'format' => $filters['format'],
+                'page' => 'rooms',
+                'record_count' => $rooms->count(),
+                'scope' => $role === 'teacher' ? 'assigned_rooms' : 'school_rooms',
+                'room_id' => $filters['room_id'] ?? null,
+            ], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+        ]);
+
+        $filename = $filters['lang'] === 'ar' ? 'المجموعات.' : 'groupes.';
+
+        return response($contents, 200, [
+            'Content-Type' => match ($filters['format']) {
+                'pdf' => 'application/pdf',
+                'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                default => 'text/csv; charset=UTF-8',
+            },
+            'Content-Disposition' => "attachment; filename*=UTF-8''".rawurlencode($filename.$filters['format']),
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Export-Record-Count' => (string) $rooms->count(),
+        ]);
+    }
+
     public function table(Request $request): JsonResponse
     {
         [$user, $schoolId] = $this->staffContext();
@@ -604,5 +850,243 @@ class RoomsController extends Controller
                 'year_id' => 'Rooms and student placements in a read-only academic year cannot be changed.',
             ]);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function exportLabels(string $language): array
+    {
+        return $language === 'ar'
+            ? [
+                'title' => 'قائمة المجموعات',
+                'school' => 'المدرسة',
+                'year' => 'السنة الدراسية',
+                'count' => 'عدد المجموعات',
+                'generated' => 'تاريخ التصدير',
+                'name' => 'المجموعة',
+                'level' => 'المستوى',
+                'age_range' => 'الفئة العمرية',
+                'capacity' => 'العدد / السعة',
+                'status' => 'الحالة',
+                'active' => 'نشطة',
+                'archived' => 'مؤرشفة',
+                'teachers' => 'المعلمون المعينون',
+                'student' => 'الطالب',
+                'student_number' => 'رقم الطالب',
+                'student_status' => 'حالة الطالب',
+                'all_ages' => 'جميع الأعمار',
+                'years_suffix' => ' سنة',
+                'no_teachers' => 'لا يوجد معلمون معينون',
+                'paused' => 'متوقف مؤقتًا',
+                'levels' => [
+                    'beginner' => 'مبتدئ',
+                    'intermediate' => 'متوسط',
+                    'advanced' => 'متقدم',
+                ],
+            ]
+            : [
+                'title' => 'Liste des groupes',
+                'school' => 'Établissement',
+                'year' => 'Année scolaire',
+                'count' => 'Nombre de groupes',
+                'generated' => 'Date d’export',
+                'name' => 'Groupe',
+                'level' => 'Niveau',
+                'age_range' => 'Tranche d’âge',
+                'capacity' => 'Effectif / capacité',
+                'status' => 'Statut',
+                'active' => 'Actif',
+                'archived' => 'Archivé',
+                'teachers' => 'Enseignants assignés',
+                'student' => 'Élève',
+                'student_number' => 'Numéro élève',
+                'student_status' => 'Statut élève',
+                'all_ages' => 'Tous les âges',
+                'years_suffix' => ' ans',
+                'no_teachers' => 'Aucun enseignant assigné',
+                'paused' => 'En pause',
+                'levels' => [
+                    'beginner' => 'Débutant',
+                    'intermediate' => 'Intermédiaire',
+                    'advanced' => 'Avancé',
+                ],
+            ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $labels
+     * @param  list<string>  $headers
+     * @param  list<list<string|int>>  $rows
+     */
+    private function roomsCsv(
+        array $labels,
+        string $schoolName,
+        string $yearLabel,
+        string $generatedAt,
+        int $count,
+        array $headers,
+        array $rows,
+    ): string {
+        $stream = fopen('php://temp', 'r+');
+        if ($stream === false) {
+            throw new \RuntimeException('Unable to create the groups CSV export.');
+        }
+
+        fwrite($stream, "\xEF\xBB\xBF");
+        fputcsv($stream, [$labels['title']]);
+        fputcsv($stream, [$labels['school'], $this->spreadsheetSafe($schoolName)]);
+        fputcsv($stream, [$labels['year'], $this->spreadsheetSafe($yearLabel)]);
+        fputcsv($stream, [$labels['count'], $count]);
+        fputcsv($stream, [$labels['generated'], $generatedAt]);
+        fputcsv($stream, []);
+        fputcsv($stream, $headers);
+        foreach ($rows as $row) {
+            fputcsv($stream, array_map(
+                fn ($value) => $this->spreadsheetSafe((string) ($value ?? '')),
+                $row,
+            ));
+        }
+
+        rewind($stream);
+        $contents = stream_get_contents($stream);
+        fclose($stream);
+        if ($contents === false) {
+            throw new \RuntimeException('Unable to read the groups CSV export.');
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @param  array<string, mixed>  $labels
+     * @param  list<string>  $headers
+     * @param  list<list<string|int>>  $rows
+     */
+    private function roomsPdf(
+        string $language,
+        array $labels,
+        string $schoolName,
+        string $yearLabel,
+        string $generatedAt,
+        int $count,
+        array $headers,
+        array $rows,
+    ): string {
+        $temporaryDirectory = storage_path('framework/cache/mpdf');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $pdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'tempDir' => $temporaryDirectory,
+        ]);
+        $pdf->SetTitle($labels['title']);
+        $pdf->WriteHTML(view('exports.rooms', [
+            'language' => $language,
+            'labels' => $labels,
+            'schoolName' => $schoolName,
+            'yearLabel' => $yearLabel,
+            'generatedAt' => $generatedAt,
+            'count' => $count,
+            'headers' => $headers,
+            'rows' => $rows,
+        ])->render());
+        $contents = $pdf->Output('', Destination::STRING_RETURN);
+        if (! str_starts_with($contents, '%PDF-')) {
+            throw new \RuntimeException('The groups PDF export is invalid.');
+        }
+
+        return $contents;
+    }
+
+    /**
+     * @param  array<string, mixed>  $labels
+     * @param  list<string>  $headers
+     * @param  list<list<string|int>>  $rows
+     */
+    private function roomsXlsx(
+        string $language,
+        array $labels,
+        string $schoolName,
+        string $yearLabel,
+        string $generatedAt,
+        int $count,
+        array $headers,
+        array $rows,
+    ): string {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle($language === 'ar' ? 'المجموعات' : 'Groupes');
+        $sheet->setRightToLeft($language === 'ar');
+
+        $metadata = [
+            [$labels['title']],
+            [$labels['school'], $schoolName],
+            [$labels['year'], $yearLabel],
+            [$labels['count'], (string) $count],
+            [$labels['generated'], $generatedAt],
+        ];
+        foreach ($metadata as $rowIndex => $row) {
+            foreach ($row as $columnIndex => $value) {
+                $sheet->getCell([$columnIndex + 1, $rowIndex + 1])
+                    ->setValueExplicit(
+                        $this->spreadsheetSafe((string) $value),
+                        DataType::TYPE_STRING,
+                    );
+            }
+        }
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+
+        $headerRow = count($metadata) + 2;
+        foreach ($headers as $index => $heading) {
+            $sheet->getCell([$index + 1, $headerRow])
+                ->setValueExplicit($heading, DataType::TYPE_STRING);
+            $sheet->getColumnDimensionByColumn($index + 1)->setAutoSize(true);
+        }
+        $lastColumn = Coordinate::stringFromColumnIndex(count($headers));
+        $lastRow = $headerRow + count($rows);
+        $sheet->getStyle("A{$headerRow}:{$lastColumn}{$headerRow}")->getFont()->setBold(true);
+        $sheet->freezePane('A'.($headerRow + 1));
+        if ($rows !== []) {
+            $sheet->setAutoFilter("A{$headerRow}:{$lastColumn}{$lastRow}");
+        }
+
+        foreach ($rows as $rowIndex => $row) {
+            foreach ($row as $columnIndex => $value) {
+                $sheet->getCell([$columnIndex + 1, $headerRow + $rowIndex + 1])
+                    ->setValueExplicit(
+                        $this->spreadsheetSafe((string) ($value ?? '')),
+                        DataType::TYPE_STRING,
+                    );
+            }
+        }
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'quranschool-groups-');
+        if ($temporaryFile === false) {
+            throw new \RuntimeException('Unable to create the groups Excel export.');
+        }
+
+        try {
+            (new Xlsx($spreadsheet))->save($temporaryFile);
+            $contents = file_get_contents($temporaryFile);
+            if ($contents === false || ! str_starts_with($contents, 'PK')) {
+                throw new \RuntimeException('Unable to read the groups Excel export.');
+            }
+        } finally {
+            if (is_file($temporaryFile) && ! unlink($temporaryFile)) {
+                throw new \RuntimeException('Unable to clean up the temporary groups Excel export.');
+            }
+            $spreadsheet->disconnectWorksheets();
+        }
+
+        return $contents;
+    }
+
+    private function spreadsheetSafe(string $value): string
+    {
+        return preg_match('/^[\s]*[=+\-@\t\r]/u', $value) === 1 ? "'".$value : $value;
     }
 }

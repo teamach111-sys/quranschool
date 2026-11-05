@@ -6,6 +6,7 @@ use Illuminate\Auth\GenericUser;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class RoomsTableTest extends TestCase
@@ -17,6 +18,8 @@ class RoomsTableTest extends TestCase
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('name_fr');
+            $table->string('name_ar');
         });
 
         Schema::create('academic_years', function (Blueprint $table) {
@@ -40,6 +43,20 @@ class RoomsTableTest extends TestCase
             $table->unsignedInteger('role_id');
             $table->string('full_name');
             $table->boolean('is_active')->default(true);
+        });
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name');
+            $table->string('action_type');
+            $table->string('entity_type');
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key');
+            $table->json('changes')->nullable();
+            $table->timestamp('created_at')->nullable();
         });
 
         Schema::create('rooms', function (Blueprint $table) {
@@ -164,6 +181,147 @@ class RoomsTableTest extends TestCase
             ->assertJsonPath('students.2.age', null)
             ->assertJsonPath('students.3.age', 11)
             ->assertJsonMissingPath('students.1.birth_date');
+    }
+
+    public function test_admin_can_export_all_school_groups_as_csv_and_audits_the_export(): void
+    {
+        $this->seedRooms();
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/rooms/export?year_id=1&format=csv&lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('Content-Disposition', "attachment; filename*=UTF-8''groupes.csv")
+            ->assertHeader('X-Export-Record-Count', '2');
+        $this->assertStringContainsString('Liste des groupes', $response->getContent());
+        $this->assertStringContainsString('Alpha', $response->getContent());
+        $this->assertStringContainsString('Teacher One', $response->getContent());
+        $this->assertStringNotContainsString('Other School Room', $response->getContent());
+        $this->assertDatabaseHas('audit_events', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'actor_user_id' => 10,
+            'action_type' => 'exported',
+            'entity_type' => 'room',
+            'summary_key' => 'rooms.exported',
+        ]);
+    }
+
+    public function test_teacher_export_is_limited_to_assigned_groups_and_visible_roster(): void
+    {
+        $this->seedRooms();
+        $this->travelTo('2026-10-01 12:00:00');
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $response = $this->get('/rooms/export?year_id=1&format=csv&lang=ar');
+
+        $response->assertOk()
+            ->assertHeader('Content-Disposition', "attachment; filename*=UTF-8''%D8%A7%D9%84%D9%85%D8%AC%D9%85%D9%88%D8%B9%D8%A7%D8%AA.csv")
+            ->assertHeader('X-Export-Record-Count', '1');
+        $this->assertStringContainsString('قائمة المجموعات', $response->getContent());
+        $this->assertStringContainsString('Student One', $response->getContent());
+        $this->assertStringContainsString('Paused Student', $response->getContent());
+        $this->assertStringNotContainsString('Student Two', $response->getContent());
+        $this->assertStringNotContainsString('Student Three', $response->getContent());
+        $this->assertStringNotContainsString('Other School Room', $response->getContent());
+    }
+
+    public function test_admin_can_export_groups_as_rtl_xlsx_with_safe_text_cells(): void
+    {
+        $this->seedRooms();
+        DB::table('rooms')->where('id', 1)->update(['name' => '=HYPERLINK("https://example.test")']);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/rooms/export?year_id=1&format=xlsx&lang=ar');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('Content-Disposition', "attachment; filename*=UTF-8''%D8%A7%D9%84%D9%85%D8%AC%D9%85%D9%88%D8%B9%D8%A7%D8%AA.xlsx")
+            ->assertHeader('X-Export-Record-Count', '2');
+        $this->assertStringStartsWith('PK', $response->getContent());
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'groups-test-');
+        $this->assertNotFalse($temporaryFile);
+        $workbook = null;
+        try {
+            $this->assertNotFalse(file_put_contents($temporaryFile, $response->getContent()));
+            $workbook = IOFactory::load($temporaryFile);
+            $sheet = $workbook->getActiveSheet();
+            $this->assertTrue($sheet->getRightToLeft());
+            $this->assertSame("'=HYPERLINK(\"https://example.test\")", $sheet->getCell('A8')->getValue());
+            $this->assertSame('المعلمون المعينون', $sheet->getCell('F7')->getValue());
+        } finally {
+            if ($workbook) {
+                $workbook->disconnectWorksheets();
+            }
+            if (is_file($temporaryFile)) {
+                unlink($temporaryFile);
+            }
+        }
+    }
+
+    public function test_secretary_export_does_not_include_teacher_assignments_or_student_names(): void
+    {
+        $this->seedRooms();
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $response = $this->get('/rooms/export?year_id=1&format=csv&lang=fr');
+
+        $response->assertOk()->assertHeader('X-Export-Record-Count', '2');
+        $this->assertStringContainsString('Alpha', $response->getContent());
+        $this->assertStringNotContainsString('Teacher One', $response->getContent());
+        $this->assertStringNotContainsString('Student One', $response->getContent());
+    }
+
+    public function test_group_pdf_export_is_readable_and_uses_arabic_filename(): void
+    {
+        $this->seedRooms();
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/rooms/export?year_id=1&format=pdf&lang=ar');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', "attachment; filename*=UTF-8''%D8%A7%D9%84%D9%85%D8%AC%D9%85%D9%88%D8%B9%D8%A7%D8%AA.pdf")
+            ->assertHeader('X-Export-Record-Count', '2');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
+
+    public function test_export_rejects_another_schools_group(): void
+    {
+        $this->seedRooms();
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/rooms/export?year_id=1&format=csv&lang=fr&room_id=3')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('room_id');
+
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     public function test_admin_can_create_and_update_rooms_with_valid_age_range_and_capacity(): void
@@ -602,8 +760,8 @@ class RoomsTableTest extends TestCase
     private function seedRooms(): void
     {
         DB::table('schools')->insert([
-            ['id' => 1, 'name' => 'School One'],
-            ['id' => 2, 'name' => 'School Two'],
+            ['id' => 1, 'name' => 'School One', 'name_fr' => 'École Un', 'name_ar' => 'المدرسة الأولى'],
+            ['id' => 2, 'name' => 'School Two', 'name_fr' => 'École Deux', 'name_ar' => 'المدرسة الثانية'],
         ]);
         DB::table('academic_years')->insert([
             ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true, 'is_active' => true],
