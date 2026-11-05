@@ -1,0 +1,518 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_blank" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;background-color:#ebf7ed;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary-container":"#4e5853","primary":"#144637","inverse-surface":"#28332d","surface":"#ebf7ed","on-primary-container":"#a3d5c1","on-tertiary":"#ffffff","surface-container-low":"#ebf7ed","on-tertiary-fixed":"#151d19","surface-tint":"#376757","secondary":"#7d5700","on-tertiary-fixed-variant":"#3f4944","on-background":"#144637","on-secondary-container":"#755100","on-secondary":"#ffffff","secondary-fixed-dim":"#f5bd58","on-secondary-fixed-variant":"#5f4100","on-primary":"#ffffff","outline-variant":"#c0c9c3","error-container":"#ffdad6","background":"#ebf7ed","secondary-container":"#ffc55f","on-primary-fixed-variant":"#1e4f40","inverse-on-surface":"#e8f4ea","tertiary-fixed-dim":"#bfc9c2","on-tertiary-container":"#c3cdc7","surface-container-highest":"#d9e5dc","surface-variant":"#d9e5dc","secondary-fixed":"#ffdeaa","on-surface-variant":"#404945","on-primary-fixed":"#002117","tertiary":"#37413c","on-surface":"#144637","tertiary-fixed":"#dbe5de","outline":"#707974","primary-fixed-dim":"#9fd1bd","surface-bright":"#ebf7ed","primary-container":"#2e5e4e","error":"#ba1a1a","surface-dim":"#d1ddd4","inverse-primary":"#9fd1bd","primary-fixed":"#baeed9","surface-container-lowest":"#ffffff","on-secondary-fixed":"#271900","surface-container-high":"#dfebe2","on-error-container":"#93000a","surface-container":"#e5f1e8","on-error":"#ffffff"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"margin":"2rem","margin-mobile":"1rem","space-xl":"2.5rem","space-md":"1rem","space-sm":"0.5rem","gutter-mobile":"0.75rem","space-lg":"1.5rem","space-xs":"0.25rem","gutter":"1.25rem"},fontFamily:{"headline-lg":["Plus Jakarta Sans"],"headline-xl-mobile":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"label-md":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"headline-lg-mobile":["Plus Jakarta Sans"],"label-sm":["Plus Jakarta Sans"],"label-lg":["Plus Jakarta Sans"],"headline-xl":["Plus Jakarta Sans"]},fontSize:{"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.015em",fontWeight:"600"}],"headline-xl-mobile":["28px",{lineHeight:"36px",letterSpacing:"-0.01em",fontWeight:"700"}],"body-md":["14px",{lineHeight:"22px",fontWeight:"400"}],"body-sm":["13px",{lineHeight:"20px",fontWeight:"400"}],"label-md":["12px",{lineHeight:"18px",letterSpacing:"0.02em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"26px",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"26px",fontWeight:"400"}],"headline-md":["22px",{lineHeight:"30px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-lg-mobile":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"16px",letterSpacing:"0.03em",fontWeight:"600"}],"label-lg":["14px",{lineHeight:"20px",letterSpacing:"0.01em",fontWeight:"600"}],"headline-xl":["36px",{lineHeight:"44px",letterSpacing:"-0.02em",fontWeight:"700"}]}}}};</script></head><body class="font-body-md text-body-md text-on-surface min-h-screen antialiased bg-[#ebf7ed]"><main class="w-full min-h-screen bg-[#ebf7ed]"><div class="flex flex-col w-full font-body-md text-body-md text-on-surface bg-[#ebf7ed]">
+<div class="max-w-7xl mx-auto py-10 px-8 w-full space-y-12">
+<!-- 1. Header Banner -->
+<header class="bg-white rounded-xl p-8 border border-[#d2ddd4] shadow-[0_4px_20px_-4px_rgba(19,62,50,0.08)] flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+<div class="absolute -right-12 -top-12 w-64 h-64 bg-[#ebf7ed] rounded-full opacity-60 blur-2xl pointer-events-none"></div>
+<div class="space-y-2 z-10">
+<div class="flex items-center gap-2 mb-1">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-sm font-label-sm bg-[#ebf7ed] text-[#144637] border border-[#c2d5c6] font-semibold tracking-wide uppercase">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+            Design System v2.4
+          </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm bg-[#ebf7ed] text-[#404945] border border-[#d2ddd4] font-medium">
+            Canvas: #EBF7ED
+          </span>
+</div>
+<h1 class="text-headline-xl font-headline-xl text-primary tracking-tight">TITLE GOES HERE</h1>
+<p class="text-body-lg font-body-lg text-[#404945] max-w-2xl leading-relaxed">SUBTITLE GOES HERE</p>
+</div>
+<div class="flex items-center gap-3 z-10 flex-shrink-0">
+<button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ebf7ed] text-primary border border-[#c2d5c6] hover:bg-[#dfebe2] transition-colors shadow-sm" id="exportTokensBtn">
+<span class="material-symbols-outlined text-lg">data_object</span>
+          Export Tokens (JSON)
+        </button>
+<button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-label-lg font-label-lg bg-primary text-on-primary hover:bg-[#2e5e4e] transition-all shadow-[0_2px_8px_rgba(20,70,55,0.25)]" id="liveDemoBtn">
+<span class="material-symbols-outlined text-lg">preview</span>
+          View Live Demo
+        </button>
+</div>
+</header>
+<!-- 2. Color Palette & Tokens -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary font-semibold">Foundations</span>
+<h2 class="text-headline-md font-headline-md text-primary">Color Palette &amp; Design Tokens</h2>
+</div>
+<span class="text-label-md font-label-md text-[#404945]">Strict #EBF7ED Harmonized Tokens</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Swatch 1: Component Workspace Canvas -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-[#ebf7ed] border border-[#c2d5c6] flex items-end p-3">
+<span class="text-primary font-label-sm text-label-sm bg-white border border-[#c2d5c6] px-2 py-0.5 rounded font-semibold">#EBF7ED</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Workspace Canvas</h3>
+<p class="text-label-sm font-label-sm text-outline">token: surface-canvas</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for workspace canvas.</p>
+</div>
+</div>
+<!-- Swatch 2: Surface Card Pure White -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-white border border-[#d2ddd4] flex items-end p-3 shadow-inner">
+<span class="text-on-surface font-label-sm text-label-sm bg-[#ebf7ed] border border-[#c2d5c6] px-2 py-0.5 rounded font-semibold">#FFFFFF</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Surface Card</h3>
+<p class="text-label-sm font-label-sm text-outline">token: surface-card</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for surface card.</p>
+</div>
+</div>
+<!-- Swatch 3: Primary Emerald Accent -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-[#2e5e4e] flex items-end p-3">
+<span class="text-on-primary font-label-sm text-label-sm bg-black/25 px-2 py-0.5 rounded font-semibold">#2E5E4E</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Primary Emerald Accent</h3>
+<p class="text-label-sm font-label-sm text-outline">token: primary-container</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for primary accent.</p>
+</div>
+</div>
+<!-- Swatch 4: Deep Forest Typography -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-[#144637] flex items-end p-3">
+<span class="text-on-primary font-label-sm text-label-sm bg-white/20 px-2 py-0.5 rounded font-semibold">#144637</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Deep Forest Text</h3>
+<p class="text-label-sm font-label-sm text-outline">token: primary / on-surface</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for typography.</p>
+</div>
+</div>
+<!-- Swatch 5: Border & Outline -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-[#d2ddd4] border border-[#c2d5c6] flex items-end p-3">
+<span class="text-[#144637] font-label-sm text-label-sm bg-white/80 px-2 py-0.5 rounded font-semibold">#D2DDD4</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Border &amp; Outline</h3>
+<p class="text-label-sm font-label-sm text-outline">token: outline-border</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for border outline.</p>
+</div>
+</div>
+<!-- Swatch 6: Gold Warning -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-[#d9a84e] flex items-end p-3">
+<span class="text-white font-label-sm text-label-sm bg-black/20 px-2 py-0.5 rounded font-semibold">#D9A84E</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Amber / Warning</h3>
+<p class="text-label-sm font-label-sm text-outline">token: warning-amber</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for warning state.</p>
+</div>
+</div>
+<!-- Swatch 7: Alert Red -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-[#e26458] flex items-end p-3">
+<span class="text-white font-label-sm text-label-sm bg-black/20 px-2 py-0.5 rounded font-semibold">#E26458</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Alert Red / Error</h3>
+<p class="text-label-sm font-label-sm text-outline">token: alert-red</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for alert error state.</p>
+</div>
+</div>
+<!-- Swatch 8: Verdant Calm / Accent -->
+<div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.05)] space-y-3">
+<div class="h-20 rounded-lg bg-[#dfebe2] border border-[#c2d5c6] flex items-end p-3">
+<span class="text-primary font-label-sm text-label-sm bg-white px-2 py-0.5 rounded font-semibold">#DFEBE2</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Verdant Calm</h3>
+<p class="text-label-sm font-label-sm text-outline">token: surface-container-high</p>
+<p class="text-body-sm font-body-sm text-[#404945] mt-1">Description text goes here for calm accent.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Buttons & Interactive Actions -->
+<section class="space-y-4">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary font-semibold">Components</span>
+<h2 class="text-headline-md font-headline-md text-primary">Buttons &amp; Interactive Actions</h2>
+</div>
+<div class="bg-white rounded-xl p-8 border border-[#d2ddd4] shadow-[0_4px_20px_-4px_rgba(19,62,50,0.06)] space-y-8">
+<!-- Variants & States -->
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-4">Button Variants &amp; States</h3>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Default -->
+<div class="space-y-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Default State</span>
+<div class="flex flex-col gap-2.5">
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#144637] text-white hover:bg-[#2e5e4e] transition-colors shadow-sm">
+                  Primary Button
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ebf7ed] text-primary border border-[#c2d5c6] hover:bg-[#dfebe2] transition-colors">
+                  Secondary Button
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-white text-primary border border-[#c2d5c6] hover:bg-[#ebf7ed] transition-colors shadow-sm">
+                  Outline / Crisp
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg text-primary hover:bg-[#ebf7ed] transition-colors">
+                  Ghost Button
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#e26458] text-white hover:bg-[#ba1a1a] transition-colors shadow-sm">
+                  Destructive Button
+                </button>
+</div>
+</div>
+<!-- Hover / Focus Preview -->
+<div class="space-y-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Hover Effect Hints</span>
+<div class="flex flex-col gap-2.5">
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#2e5e4e] text-white shadow-md">
+                  Primary:hover
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#dfebe2] text-primary border border-[#c2d5c6]">
+                  Secondary:hover
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ebf7ed] text-primary border border-[#c2d5c6] shadow-sm">
+                  Outline:hover
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ebf7ed]/70 text-primary">
+                  Ghost:hover
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ba1a1a] text-white shadow-sm">
+                  Destructive:hover
+                </button>
+</div>
+</div>
+<!-- Loading State -->
+<div class="space-y-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Loading / Spinner</span>
+<div class="flex flex-col gap-2.5">
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#144637] text-white opacity-85 flex items-center justify-center gap-2 cursor-wait" disabled="">
+<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                  Saving Audio...
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ebf7ed] text-primary border border-[#c2d5c6] opacity-85 flex items-center justify-center gap-2 cursor-wait" disabled="">
+<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                  Syncing Recitation
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#d9a84e] text-white opacity-85 flex items-center justify-center gap-2 cursor-wait" disabled="">
+<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                  Grading Rub'
+                </button>
+</div>
+</div>
+<!-- Disabled State -->
+<div class="space-y-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Disabled State</span>
+<div class="flex flex-col gap-2.5">
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ebf7ed] text-[#707974] border border-[#d2ddd4] cursor-not-allowed" disabled="">
+                  Primary Disabled
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ebf7ed]/50 text-[#707974] border border-[#d2ddd4] cursor-not-allowed" disabled="">
+                  Secondary Disabled
+                </button>
+<button class="w-full px-4 py-2.5 rounded-lg text-label-lg font-label-lg bg-[#ffdad6]/50 text-[#ba1a1a]/60 border border-[#ffdad6] cursor-not-allowed" disabled="">
+                  Destructive Disabled
+                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Button Sizing & Icon Buttons & Special Badges -->
+<div class="pt-6 border-t border-[#d2ddd4] space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Sizes -->
+<div class="space-y-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Scale Dimensions</span>
+<div class="flex flex-wrap items-center gap-3">
+<button class="px-3 py-1.5 rounded-lg text-label-sm font-label-sm bg-[#144637] text-white">
+                  Small (sm)
+                </button>
+<button class="px-4 py-2.5 rounded-lg text-label-md font-label-md bg-[#144637] text-white">
+                  Medium (md)
+                </button>
+<button class="px-6 py-3 rounded-lg text-label-lg font-label-lg bg-[#144637] text-white shadow-md">
+                  Large (lg)
+                </button>
+</div>
+</div>
+<!-- Icon Buttons -->
+<div class="space-y-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Dedicated Icon Buttons</span>
+<div class="flex items-center gap-2">
+<button class="p-2.5 rounded-lg bg-white border border-[#c2d5c6] text-primary hover:bg-[#ebf7ed] transition-colors" title="Audio Play">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="p-2.5 rounded-lg bg-white border border-[#c2d5c6] text-primary hover:bg-[#ebf7ed] transition-colors" title="Edit Note">
+<span class="material-symbols-outlined text-lg">edit</span>
+</button>
+<button class="p-2.5 rounded-lg bg-[#ffdad6] text-[#ba1a1a] border border-[#ffdad6] hover:opacity-80 transition-opacity" title="Delete Item">
+<span class="material-symbols-outlined text-lg">delete</span>
+</button>
+<button class="p-2.5 rounded-lg bg-white border border-[#c2d5c6] text-primary hover:bg-[#ebf7ed] transition-colors" title="Download Mushaf">
+<span class="material-symbols-outlined text-lg">download</span>
+</button>
+<button class="p-2.5 rounded-lg bg-white border border-[#c2d5c6] text-primary hover:bg-[#ebf7ed] transition-colors" title="Settings">
+<span class="material-symbols-outlined text-lg">settings</span>
+</button>
+</div>
+</div>
+<!-- Special Action Badges -->
+<div class="space-y-3">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Special Action Badges</span>
+<div class="flex flex-wrap items-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-sm font-label-sm bg-[#ffdeaa] text-[#755100] border border-[#ffc55f] font-semibold shadow-sm hover:opacity-90">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+                  Sanad Certificate Issued
+                </button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-label-sm font-label-sm bg-[#ebf7ed] text-primary border border-[#c2d5c6] font-semibold shadow-sm hover:bg-[#dfebe2]">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                  Validate Tajweed
+                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Form Controls & Inputs -->
+<section class="space-y-4">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary font-semibold">Inputs &amp; Selection</span>
+<h2 class="text-headline-md font-headline-md text-primary">Form Controls &amp; Inputs</h2>
+</div>
+<div class="bg-white rounded-xl p-8 border border-[#d2ddd4] shadow-[0_4px_20px_-4px_rgba(19,62,50,0.06)] space-y-8">
+<!-- Text Inputs Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Input label 1</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-white text-[#144637] placeholder:text-[#707974] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm transition-colors text-body-md font-body-md" placeholder="Input example 1" type="text"><p class="text-label-sm font-label-sm text-[#707974]">Helper text goes here</p></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Input label 2</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-[#ebf7ed] text-[#404945] border border-[#d2ddd4] cursor-not-allowed shadow-none text-body-md font-body-md font-medium" readonly="" type="text" value="Input example 2 / Read-only text goes here"><p class="text-label-sm font-label-sm text-[#707974]">Read-only system role assignment</p></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-[#ba1a1a] font-semibold flex items-center justify-between">Error input label<span class="material-symbols-outlined text-sm text-[#ba1a1a]">error</span></label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-white text-[#ba1a1a] placeholder:text-[#ba1a1a]/60 border border-[#e26458] focus:border-[#ba1a1a] focus:outline-none focus:ring-1 focus:ring-[#ba1a1a] shadow-sm text-body-md font-body-md" type="text" value="Error value example"><p class="text-label-sm font-label-sm text-[#ba1a1a] flex items-center gap-1 font-medium"><span class="material-symbols-outlined text-xs">warning</span>Error hint message goes here</p></div></div>
+<!-- Select & Date & Time Pickers Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6"><div class="space-y-1.5 md:col-span-2"><label class="block text-label-md font-label-md text-primary font-semibold">Select label</label><div class="relative w-full"><select class="w-full h-[42px] appearance-none pl-3.5 pr-10 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm transition-colors text-body-md font-body-md cursor-pointer"><option>Option 1</option><option>Option 2</option><option>Option 3</option><option>Option 4</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#707974] pointer-events-none text-xl">expand_more</span></div></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Date input label</label><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#707974] text-lg pointer-events-none">calendar_today</span><input class="w-full h-[42px] pl-10 pr-3.5 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md transition-colors" type="text" value="DD/MM/YYYY"></div></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Time input label</label><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#707974] text-lg pointer-events-none">schedule</span><input class="w-full h-[42px] pl-10 pr-3.5 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md transition-colors" type="text" value="00:00 AM"></div></div></div>
+<!-- Search Bar with Shortcut -->
+<div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Search input label</label><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3.5 text-[#707974] text-xl">search</span><input class="w-full h-[44px] pl-11 pr-20 py-2.5 rounded-lg bg-white text-[#144637] placeholder:text-[#707974] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md" placeholder="Search query goes here..." type="text"><div class="absolute right-3 flex items-center gap-1"><kbd class="px-2 py-1 rounded bg-[#ebf7ed] text-label-sm font-label-sm text-[#144637] font-semibold border border-[#c2d5c6]">⌘K</kbd></div></div></div>
+<!-- Checkboxes, Radios, Toggles -->
+<div class="pt-6 border-t border-[#d2ddd4] grid grid-cols-1 md:grid-cols-3 gap-8"><div class="space-y-3"><span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Checkboxes</span><div class="space-y-2.5"><label class="flex items-center gap-3 cursor-pointer"><input checked="" class="w-4 h-4 rounded text-primary focus:ring-0 cursor-pointer accent-[#144637]" type="checkbox"><span class="text-body-md font-body-md text-on-surface">Checkbox item 1</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 rounded text-primary focus:ring-0 cursor-pointer accent-[#144637]" type="checkbox"><span class="text-body-md font-body-md text-on-surface">Checkbox item 2</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 rounded text-primary focus:ring-0 cursor-pointer accent-[#144637]" id="indeterminateBox" type="checkbox"><span class="text-body-md font-body-md text-on-surface">Checkbox item 3</span></label></div></div><div class="space-y-3"><span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Evaluation Grading (Radio)</span><div class="space-y-2.5"><label class="flex items-center gap-3 cursor-pointer"><input checked="" class="w-4 h-4 text-primary focus:ring-0 accent-[#144637] cursor-pointer" name="recitation_grade" type="radio"><span class="text-body-md font-body-md text-on-surface">Radio option 1</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 text-primary focus:ring-0 accent-[#144637] cursor-pointer" name="recitation_grade" type="radio"><span class="text-body-md font-body-md text-on-surface">Radio option 2</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 text-primary focus:ring-0 accent-[#144637] cursor-pointer" name="recitation_grade" type="radio"><span class="text-body-md font-body-md text-on-surface">Radio option 3</span></label></div></div><div class="space-y-3"><span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Interactive Toggles</span><div class="space-y-3"><label class="flex items-center justify-between cursor-pointer"><span class="text-body-md font-body-md text-on-surface">Toggle label 1</span><input checked="" class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#d2ddd4] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#144637] relative"></div></label><label class="flex items-center justify-between cursor-pointer"><span class="text-body-md font-body-md text-on-surface">Toggle label 2</span><input class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#d2ddd4] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#144637] relative"></div></label></div></div></div>
+</div>
+</section>
+<!-- 5. Functional Iconography Library -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary font-semibold">Visual Assets</span>
+<h2 class="text-headline-md font-headline-md text-primary">Functional Iconography Library</h2>
+</div>
+<span class="text-label-md font-label-md text-[#404945]">Material Symbols Clean Set on White Surface</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+<!-- Icon 1: Dashboard -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">dashboard</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Dashboard</span>
+</div>
+<!-- Icon 2: Student / User -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">person</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Student / User</span>
+</div>
+<!-- Icon 3: Quran / Hifz -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Quran / Hifz</span>
+</div>
+<!-- Icon 4: Calendar -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">calendar_month</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Calendar</span>
+</div>
+<!-- Icon 5: Schedule / Clock -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">schedule</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Schedule / Clock</span>
+</div>
+<!-- Icon 6: Notifications -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">notifications</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Notifications</span>
+</div>
+<!-- Icon 7: Check / Verified -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Check / Verified</span>
+</div>
+<!-- Icon 8: Close / Cancel -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">cancel</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Close / Cancel</span>
+</div>
+<!-- Icon 9: Filter -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">filter_list</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Filter</span>
+</div>
+<!-- Icon 10: Sort / Unfold -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">unfold_more</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Sort / Unfold</span>
+</div>
+<!-- Icon 11: Search -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">search</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Search</span>
+</div>
+<!-- Icon 12: Download -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">cloud_download</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Download</span>
+</div>
+<!-- Icon 13: Trash / Delete -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[#e26458] text-2xl">delete_outline</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Trash / Delete</span>
+</div>
+<!-- Icon 14: Edit Note -->
+<div class="bg-white p-3.5 rounded-lg border border-[#d2ddd4] flex flex-col items-center justify-center gap-2 hover:bg-[#ebf7ed] transition-colors shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">edit_note</span>
+<span class="text-label-sm font-label-sm text-on-surface font-medium text-center">Edit Note</span>
+</div>
+</div>
+</section>
+<!-- 6. Toast Alerts & Status Banners -->
+<section class="space-y-4">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary font-semibold">Feedback Systems</span>
+<h2 class="text-headline-md font-headline-md text-primary">Toast Alerts &amp; Status Banners</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-xl border border-[#c2d5c6] shadow-[0_2px_10px_rgba(19,62,50,0.06)] flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#ebf7ed] text-primary border border-[#c2d5c6] flex-shrink-0"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span></div><div class="flex-1 space-y-0.5"><h4 class="text-label-lg font-label-lg text-primary font-semibold">Toast title 1</h4><p class="text-body-sm font-body-sm text-[#404945]">Toast description goes here.</p></div><button class="text-outline hover:text-on-surface transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div><div class="bg-white p-4 rounded-xl border border-[#ffdeaa] shadow-[0_2px_10px_rgba(19,62,50,0.06)] flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#ffdeaa]/50 text-[#755100] border border-[#ffc55f] flex-shrink-0"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">warning</span></div><div class="flex-1 space-y-0.5"><h4 class="text-label-lg font-label-lg text-[#755100] font-semibold">Toast title 2</h4><p class="text-body-sm font-body-sm text-[#404945]">Toast description goes here.</p></div><button class="text-outline hover:text-on-surface transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div><div class="bg-white p-4 rounded-xl border border-[#d2ddd4] shadow-[0_2px_10px_rgba(19,62,50,0.06)] flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#ebf7ed] text-primary border border-[#c2d5c6] flex-shrink-0"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">info</span></div><div class="flex-1 space-y-0.5"><h4 class="text-label-lg font-label-lg text-primary font-semibold">Toast title 3</h4><p class="text-body-sm font-body-sm text-[#404945]">Toast description goes here.</p></div><button class="text-outline hover:text-on-surface transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div><div class="bg-white p-4 rounded-xl border border-[#ffdad6] shadow-[0_2px_10px_rgba(19,62,50,0.06)] flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#ffdad6] text-[#ba1a1a] border border-[#e26458] flex-shrink-0"><span class="material-symbols-outlined text-xl">sync_problem</span></div><div class="flex-1 space-y-0.5"><h4 class="text-label-lg font-label-lg text-[#ba1a1a] font-semibold">Toast title 4</h4><p class="text-body-sm font-body-sm text-[#404945]">Toast description goes here.</p></div><button class="text-outline hover:text-on-surface transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div></div>
+</section>
+<!-- 7. Data Table with Pagination & Controls -->
+<section class="space-y-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary font-semibold">Data Views</span>
+<h2 class="text-headline-md font-headline-md text-primary">Tahfiz Evaluation Ledger</h2>
+</div>
+<!-- Table Controls -->
+<div class="flex items-center gap-3">
+<div class="relative min-w-[220px]">
+<select class="w-full appearance-none pl-3.5 pr-8 py-2 rounded-lg bg-white text-on-surface border border-[#c2d5c6] hover:border-[#144637] focus:outline-none focus:ring-1 focus:ring-primary shadow-sm text-label-md font-label-md cursor-pointer transition-colors">
+<option>Filter by Halaqah: All Sessions</option>
+<option>Halaqah Al-Fajr</option>
+<option>Halaqah Al-Furqan</option>
+<option>Halaqah Al-Noor</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-base pointer-events-none">expand_more</span>
+</div>
+<button class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-primary hover:bg-[#ebf7ed] transition-colors shadow-sm text-label-md font-label-md border border-[#c2d5c6]">
+<span class="material-symbols-outlined text-base">file_download</span>
+            Export CSV
+          </button>
+</div>
+</div>
+<!-- Table Wrapper -->
+<div class="bg-white rounded-xl border border-[#d2ddd4] shadow-[0_4px_20px_-4px_rgba(19,62,50,0.06)] overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-[#ebf7ed] text-primary border-b border-[#d2ddd4] text-label-sm font-label-sm uppercase tracking-wider"><th class="py-3.5 px-4 w-12 text-center"><input class="w-4 h-4 rounded text-primary focus:ring-0 accent-[#144637] cursor-pointer" type="checkbox"></th><th class="py-3.5 px-4 font-semibold">Item ID</th><th class="py-3.5 px-4 font-semibold">Item Name</th><th class="py-3.5 px-4 font-semibold">Category / Type</th><th class="py-3.5 px-4 font-semibold">Level / Stage</th><th class="py-3.5 px-4 font-semibold">Status Badge</th><th class="py-3.5 px-4 font-semibold">Date</th><th class="py-3.5 px-4 font-semibold text-right">Actions</th></tr>
+</thead>
+<tbody class="divide-y divide-[#ebf7ed] text-body-md font-body-md text-on-surface"><tr class="bg-[#ebf7ed]/70 hover:bg-[#ebf7ed] transition-colors"><td class="py-3.5 px-4 text-center"><input checked="" class="w-4 h-4 rounded text-primary focus:ring-0 accent-[#144637] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-primary">#ID-001</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#dfebe2] border border-[#c2d5c6] flex items-center justify-center font-semibold text-label-sm text-primary">01</div><div><p class="font-medium text-[#144637]">Item Name 1</p><p class="text-label-sm font-label-sm text-[#707974]">Item Subtitle 1</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#144637]">Item Category 1</span><span class="text-[#707974] ml-1 text-body-sm font-body-sm">(Details 1)</span></td><td class="py-3.5 px-4">Level 1</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-label-sm font-label-sm bg-white border border-[#c2d5c6] text-primary font-semibold"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span>Status Label 1</span></td><td class="py-3.5 px-4 text-[#404945]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-white text-primary transition-colors" title="Play"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-white text-[#404945] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr><tr class="hover:bg-[#ebf7ed]/50 transition-colors"><td class="py-3.5 px-4 text-center"><input class="w-4 h-4 rounded text-primary focus:ring-0 accent-[#144637] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-primary">#ID-002</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#ebf7ed] border border-[#c2d5c6] flex items-center justify-center font-semibold text-label-sm text-primary">02</div><div><p class="font-medium text-[#144637]">Item Name 2</p><p class="text-label-sm font-label-sm text-[#707974]">Item Subtitle 2</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#144637]">Item Category 2</span><span class="text-[#707974] ml-1 text-body-sm font-body-sm">(Details 2)</span></td><td class="py-3.5 px-4">Level 2</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-label-sm font-label-sm bg-[#ffdeaa]/50 border border-[#ffc55f] text-[#755100] font-semibold"><span class="material-symbols-outlined text-xs">pending</span>Status Label 2</span></td><td class="py-3.5 px-4 text-[#404945]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-[#ebf7ed] text-primary transition-colors" title="Play"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-[#ebf7ed] text-[#404945] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr><tr class="hover:bg-[#ebf7ed]/50 transition-colors"><td class="py-3.5 px-4 text-center"><input class="w-4 h-4 rounded text-primary focus:ring-0 accent-[#144637] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-primary">#ID-003</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#ebf7ed] border border-[#c2d5c6] flex items-center justify-center font-semibold text-label-sm text-primary">03</div><div><p class="font-medium text-[#144637]">Item Name 3</p><p class="text-label-sm font-label-sm text-[#707974]">Item Subtitle 3</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#144637]">Item Category 3</span><span class="text-[#707974] ml-1 text-body-sm font-body-sm">(Details 3)</span></td><td class="py-3.5 px-4">Level 3</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-label-sm font-label-sm bg-white border border-[#c2d5c6] text-primary font-semibold"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span>Status Label 1</span></td><td class="py-3.5 px-4 text-[#404945]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-[#ebf7ed] text-primary transition-colors" title="Play"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-[#ebf7ed] text-[#404945] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr><tr class="hover:bg-[#ebf7ed]/50 transition-colors"><td class="py-3.5 px-4 text-center"><input class="w-4 h-4 rounded text-primary focus:ring-0 accent-[#144637] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-primary">#ID-004</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#ebf7ed] border border-[#c2d5c6] flex items-center justify-center font-semibold text-label-sm text-primary">04</div><div><p class="font-medium text-[#144637]">Item Name 4</p><p class="text-label-sm font-label-sm text-[#707974]">Item Subtitle 4</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#144637]">Item Category 4</span><span class="text-[#707974] ml-1 text-body-sm font-body-sm">(Details 4)</span></td><td class="py-3.5 px-4">Level 4</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-label-sm font-label-sm bg-[#ffdad6] border border-[#e26458] text-[#ba1a1a] font-semibold"><span class="material-symbols-outlined text-xs">restart_alt</span>Status Label 3</span></td><td class="py-3.5 px-4 text-[#404945]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-[#ebf7ed] text-primary transition-colors" title="Play"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-[#ebf7ed] text-[#404945] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr></tbody>
+</table>
+</div>
+<!-- Complete Table Navigation & Pagination Bar -->
+<div class="px-6 py-4 bg-white border-t border-[#d2ddd4] flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<span class="text-body-sm font-body-sm text-[#404945]">Showing <strong class="text-primary font-semibold">1 to 4</strong> of <strong class="text-primary font-semibold">48</strong> items</span>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-[#707974]">Rows per page:</span>
+<div class="relative inline-flex items-center">
+<select class="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg bg-white text-label-sm font-label-sm text-[#144637] border border-[#c2d5c6] hover:border-[#144637] focus:outline-none focus:ring-1 focus:ring-primary shadow-sm cursor-pointer transition-colors">
+<option>10</option>
+<option>25</option>
+<option>50</option>
+</select>
+<span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-outline text-sm pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-label-sm font-label-sm bg-[#ebf7ed] text-primary border border-[#c2d5c6] hover:bg-[#dfebe2] transition-colors shadow-sm disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+              Previous
+            </button>
+<div class="flex items-center gap-1 px-2">
+<button class="w-8 h-8 rounded-lg bg-[#144637] text-white text-label-sm font-label-sm font-semibold flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded-lg bg-white border border-[#c2d5c6] text-primary hover:bg-[#ebf7ed] text-label-sm font-label-sm font-semibold flex items-center justify-center shadow-sm">2</button>
+<button class="w-8 h-8 rounded-lg bg-white border border-[#c2d5c6] text-primary hover:bg-[#ebf7ed] text-label-sm font-label-sm font-semibold flex items-center justify-center shadow-sm">3</button>
+<span class="px-1 text-[#707974]">...</span>
+<button class="w-8 h-8 rounded-lg bg-white border border-[#c2d5c6] text-primary hover:bg-[#ebf7ed] text-label-sm font-label-sm font-semibold flex items-center justify-center shadow-sm">10</button>
+</div>
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-label-sm font-label-sm bg-white text-primary border border-[#c2d5c6] hover:bg-[#ebf7ed] transition-colors shadow-sm">
+              Next
+              <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- 8. Modal Component (Showcase card) -->
+<section class="space-y-4">
+<div>
+<span class="text-label-sm font-label-sm uppercase tracking-wider text-secondary font-semibold">Overlays &amp; Dialogs</span>
+<h2 class="text-headline-md font-headline-md text-primary">Modal Component Showcase</h2>
+</div>
+<div class="bg-[#dfebe2]/50 p-6 md:p-12 rounded-xl border border-[#c2d5c6] flex justify-center items-center">
+<!-- Showcase Modal Dialog Container -->
+<div class="w-full max-w-xl bg-white rounded-xl border border-[#d2ddd4] shadow-[0_12px_36px_-6px_rgba(19,62,50,0.15)] overflow-hidden"><div class="p-6 bg-[#ebf7ed] border-b border-[#d2ddd4] flex items-center justify-between"><div class="flex items-center gap-3"><div class="p-2 rounded-lg bg-primary text-white"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">edit_calendar</span></div><div><h3 class="text-headline-sm font-headline-sm text-primary">Modal Title Goes Here</h3><p class="text-body-sm font-body-sm text-[#404945]">Modal subtitle goes here</p></div></div><button class="text-[#707974] hover:text-primary p-1 rounded-lg transition-colors"><span class="material-symbols-outlined text-xl">close</span></button></div><div class="p-6 space-y-4 bg-white"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Select input label</label><div class="relative w-full"><select class="w-full h-[42px] appearance-none pl-3.5 pr-10 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md cursor-pointer transition-colors"><option>Option 1 (#ID-001)</option><option>Option 2 (#ID-002)</option><option>Option 3 (#ID-003)</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline text-xl pointer-events-none">expand_more</span></div></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Select input label</label><div class="relative w-full"><select class="w-full h-[42px] appearance-none pl-3.5 pr-10 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md cursor-pointer transition-colors"><option>Category Option A</option><option>Category Option B</option><option>Category Option C</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline text-xl pointer-events-none">expand_more</span></div></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="space-y-1.5 md:col-span-1"><label class="block text-label-md font-label-md text-primary font-semibold">Input label 1</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md transition-colors" type="text" value="Input value 1"></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Input label 2</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md transition-colors" type="number" value="1"></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Input label 3</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-white text-[#144637] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md transition-colors" type="number" value="30"></div></div><div class="space-y-1.5"><label class="block text-label-md font-label-md text-primary font-semibold">Textarea label goes here</label><textarea class="w-full px-3.5 py-2.5 rounded-lg bg-white text-[#144637] placeholder:text-[#707974] border border-[#c2d5c6] focus:border-[#2e5e4e] focus:outline-none focus:ring-1 focus:ring-[#2e5e4e] shadow-sm text-body-md font-body-md resize-none transition-colors" placeholder="Textarea placeholder / notes go here..." rows="3">Textarea placeholder / notes go here...</textarea></div><div class="pt-1"><label class="flex items-center gap-2.5 cursor-pointer"><input checked="" class="w-4 h-4 rounded text-primary focus:ring-0 accent-[#144637] cursor-pointer" type="checkbox"><span class="text-body-sm font-body-sm text-[#144637]">Checkbox option confirmation</span></label></div></div><div class="px-6 py-4 bg-[#ebf7ed] border-t border-[#d2ddd4] flex items-center justify-end gap-3"><button class="px-4 py-2 rounded-lg text-label-lg font-label-lg bg-white text-primary border border-[#c2d5c6] hover:bg-[#dfebe2] transition-colors shadow-sm">Cancel</button><button class="px-5 py-2 rounded-lg text-label-lg font-label-lg bg-primary text-white hover:bg-[#2e5e4e] transition-colors shadow-sm flex items-center gap-2"><span class="material-symbols-outlined text-base">save</span>Action Button</button></div></div>
+</div>
+</section>
+<!-- Bottom Footer Token Status -->
+<footer class="pt-8 pb-4 text-center text-label-sm font-label-sm text-[#404945] flex flex-col items-center justify-center gap-2">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-[#144637] inline-block shadow-sm"></span>
+<span class="font-medium">Serene Tahfiz Minimalist Standards • Compliant with English RTL/LTR Specifications</span>
+</div>
+<p class="text-[#707974]">Calibrated with #EBF7ED Workspace Canvas, Pure White Cards (#FFFFFF), and Deep Forest Typography (#144637)</p>
+</footer>
+</div>
+</div>
+<script>
+  // Set indeterminate state on checkbox demo
+  const indeterminateEl = document.getElementById('indeterminateBox');
+  if (indeterminateEl) {
+    indeterminateEl.indeterminate = true;
+  }
+
+  // Demo export action
+  const exportBtn = document.getElementById('exportTokensBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      const tokens = {
+        workspaceCanvas: "#EBF7ED",
+        surfaceCard: "#FFFFFF",
+        primaryEmeraldAccent: "#2E5E4E",
+        deepForestText: "#144637",
+        borderOutline: "#D2DDD4",
+        alertRed: "#E26458",
+        goldWarning: "#D9A84E",
+        verdantCalm: "#DFEBE2"
+      };
+      const blob = new Blob([JSON.stringify(tokens, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'serene-tahfiz-tokens.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  // Smooth scroll to table demo on click
+  const liveDemoBtn = document.getElementById('liveDemoBtn');
+  if (liveDemoBtn) {
+    liveDemoBtn.addEventListener('click', () => {
+      const target = document.querySelector('table');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+</script></main>
+
+
+</body></html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html class="transition-colors duration-200" lang="fr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "primary": "#144637",
+        "on-primary": "#ffffff",
+        "surface": "#f0fcf3",
+        "on-tertiary-fixed-variant": "#3f4944",
+        "surface-container-lowest": "#ffffff",
+        "tertiary": "#37413c",
+        "on-background": "#131e18",
+        "on-tertiary-fixed": "#151d19",
+        "surface-container-low": "#ebf7ed",
+        "on-primary-fixed": "#002117",
+        "on-tertiary": "#ffffff",
+        "surface-variant": "#d9e5dc",
+        "primary-fixed": "#baeed9",
+        "background": "#f0fcf3",
+        "outline": "#707974",
+        "on-surface-variant": "#404945",
+        "surface-dim": "#d1ddd4",
+        "on-secondary": "#ffffff",
+        "error-container": "#ffdad6",
+        "inverse-on-surface": "#e8f4ea",
+        "tertiary-fixed": "#dbe5de",
+        "surface-container": "#e5f1e8",
+        "inverse-surface": "#28332d",
+        "inverse-primary": "#9fd1bd",
+        "on-error": "#ffffff",
+        "surface-container-highest": "#d9e5dc",
+        "secondary-fixed": "#ffdeaa",
+        "outline-variant": "#c0c9c3",
+        "surface-bright": "#f0fcf3",
+        "secondary": "#7d5700",
+        "on-error-container": "#93000a",
+        "tertiary-container": "#4e5853",
+        "on-tertiary-container": "#c3cdc7",
+        "on-secondary-fixed": "#271900",
+        "error": "#ba1a1a",
+        "surface-container-high": "#dfebe2",
+        "surface-tint": "#376757",
+        "on-secondary-container": "#755100",
+        "secondary-container": "#ffc55f",
+        "on-surface": "#131e18",
+        "primary-container": "#2e5e4e",
+        "on-primary-container": "#a3d5c1",
+        "on-primary-fixed-variant": "#1e4f40",
+        "on-secondary-fixed-variant": "#5f4100",
+        "primary-fixed-dim": "#9fd1bd",
+        "secondary-fixed-dim": "#f5bd58",
+        "tertiary-fixed-dim": "#bfc9c2"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "margin-desktop": "2.5rem",
+        "gutter-desktop": "1.5rem",
+        "space-sm": "0.5rem",
+        "space-lg": "1rem",
+        "space-xs": "0.25rem",
+        "space-xl": "1.5rem",
+        "margin-tablet": "1.5rem",
+        "space-md": "0.75rem",
+        "margin": "1rem",
+        "gutter": "1rem"
+      },
+      "fontFamily": {
+        "label-mono-md": ["JetBrains Mono"],
+        "headline-md": ["Geist"],
+        "display-lg-mobile": ["Geist"],
+        "display-lg": ["Geist"],
+        "body-lg": ["Geist"],
+        "headline-sm": ["Geist"],
+        "body-md": ["Geist"],
+        "body-sm": ["Geist"],
+        "label-mono-sm": ["JetBrains Mono"],
+        "bilingual-sub": ["Geist"]
+      },
+      "fontSize": {
+        "label-mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+        "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+        "display-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+        "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+        "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+        "body-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+        "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }],
+        "label-mono-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+        "bilingual-sub": ["11px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }]
+      }
+    }
+  }
+};</script></head><body class="bg-surface dark:bg-[#182620] font-body-md text-on-surface dark:text-[#ecf3ef] antialiased transition-colors duration-200"><aside class="fixed left-0 top-0 bottom-0 w-64 bg-surface-container-low dark:bg-[#202f29] border-r border-outline-variant dark:border-[#2f4239] z-50 flex flex-col justify-between select-none transition-colors duration-200"><div class="flex flex-col flex-1"><div class="h-16 px-space-lg flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#202f29] transition-colors duration-200"><div class="flex items-center gap-space-sm w-full"><div class="w-8 h-8 rounded border border-dashed border-outline dark:border-[#475b52] flex items-center justify-center bg-surface-container dark:bg-[#182620]"><span class="material-symbols-outlined text-[18px] text-outline dark:text-[#9bb2a8]">category</span></div><span class="font-headline-sm text-headline-sm uppercase tracking-wider text-on-surface dark:text-[#ecf3ef] leading-none font-semibold">LOGO GOES HERE</span></div></div><div class="px-space-md py-space-sm border-b border-outline-variant dark:border-[#2f4239] bg-surface-container dark:bg-[#182620]/60 transition-colors duration-200"><span class="font-label-mono-sm text-label-mono-sm uppercase text-on-surface-variant dark:text-[#9bb2a8] tracking-wider flex items-center justify-between"><span>Navigation Module</span></span></div><nav class="p-space-sm flex flex-col gap-space-xs flex-1" data-active-classes="bg-primary text-on-primary font-semibold"><a aria-current="page" class="flex items-center justify-between px-space-md py-space-sm rounded transition-colors bg-primary dark:bg-[#2e5e4e] text-on-primary dark:text-[#ecf3ef] font-semibold" data-path="item-1" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">grid_view</span><span class="font-body-md text-body-md">SIDEBAR ITEM 1 GOES HERE</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" data-path="item-2" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="font-body-md text-body-md">SIDEBAR ITEM 2 GOES HERE</span></div></a><details class="group rounded transition-colors" open=""><summary class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] cursor-pointer select-none list-none transition-colors"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">layers</span><span class="font-body-md text-body-md">SIDEBAR ITEM WITH SUB-ITEMS GOES HERE</span></div><span class="material-symbols-outlined text-[18px] text-outline dark:text-[#9bb2a8] transition-transform duration-200 group-open:rotate-180">expand_more</span></summary><div class="flex flex-col gap-space-xs pl-6 pr-space-xs pt-1 pb-1"><a class="flex items-center px-space-md py-1 rounded text-body-sm text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" href="#"><span class="font-body-sm">SUB-ITEM 1 GOES HERE</span></a><a class="flex items-center px-space-md py-1 rounded text-body-sm text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" href="#"><span class="font-body-sm">SUB-ITEM 2 GOES HERE</span></a><a class="flex items-center px-space-md py-1 rounded text-body-sm text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" href="#"><span class="font-body-sm">SUB-ITEM 3 GOES HERE</span></a></div></details><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" data-path="item-4" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">calendar_today</span><span class="font-body-md text-body-md">SIDEBAR ITEM 4 GOES HERE</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" data-path="item-5" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">group</span><span class="font-body-md text-body-md">SIDEBAR ITEM 5 GOES HERE</span></div></a><a class="flex items-center justify-between px-space-md py-space-sm rounded text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" data-path="item-6" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">tune</span><span class="font-body-md text-body-md">SIDEBAR ITEM 6 GOES HERE</span></div></a></nav></div><div class="p-space-sm border-t border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] transition-colors duration-200"><a class="flex items-center justify-between px-space-md py-space-sm rounded text-error dark:text-[#f87171] hover:bg-error-container dark:hover:bg-[#4a2626]/40 hover:text-on-error-container dark:hover:text-[#fca5a5] transition-colors" data-path="logout" href="#"><div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">power_settings_new</span><span class="font-body-md text-body-md font-medium">Déconnexion</span></div><span class="font-label-mono-sm text-label-mono-sm border border-error/30 dark:border-red-400/30 px-1.5 py-0.5 rounded uppercase">Exit</span></a></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 dark:bg-[#202f29]/90 backdrop-blur border-b border-outline-variant dark:border-[#2f4239] z-40 px-space-lg flex items-center justify-between transition-colors duration-200"><div class="flex items-center gap-space-md"><div class="relative" id="yearSelectorContainer"><button aria-expanded="false" aria-haspopup="true" class="flex items-center border border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#182620] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] px-space-md rounded gap-space-xs h-8 transition-colors cursor-pointer select-none" id="yearTriggerBtn" type="button"><span class="material-symbols-outlined text-[16px] text-on-surface-variant dark:text-[#9bb2a8]">date_range</span><span class="font-label-mono-md text-label-mono-md text-on-surface dark:text-[#ecf3ef] font-normal" id="selectedYearText">2024 / 1445-1446</span><span class="material-symbols-outlined text-[14px] text-outline dark:text-[#9bb2a8] transition-transform duration-200" id="yearChevron">arrow_drop_down</span></button><div class="absolute left-0 top-full mt-1 w-48 bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#2f4239] rounded shadow-lg z-50 py-1 flex flex-col transition-all duration-200 ease-out origin-top-left opacity-0 pointer-events-none scale-95 -translate-y-1" id="yearDropdownMenu"><button class="year-option flex items-center px-3 py-1.5 text-left font-label-mono-md text-[11px] text-on-surface dark:text-[#ecf3ef] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors" data-year="2025 / 1446-1447" type="button">2025 / 1446-1447</button><button class="year-option flex items-center px-3 py-1.5 text-left font-label-mono-md text-[11px] text-on-surface dark:text-[#ecf3ef] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors font-medium bg-surface-container-low dark:bg-[#182620]" data-year="2024 / 1445-1446" type="button">2024 / 1445-1446</button><button class="year-option flex items-center px-3 py-1.5 text-left font-label-mono-md text-[11px] text-on-surface dark:text-[#ecf3ef] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors" data-year="2023 / 1444-1445" type="button">2023 / 1444-1445</button></div></div><div class="h-4 w-px bg-outline-variant dark:bg-[#2f4239]"></div><div class="flex items-center gap-space-xs text-on-surface-variant dark:text-[#9bb2a8] bg-surface-container-low dark:bg-[#182620] px-space-md rounded border border-outline-variant dark:border-[#2f4239] h-8 transition-colors duration-200"><span class="material-symbols-outlined text-[16px] text-outline dark:text-[#9bb2a8]">schedule</span><span class="font-label-mono-sm text-label-mono-sm font-normal text-on-surface-variant dark:text-[#9bb2a8]">Mercredi 15 Mai 2025</span><span class="text-outline dark:text-[#707974] font-label-mono-sm text-label-mono-sm">•</span><span class="font-label-mono-sm text-label-mono-sm font-normal text-on-surface-variant dark:text-[#9bb2a8]">17 Dhu al-Qi'dah 1446</span></div></div><div class="flex items-center gap-space-md"><div class="relative flex items-center border border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#182620] rounded p-0.5 h-8 transition-colors duration-200" id="langSwitchContainer"><div class="absolute top-0.5 bottom-0.5 rounded bg-primary dark:bg-[#baeed9] transition-all duration-200 shadow-xs" id="langActiveIndicator" style="left: 2px; width: 34px;"></div><button class="relative z-10 h-full px-2 font-label-mono-sm text-label-mono-sm rounded text-on-primary dark:text-[#002117] font-medium flex items-center justify-center transition-colors duration-200" id="langFrBtn" type="button">FR</button><button class="relative z-10 h-full px-2 font-label-mono-sm text-label-mono-sm text-on-surface-variant dark:text-[#9bb2a8] hover:text-on-surface dark:hover:text-[#ecf3ef] font-medium flex items-center justify-center transition-colors duration-200" id="langArBtn" type="button">العربية</button></div><div aria-label="Theme Switcher" class="relative flex items-center border border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#182620] rounded-full p-0.5 h-8 transition-colors duration-200" id="themeSwitchContainer" role="group"><div class="absolute top-0.5 bottom-0.5 w-7 rounded-full bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#475b52] shadow-sm transition-all duration-200" id="themeActiveIndicator" style="left: 2px;"></div><button class="relative z-10 flex items-center justify-center w-7 h-7 rounded-full text-on-surface dark:text-[#707974] transition-colors duration-200" id="themeLightBtn" title="Mode Clair" type="button"><span class="material-symbols-outlined text-[16px]">light_mode</span></button><button class="relative z-10 flex items-center justify-center w-7 h-7 rounded-full text-on-surface-variant dark:text-[#f5bd58] hover:text-on-surface transition-colors duration-200" id="themeDarkBtn" title="Mode Sombre" type="button"><span class="material-symbols-outlined text-[16px]">dark_mode</span></button></div><div class="flex items-center text-outline dark:text-[#9bb2a8]"><button class="w-8 h-8 rounded border border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] flex items-center justify-center hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" title="Notifications" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span></button></div><div class="h-4 w-px bg-outline-variant dark:border-[#2f4239]"></div><div class="relative flex items-center gap-space-sm pl-space-xs" id="profileDropdownWrapper"><button aria-expanded="false" aria-haspopup="true" class="flex items-center gap-space-sm group cursor-pointer focus:outline-none" id="profileBtn" type="button"><div class="w-8 h-8 rounded-full bg-primary dark:bg-[#2e5e4e] group-hover:bg-primary-container dark:group-hover:bg-[#376757] transition-colors flex items-center justify-center ring-1 ring-outline/20 dark:ring-[#475b52]"><span class="material-symbols-outlined text-on-primary dark:text-[#ecf3ef] text-[18px]">person</span></div><div class="flex flex-col text-left"><span class="font-body-sm text-body-sm font-semibold text-on-surface dark:text-[#ecf3ef] group-hover:text-primary dark:group-hover:text-[#9fd1bd] transition-colors leading-tight">USER NAME GOES HERE</span><span class="font-label-mono-sm text-label-mono-sm text-on-surface-variant dark:text-[#9bb2a8] leading-none">SUB USERNAME GOES HERE</span></div></button><div class="absolute right-0 top-full mt-2 w-52 bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#2f4239] rounded shadow-lg z-50 py-1 flex flex-col text-left opacity-0 pointer-events-none scale-95 -translate-y-1 transition-all duration-200 ease-out origin-top-right" id="profileMenu"><div class="px-3 py-2 border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low/50 dark:bg-[#182620]/50"><p class="font-body-sm text-[12px] font-semibold text-on-surface dark:text-[#ecf3ef] leading-tight truncate">USER NAME GOES HERE</p><p class="font-label-mono-sm text-[10px] text-on-surface-variant dark:text-[#9bb2a8] truncate mt-0.5">user@institution.dz</p></div><a class="flex items-center gap-2 px-3 py-2 text-[12px] text-on-surface dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors" href="#"><span class="material-symbols-outlined text-[16px] text-outline dark:text-[#9bb2a8]">account_circle</span><span class="font-body-sm text-[12px]">Profil</span></a><a class="flex items-center gap-2 px-3 py-2 text-[12px] text-on-surface dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors" href="#"><span class="material-symbols-outlined text-[16px] text-outline dark:text-[#9bb2a8]">settings</span><span class="font-body-sm text-[12px]">Paramètres</span></a><div class="border-t border-outline-variant dark:border-[#2f4239] my-1"></div><a class="flex items-center gap-2 px-3 py-2 text-[12px] text-error dark:text-[#f87171] hover:bg-error-container dark:hover:bg-[#4a2626]/40 hover:text-on-error-container dark:hover:text-[#fca5a5] transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">logout</span><span class="font-body-sm text-[12px] font-medium">Déconnexion</span></a></div></div></div></header><div class="pt-16 flex-1 flex flex-col"><section class="bg-surface-container-lowest dark:bg-[#202f29] border-b border-outline-variant dark:border-[#2f4239] px-space-lg py-space-md transition-colors duration-200"><h1 class="font-headline-md text-headline-md text-on-surface dark:text-[#ecf3ef] font-semibold tracking-tight">PAGE TITLE GOES HERE</h1><p class="font-body-md text-body-md text-on-surface-variant dark:text-[#9bb2a8] mt-1 max-w-4xl">SUBTITLE GOES HERE</p></section><main class="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200" style="padding: 10px;"><div class="flex flex-col w-full p-[10px] gap-space-md select-none"><div class="w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-dashed border-outline-variant dark:border-[#384d43] rounded flex flex-col items-center justify-center p-[10px] transition-colors duration-200"><div class="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]"><span class="material-symbols-outlined text-[24px]">dashboard_customize</span><span class="font-headline-sm text-headline-sm uppercase tracking-wider font-semibold">COMPONENTS GO HERE</span></div><span class="font-label-mono-sm text-label-mono-sm text-outline dark:text-[#9bb2a8] mt-2">SPACING: STRICT_p-[10px] • EACH COMPONENT IS SEPARATED BY 10PX</span></div></div>
+<script>
+  (function() {
+    // 1. Profile Dropdown Logic
+    const profileBtn = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    const profileWrapper = document.getElementById('profileDropdownWrapper');
+
+    function openProfileMenu() {
+      if (!profileMenu || !profileBtn) return;
+      profileMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', '-translate-y-1');
+      profileMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+      profileBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeProfileMenu() {
+      if (!profileMenu || !profileBtn) return;
+      profileMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', '-translate-y-1');
+      profileMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+      profileBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = profileBtn.getAttribute('aria-expanded') === 'true';
+        if (isOpen) {
+          closeProfileMenu();
+        } else {
+          closeYearDropdown();
+          openProfileMenu();
+        }
+      });
+    }
+
+    // 2. Language Switcher Logic
+    const langFrBtn = document.getElementById('langFrBtn');
+    const langArBtn = document.getElementById('langArBtn');
+    const langActiveIndicator = document.getElementById('langActiveIndicator');
+
+    function updateLangIndicator(activeBtn, inactiveBtn) {
+      if (!langActiveIndicator || !activeBtn) return;
+      langActiveIndicator.style.left = activeBtn.offsetLeft + 'px';
+      langActiveIndicator.style.width = activeBtn.offsetWidth + 'px';
+
+      activeBtn.classList.remove('text-on-surface-variant', 'dark:text-[#9bb2a8]');
+      activeBtn.classList.add('text-on-primary', 'dark:text-[#002117]');
+      inactiveBtn.classList.remove('text-on-primary', 'dark:text-[#002117]');
+      inactiveBtn.classList.add('text-on-surface-variant', 'dark:text-[#9bb2a8]');
+    }
+
+    if (langFrBtn && langArBtn && langActiveIndicator) {
+      setTimeout(function() {
+        updateLangIndicator(langFrBtn, langArBtn);
+      }, 50);
+
+      langFrBtn.addEventListener('click', function() {
+        updateLangIndicator(langFrBtn, langArBtn);
+      });
+      langArBtn.addEventListener('click', function() {
+        updateLangIndicator(langArBtn, langFrBtn);
+      });
+    }
+
+    // 3. Theme Switcher Logic
+    const themeLightBtn = document.getElementById('themeLightBtn');
+    const themeDarkBtn = document.getElementById('themeDarkBtn');
+    const themeActiveIndicator = document.getElementById('themeActiveIndicator');
+
+    function updateTheme(mode) {
+      if (!themeActiveIndicator) return;
+      if (mode === 'light') {
+        themeActiveIndicator.style.left = '2px';
+        document.documentElement.classList.remove('dark');
+        themeLightBtn.classList.remove('text-on-surface-variant', 'dark:text-[#707974]');
+        themeLightBtn.classList.add('text-on-surface');
+        themeDarkBtn.classList.remove('dark:text-[#f5bd58]', 'text-[#f5bd58]');
+        themeDarkBtn.classList.add('text-on-surface-variant', 'dark:text-[#707974]');
+      } else {
+        themeActiveIndicator.style.left = (themeDarkBtn.offsetLeft) + 'px';
+        document.documentElement.classList.add('dark');
+        themeDarkBtn.classList.remove('text-on-surface-variant', 'dark:text-[#707974]');
+        themeDarkBtn.classList.add('dark:text-[#f5bd58]');
+        themeLightBtn.classList.remove('text-on-surface');
+        themeLightBtn.classList.add('text-on-surface-variant', 'dark:text-[#707974]');
+      }
+    }
+
+    if (themeLightBtn && themeDarkBtn) {
+      themeLightBtn.addEventListener('click', function() {
+        updateTheme('light');
+      });
+      themeDarkBtn.addEventListener('click', function() {
+        updateTheme('dark');
+      });
+    }
+
+    // 4. Academic Year Selector Logic
+    const yearContainer = document.getElementById('yearSelectorContainer');
+    const yearTriggerBtn = document.getElementById('yearTriggerBtn');
+    const yearDropdownMenu = document.getElementById('yearDropdownMenu');
+    const yearChevron = document.getElementById('yearChevron');
+    const selectedYearText = document.getElementById('selectedYearText');
+    const yearOptions = document.querySelectorAll('.year-option');
+
+    function openYearDropdown() {
+      if (!yearDropdownMenu || !yearTriggerBtn) return;
+      yearDropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', '-translate-y-1');
+      yearDropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+      if (yearChevron) yearChevron.classList.add('rotate-180');
+      yearTriggerBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeYearDropdown() {
+      if (!yearDropdownMenu || !yearTriggerBtn) return;
+      yearDropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', '-translate-y-1');
+      yearDropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+      if (yearChevron) yearChevron.classList.remove('rotate-180');
+      yearTriggerBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    if (yearTriggerBtn && yearDropdownMenu) {
+      yearTriggerBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = yearTriggerBtn.getAttribute('aria-expanded') === 'true';
+        if (isOpen) {
+          closeYearDropdown();
+        } else {
+          closeProfileMenu();
+          openYearDropdown();
+        }
+      });
+
+      yearOptions.forEach(function(opt) {
+        opt.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const year = this.getAttribute('data-year');
+          if (selectedYearText) selectedYearText.textContent = year;
+          yearOptions.forEach(function(o) {
+            o.classList.remove('font-medium', 'bg-surface-container-low', 'dark:bg-[#182620]');
+          });
+          this.classList.add('font-medium', 'bg-surface-container-low', 'dark:bg-[#182620]');
+          closeYearDropdown();
+        });
+      });
+    }
+
+    // Close menus on outside click
+    document.addEventListener('click', function(e) {
+      if (profileWrapper && !profileWrapper.contains(e.target)) {
+        closeProfileMenu();
+      }
+      if (yearContainer && !yearContainer.contains(e.target)) {
+        closeYearDropdown();
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeProfileMenu();
+        closeYearDropdown();
+      }
+    });
+  })();
+</script></main></div></div></body></html>

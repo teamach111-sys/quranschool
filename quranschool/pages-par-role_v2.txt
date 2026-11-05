@@ -1,0 +1,60 @@
+ÉCOLE CORANIQUE — ASSOCIATION IMAM MUSLIM
+Pages du site par rôle — modèle à trois gates
+=====================================================
+
+CONTRÔLE D'ACCÈS
+----------------
+Un compte = un rôle. Trois gates, une par rôle ; chaque page vérifie
+exactement une gate, rien de plus :
+
+    Gate::define('access-admin',      fn ($user) => $user->hasRole('admin'));
+    Gate::define('access-teacher',    fn ($user) => $user->hasRole('teacher'));
+    Gate::define('access-secretary',  fn ($user) => $user->hasRole('secretary'));
+
+- Les rôles vivent dans une table dédiée, jamais dans la fiche
+  utilisateur.
+- Vérification côté serveur uniquement (jamais dans le navigateur).
+- L'équivalent sera appliqué côté serveur dans l'application :
+  table user_roles + fonction has_role() — le principe des gates
+  ci-dessus est conservé tel quel.
+
+PAGES COMMUNES (aucune gate, utilisateur connecté)
+--------------------------------------------------
+- Connexion
+- Mon profil (nom, téléphone, langue fr/ar, mot de passe)
+- Sélecteur d'année scolaire (bandeau permanent, filtre tout)
+
+
+ACCESS-ADMIN
+------------
+- Tableau de bord admin
+- École (informations)
+- Années scolaires
+- Utilisateurs & rôles
+- Historique des changements de rôle
+- Groupes + attribution des enseignants
+- Emploi du temps
+- Élèves (complet)
+- Présences (lecture)
+- Séances de mémorisation (lecture)
+- Paiements & finances
+
+
+ACCESS-SECRETARY
+----------------
+- Tableau de bord secrétariat
+- Élèves (complet)
+- Présences (saisie et correction)
+- Paiements (échéances, encaissements, impayés)
+- Groupes & emploi du temps (lecture)
+- Séances de mémorisation (lecture)
+
+
+ACCESS-TEACHER
+--------------
+- Tableau de bord enseignant
+- Mes groupes et mes élèves (lecture)
+- Appel — présences de ses groupes uniquement
+- Séances de mémorisation — saisie pour ses élèves uniquement
+- Mon emploi du temps (lecture)
+=====================================================
