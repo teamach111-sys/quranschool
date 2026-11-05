@@ -52,7 +52,10 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [receiptExportingId, setReceiptExportingId] = useState(null);
+    const [excelExporting, setExcelExporting] = useState(false);
+    const [canExportPayments, setCanExportPayments] = useState(false);
     const [canExportReceipts, setCanExportReceipts] = useState(false);
+    const [tableSort, setTableSort] = useState({ key: '', direction: 'asc' });
 
     useEffect(() => {
         const syncYear = (event) => {
@@ -89,6 +92,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             setCurrency(data.currency ?? 'MAD');
             setCanManage(Boolean(data.can_manage));
             setCanRecord(Boolean(data.can_record));
+            setCanExportPayments(Boolean(data.can_export_payments));
             setCanExportReceipts(Boolean(data.can_export_receipts));
             setCanGenerate(Boolean(data.year_is_active && data.year_is_current && data.can_record));
             setIsSecretary(Boolean(data.is_secretary));
@@ -175,6 +179,59 @@ export default function PaymentsTable({ routeParams = {} }) {
             toast.error(t.payments.receiptExportError);
         } finally {
             setReceiptExportingId(null);
+        }
+    };
+
+    const exportPaymentsExcel = async () => {
+        if (excelExporting || displayedPayments.length === 0) return;
+        setExcelExporting(true);
+
+        try {
+            const query = new URLSearchParams({
+                year_id: String(yearId),
+                lang,
+            });
+            if (focusedAlertPayment) query.set('payment_id', String(focusedAlertPayment.id));
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value) query.set(key, value);
+            });
+            if (search.trim()) query.set('search', search.trim());
+            if (tableSort.key) {
+                query.set('sort_by', tableSort.key);
+                query.set('sort_direction', tableSort.direction);
+            }
+
+            const response = await apiFetch(`/payments/export?${query}`, {
+                headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+            });
+            if (response.status === 422) {
+                toast.error(t.payments.excelExportEmpty);
+                return;
+            }
+            if (!response.ok) throw new Error('Payment export failed');
+            const exportCount = Number(response.headers.get('X-Export-Record-Count'));
+            if (!Number.isInteger(exportCount) || exportCount < 1) {
+                throw new Error('Payment export count was invalid');
+            }
+
+            const blob = await response.blob();
+            if (!blob.type.toLowerCase().includes('spreadsheetml')) {
+                throw new Error('Payment export response was not an Excel workbook');
+            }
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'payments.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast.success(t.payments.excelExported(exportCount));
+        } catch {
+            toast.error(t.payments.excelExportError);
+        } finally {
+            setExcelExporting(false);
         }
     };
 
@@ -436,7 +493,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     ))}
                 </div>
             )}
-            {(canManage || canGenerate) && (
+            {(canManage || canGenerate || canExportPayments) && (
                 <div className="flex flex-wrap justify-end gap-2">
                     {canGenerate && (
                         <button
@@ -458,6 +515,22 @@ export default function PaymentsTable({ routeParams = {} }) {
                             {t.payments.create}
                         </button>
                     )}
+                    {canExportPayments && (
+                        <button
+                            type="button"
+                            disabled={loading || excelExporting || displayedPayments.length === 0}
+                            onClick={exportPaymentsExcel}
+                            aria-busy={excelExporting}
+                            className="order-first inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:hover:bg-[#22302a]"
+                        >
+                            {excelExporting
+                                ? <Icon name="progress_activity" className="animate-spin text-[17px]" />
+                                : <Icon name="download" className="text-[17px]" />}
+                            {excelExporting
+                                ? t.payments.exportingExcel
+                                : t.payments.exportExcel(displayedPayments.length)}
+                        </button>
+                    )}
                 </div>
             )}
             <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
@@ -468,6 +541,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                         isRTL={isRTL}
                         placeholder={t.payments.search}
                         ariaLabel={t.payments.search}
+                        maxLength={255}
                     />
                 </div>
                 <div className="min-w-0 xl:flex-1">
@@ -542,6 +616,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     toolbar={toolbar}
                     actions={actions}
                     loading={loading}
+                    onSortChange={(sort) => setTableSort(sort)}
                 />
             </div>
             <div className="md:hidden">

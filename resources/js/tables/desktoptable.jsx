@@ -45,6 +45,7 @@ export default function DesktopTable({
     pageSize = 10,
     ariaLabel,
     loading = false,
+    onSortChange,
 }) {
     const { t } = useLanguage();
     const [page, setPage] = useState(1);
@@ -82,12 +83,10 @@ export default function DesktopTable({
 
     const toggleSort = (column) => {
         if (!column.sortable) return;
-        if (sortKey === column.key) {
-            setSortDirection((direction) => direction === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortKey(column.key);
-            setSortDirection('asc');
-        }
+        const nextDirection = sortKey === column.key && sortDirection === 'asc' ? 'desc' : 'asc';
+        setSortKey(column.key);
+        setSortDirection(nextDirection);
+        onSortChange?.({ key: column.key, direction: nextDirection });
         setPage(1);
     };
 

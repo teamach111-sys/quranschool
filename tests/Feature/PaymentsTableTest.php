@@ -6,6 +6,7 @@ use Illuminate\Auth\GenericUser;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class PaymentsTableTest extends TestCase
@@ -91,6 +92,7 @@ class PaymentsTableTest extends TestCase
             ->assertJsonPath('currency', 'MAD')
             ->assertJsonPath('can_manage', true)
             ->assertJsonPath('can_record', true)
+            ->assertJsonPath('can_export_payments', true)
             ->assertJsonPath('is_secretary', false)
             ->assertJsonCount(1, 'payments')
             ->assertJsonPath('payments.0.id', 1)
@@ -203,6 +205,7 @@ class PaymentsTableTest extends TestCase
             ->assertHeader('content-disposition', 'attachment; filename="payment-receipt-1.pdf"');
         $this->assertStringStartsWith('%PDF-', $response->getContent());
         $event = DB::table('audit_events')->first();
+        $this->assertDatabaseCount('audit_events', 1);
         $this->assertNotNull($event);
         $this->assertSame(1, (int) $event->school_id);
         $this->assertSame(1, (int) $event->year_id);
@@ -244,6 +247,142 @@ class PaymentsTableTest extends TestCase
         $this->actingAs($this->user(20, 1, 'teacher'));
 
         $this->get('/payments/1/receipt?year_id=1&lang=fr')->assertForbidden();
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
+    public function test_admin_exports_filtered_payments_as_a_safe_audited_excel_workbook(): void
+    {
+        $this->seedPayments();
+        DB::table('schools')->where('id', 1)->update(['name_fr' => 'École de test']);
+        DB::table('payments')->where('id', 1)->update([
+            'reference' => '=HYPERLINK("https://example.invalid","Open")',
+        ]);
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/payments/export?year_id=1&student_id=1&status=paid&period_date=2026-10-15&search=Mariam&lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('content-disposition', 'attachment; filename="payments.xlsx"')
+            ->assertHeader('cache-control', 'no-store, private')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $content = $response->getContent();
+        $rows = $this->readExcelRows($content);
+        $this->assertSame('École de test', $rows[1][1]);
+        $this->assertSame('2026-2027', $rows[2][1]);
+        $this->assertSame('Élève', $rows[7][0]);
+        $this->assertSame('Numéro d’élève', $rows[7][1]);
+        $this->assertSame('Mariam Ali', $rows[8][0]);
+        $this->assertSame('Payé', $rows[8][6]);
+        $this->assertSame('=HYPERLINK("https://example.invalid","Open")', $rows[8][9]);
+        $this->assertNotContains('Other School Student', array_column($rows, 0));
+        $this->assertNotContains('Zayd Ali', array_column($rows, 0));
+
+        $event = DB::table('audit_events')->first();
+        $this->assertDatabaseCount('audit_events', 1);
+        $this->assertNotNull($event);
+        $this->assertSame(1, (int) $event->school_id);
+        $this->assertSame(1, (int) $event->year_id);
+        $this->assertSame(10, (int) $event->actor_user_id);
+        $this->assertSame('Admin User', $event->actor_name);
+        $this->assertSame('exported', $event->action_type);
+        $this->assertSame('payment', $event->entity_type);
+        $this->assertNull($event->entity_id);
+        $this->assertSame('payment.table_exported', $event->summary_key);
+        $this->assertSame([
+            'format' => 'xlsx',
+            'page' => 'payments',
+            'record_count' => 1,
+            'filters' => [
+                'role_scope' => 'all_payments',
+                'student_id' => '1',
+                'payment_id' => null,
+                'status' => 'paid',
+                'period_date' => '2026-10-15',
+                'search_applied' => true,
+                'sort_by' => null,
+                'sort_direction' => null,
+            ],
+        ], json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_secretary_excel_export_contains_only_operational_payments_and_contact_data(): void
+    {
+        $this->seedPayments();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $response = $this->get('/payments/export?year_id=1&lang=fr');
+
+        $response->assertOk();
+        $rows = $this->readExcelRows($response->getContent());
+        $this->assertSame('Téléphone du responsable', $rows[7][2]);
+        $this->assertContains('0600000001', array_column($rows, 2));
+        $this->assertNotContains('REC-001', array_column($rows, 10));
+        $this->assertContains('À échéance', array_column($rows, 7));
+        $this->assertContains('En retard', array_column($rows, 7));
+        $this->assertContains('Exonéré', array_column($rows, 7));
+        $event = DB::table('audit_events')->first();
+        $this->assertDatabaseCount('audit_events', 1);
+        $this->assertSame(3, json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR)['record_count']);
+        $this->assertDatabaseHas('audit_events', [
+            'actor_user_id' => 12,
+            'summary_key' => 'payment.table_exported',
+        ]);
+    }
+
+    public function test_payment_excel_export_uses_arabic_report_and_status_labels_when_requested(): void
+    {
+        $this->seedPayments();
+        $this->actingAs($this->user(12, 1, 'secretary'));
+
+        $response = $this->get('/payments/export?year_id=1&lang=ar');
+
+        $response->assertOk();
+        $rows = $this->readExcelRows($response->getContent());
+        $this->assertSame('تقرير المدفوعات', $rows[0][0]);
+        $this->assertSame('هاتف ولي الأمر', $rows[7][2]);
+        $this->assertContains('مستحق', array_column($rows, 7));
+    }
+
+    public function test_payment_excel_export_uses_the_requested_sort_order(): void
+    {
+        $this->seedPayments();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $response = $this->get('/payments/export?year_id=1&sort_by=student_name&sort_direction=desc');
+
+        $response->assertOk()
+            ->assertHeader('X-Export-Record-Count', '4')
+            ->assertHeader('content-disposition', 'attachment; filename="payments.xlsx"');
+        $rows = $this->readExcelRows($response->getContent());
+        $this->assertSame('Zayd Ali', $rows[8][0]);
+    }
+
+    public function test_payment_excel_export_rejects_unauthorized_users_invalid_sort_and_empty_results(): void
+    {
+        $this->seedPayments();
+
+        $this->getJson('/payments/export')->assertUnauthorized();
+
+        $this->actingAs($this->user(20, 1, 'teacher'));
+        $this->get('/payments/export')->assertForbidden();
+
+        $this->actingAs($this->user(10, 1, 'admin'));
+        $this->getJson('/payments/export?year_id=1&sort_by=payments.id')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['sort_by']);
+        $this->getJson('/payments/export?year_id=1&student_id=4')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['student_id']);
+        $this->getJson('/payments/export?year_id=3')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['year_id']);
+        $this->getJson('/payments/export?year_id=1&student_id=1&period_date=2027-01-01')
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Aucun paiement ne correspond à cet export.');
+        $this->getJson('/payments/export?year_id=1&search=%25')
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Aucun paiement ne correspond à cet export.');
         $this->assertDatabaseCount('audit_events', 0);
     }
 
@@ -370,6 +509,29 @@ class PaymentsTableTest extends TestCase
             fn (array $payment) => array_merge($paymentDefaults, $payment),
             $payments,
         ));
+    }
+
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function readExcelRows(string $contents): array
+    {
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'quranschool-test-payments-');
+        if ($temporaryFile === false) {
+            throw new \RuntimeException('Unable to create the temporary Excel test file.');
+        }
+
+        try {
+            if (file_put_contents($temporaryFile, $contents) === false) {
+                throw new \RuntimeException('Unable to write the temporary Excel test file.');
+            }
+
+            return IOFactory::load($temporaryFile)->getActiveSheet()->toArray();
+        } finally {
+            if (is_file($temporaryFile) && ! unlink($temporaryFile)) {
+                throw new \RuntimeException('Unable to clean up the temporary Excel test file.');
+            }
+        }
     }
 
     private function user(int $id, int $schoolId, string $role): GenericUser

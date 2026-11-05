@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use DateTimeImmutable;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -13,6 +15,10 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use stdClass;
 
 class PaymentsController extends Controller
@@ -34,30 +40,7 @@ class PaymentsController extends Controller
             'period_date' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
-        $paymentsQuery = DB::table('payments')
-            ->join('students', function (JoinClause $join) {
-                $join->on('students.id', '=', 'payments.student_id')
-                    ->on('students.school_id', '=', 'payments.school_id')
-                    ->on('students.year_id', '=', 'payments.year_id');
-            })
-            ->leftJoin('users as recorders', function (JoinClause $join) {
-                $join->on('recorders.id', '=', 'payments.recorded_by')
-                    ->on('recorders.school_id', '=', 'payments.school_id');
-            })
-            ->where('payments.school_id', $schoolId)
-            ->where('payments.year_id', $yearId);
-
-        if (! empty($filters['student_id'])) {
-            $paymentsQuery->where('payments.student_id', (int) $filters['student_id']);
-        }
-        if (! empty($filters['status'])) {
-            $paymentsQuery->where('payments.status', $filters['status']);
-        }
-        if (! empty($filters['period_date'])) {
-            $paymentsQuery
-                ->where('payments.period_start', '<=', $filters['period_date'])
-                ->where('payments.period_end', '>=', $filters['period_date']);
-        }
+        $paymentsQuery = $this->paymentsListQuery($schoolId, $yearId, $filters);
 
         $paymentColumns = [
             'payments.id',
@@ -182,11 +165,349 @@ class PaymentsController extends Controller
             'can_manage' => $user->role === 'admin' && (bool) $year->is_active,
             'can_record' => in_array($user->role, ['admin', 'secretary'], true)
                 && (bool) $year->is_active,
+            'can_export_payments' => in_array($user->role, ['admin', 'secretary'], true),
             'can_export_receipts' => in_array($user->role, ['admin', 'secretary'], true),
             'is_secretary' => $user->role === 'secretary',
             'payments' => $payments,
             'students' => $students,
             'unpaid_balances' => $user->role === 'secretary' ? $unpaidBalances : [],
+        ]);
+    }
+
+    public function exportExcel(Request $request): Response|JsonResponse
+    {
+        [$user, $schoolId] = $this->staffContext();
+        $year = $this->resolveYear($request, $schoolId, $user->role);
+        $yearId = (int) $year->id;
+        $filters = $request->validate([
+            'student_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('students', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'payment_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('payments', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId),
+            ],
+            'status' => ['nullable', Rule::in(['paid', 'due', 'late', 'waived'])],
+            'period_date' => ['nullable', 'date_format:Y-m-d'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'sort_by' => [
+                'nullable',
+                Rule::in([
+                    'student_name',
+                    'student_number',
+                    'period_start',
+                    'amount',
+                    'status',
+                    'paid_at',
+                    'payment_method',
+                    'reference',
+                    'recorded_by_name',
+                ]),
+            ],
+            'sort_direction' => ['nullable', Rule::in(['asc', 'desc'])],
+            'lang' => ['nullable', Rule::in(['fr', 'ar'])],
+        ]);
+        $language = $filters['lang'] ?? data_get($user, 'language', 'fr');
+        $language = in_array($language, ['fr', 'ar'], true) ? $language : 'fr';
+        $search = trim($filters['search'] ?? '');
+
+        $paymentsQuery = $this->paymentsListQuery(
+            $schoolId,
+            $yearId,
+            $filters,
+            $search,
+        );
+        if ($user->role === 'secretary') {
+            $paymentsQuery->whereIn('payments.status', ['due', 'late', 'waived']);
+        }
+
+        $sortColumns = [
+            'student_name' => 'students.full_name',
+            'student_number' => 'students.student_number',
+            'period_start' => 'payments.period_start',
+            'amount' => 'payments.amount',
+            'status' => 'payments.status',
+            'paid_at' => 'payments.paid_at',
+            'payment_method' => 'payments.payment_method',
+            'reference' => 'payments.reference',
+            'recorded_by_name' => 'recorders.full_name',
+        ];
+        if (! empty($filters['sort_by'])) {
+            $paymentsQuery
+                ->orderBy($sortColumns[$filters['sort_by']], $filters['sort_direction'] ?? 'asc')
+                ->orderBy('payments.id');
+        } else {
+            $paymentsQuery
+                ->orderByDesc('payments.period_start')
+                ->orderBy('students.full_name')
+                ->orderByDesc('payments.id');
+        }
+
+        $columns = [
+            'payments.period_start',
+            'payments.period_end',
+            'payments.amount',
+            'payments.currency',
+            'payments.status',
+            'payments.paid_at',
+            'payments.payment_method',
+            'payments.reference',
+            'payments.notes',
+            'students.full_name as student_name',
+            'students.student_number',
+            'payments.recorded_by',
+            'recorders.full_name as recorded_by_name',
+        ];
+        if ($user->role === 'secretary') {
+            $columns[] = 'students.guardian_phone';
+        }
+        $payments = $paymentsQuery->get($columns);
+
+        if ($payments->isEmpty()) {
+            $message = $language === 'ar'
+                ? 'لا توجد مدفوعات مطابقة للتصدير.'
+                : 'Aucun paiement ne correspond à cet export.';
+
+            return response()->json(['message' => $message], 422);
+        }
+
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->first(['name_fr', 'name_ar']);
+        abort_unless($school, 404);
+        $schoolName = $language === 'ar' ? $school->name_ar : $school->name_fr;
+        $labels = $language === 'ar'
+            ? [
+                'report' => 'تقرير المدفوعات',
+                'school' => 'المدرسة',
+                'academicYear' => 'السنة الدراسية',
+                'generatedAt' => 'تاريخ الإنشاء',
+                'filters' => 'نطاق التصفية',
+                'recordCount' => 'عدد السجلات',
+                'allMatching' => 'كل السجلات المطابقة لعوامل التصفية',
+                'collectionsOnly' => 'المستحق والمتأخر والمعفى فقط',
+                'studentFilter' => 'الطالب',
+                'recordFilter' => 'السجل',
+                'statusFilter' => 'الحالة',
+                'periodFilter' => 'الفترة تشمل التاريخ',
+                'searchFilter' => 'البحث',
+                'student' => 'الطالب',
+                'studentNumber' => 'رقم الطالب',
+                'guardianPhone' => 'هاتف ولي الأمر',
+                'periodStart' => 'بداية الفترة',
+                'periodEnd' => 'نهاية الفترة',
+                'amount' => 'المبلغ',
+                'currency' => 'العملة',
+                'status' => 'الحالة',
+                'paidAt' => 'تاريخ الدفع',
+                'paymentMethod' => 'طريقة الدفع',
+                'reference' => 'المرجع',
+                'notes' => 'ملاحظات',
+                'recordedBy' => 'سجلها',
+                'statuses' => [
+                    'paid' => 'مدفوع',
+                    'due' => 'مستحق',
+                    'late' => 'متأخر',
+                    'waived' => 'معفى',
+                ],
+            ]
+            : [
+                'report' => 'Rapport des paiements',
+                'school' => 'École',
+                'academicYear' => 'Année scolaire',
+                'generatedAt' => 'Généré le',
+                'filters' => 'Périmètre des filtres',
+                'recordCount' => 'Nombre de lignes',
+                'allMatching' => 'Toutes les lignes correspondant aux filtres',
+                'collectionsOnly' => 'Échéances dues, en retard ou exonérées uniquement',
+                'studentFilter' => 'Élève',
+                'recordFilter' => 'Dossier',
+                'statusFilter' => 'Statut',
+                'periodFilter' => 'Période incluant le',
+                'searchFilter' => 'Recherche',
+                'student' => 'Élève',
+                'studentNumber' => 'Numéro d’élève',
+                'guardianPhone' => 'Téléphone du responsable',
+                'periodStart' => 'Début de période',
+                'periodEnd' => 'Fin de période',
+                'amount' => 'Montant',
+                'currency' => 'Devise',
+                'status' => 'Statut',
+                'paidAt' => 'Payé le',
+                'paymentMethod' => 'Mode de paiement',
+                'reference' => 'Référence',
+                'notes' => 'Notes',
+                'recordedBy' => 'Enregistré par',
+                'statuses' => [
+                    'paid' => 'Payé',
+                    'due' => 'À échéance',
+                    'late' => 'En retard',
+                    'waived' => 'Exonéré',
+                ],
+            ];
+        $appliedFilters = [];
+        if ($user->role === 'secretary') {
+            $appliedFilters[] = $labels['collectionsOnly'];
+        }
+        if (! empty($filters['student_id'])) {
+            $appliedFilters[] = $labels['studentFilter'].': '.$payments->first()->student_name;
+        }
+        if (! empty($filters['payment_id'])) {
+            $appliedFilters[] = $labels['recordFilter'].': '.$payments->first()->student_name;
+        }
+        if (! empty($filters['status'])) {
+            $appliedFilters[] = $labels['statusFilter'].': '.$labels['statuses'][$filters['status']];
+        }
+        if (! empty($filters['period_date'])) {
+            $appliedFilters[] = $labels['periodFilter'].': '.$filters['period_date'];
+        }
+        if ($search !== '') {
+            $appliedFilters[] = $labels['searchFilter'].': '.$search;
+        }
+        if ($appliedFilters === []) {
+            $appliedFilters[] = $labels['allMatching'];
+        }
+
+        $headings = [
+            $labels['student'],
+            $labels['studentNumber'],
+            ...($user->role === 'secretary' ? [$labels['guardianPhone']] : []),
+            $labels['periodStart'],
+            $labels['periodEnd'],
+            $labels['amount'],
+            $labels['currency'],
+            $labels['status'],
+            $labels['paidAt'],
+            $labels['paymentMethod'],
+            $labels['reference'],
+            $labels['notes'],
+            $labels['recordedBy'],
+        ];
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle($language === 'ar' ? 'المدفوعات' : 'Paiements');
+        $sheet->setRightToLeft($language === 'ar');
+        $metadataRows = [
+            [$labels['report']],
+            [$labels['school'], $schoolName],
+            [$labels['academicYear'], $year->year_label],
+            [$labels['generatedAt'], now()->format(DATE_ATOM)],
+            [$labels['filters'], implode(' | ', $appliedFilters)],
+            [$labels['recordCount'], $payments->count()],
+        ];
+        foreach ($metadataRows as $rowIndex => $row) {
+            foreach ($row as $columnIndex => $value) {
+                $sheet->getCell([$columnIndex + 1, $rowIndex + 1])
+                    ->setValueExplicit((string) $value, DataType::TYPE_STRING);
+            }
+        }
+        $headerRow = count($metadataRows) + 2;
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle("A{$headerRow}:".Coordinate::stringFromColumnIndex(count($headings)).$headerRow)
+            ->getFont()
+            ->setBold(true);
+        foreach ($headings as $columnIndex => $heading) {
+            $sheet->getCell([$columnIndex + 1, $headerRow])
+                ->setValueExplicit($heading, DataType::TYPE_STRING);
+            $sheet->getColumnDimensionByColumn($columnIndex + 1)->setAutoSize(true);
+        }
+        $sheet->freezePane('A'.($headerRow + 1));
+        $lastColumn = Coordinate::stringFromColumnIndex(count($headings));
+        $lastRow = $headerRow + $payments->count();
+        $sheet->setAutoFilter("A{$headerRow}:{$lastColumn}{$lastRow}");
+
+        foreach ($payments as $rowIndex => $payment) {
+            $row = [
+                $payment->student_name,
+                $payment->student_number,
+                ...($user->role === 'secretary' ? [$payment->guardian_phone] : []),
+                $payment->period_start,
+                $payment->period_end,
+                $this->decimalAmount((string) $payment->amount),
+                $payment->currency,
+                $labels['statuses'][$payment->status] ?? $payment->status,
+                $payment->paid_at,
+                $payment->payment_method,
+                $payment->reference,
+                $payment->notes,
+                $payment->recorded_by_name,
+            ];
+            $excelRow = $headerRow + $rowIndex + 1;
+            foreach ($row as $columnIndex => $value) {
+                $cell = $sheet->getCell([$columnIndex + 1, $excelRow]);
+                if ($columnIndex === ($user->role === 'secretary' ? 5 : 4)) {
+                    $cell->setValueExplicit((float) $value, DataType::TYPE_NUMERIC);
+                    $cell->getStyle()->getNumberFormat()->setFormatCode('0.00');
+
+                    continue;
+                }
+                $cell->setValueExplicit((string) ($value ?? ''), DataType::TYPE_STRING);
+            }
+        }
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'quranschool-payments-');
+        if ($temporaryFile === false) {
+            throw new \RuntimeException('Unable to create the payments Excel export.');
+        }
+        try {
+            (new Xlsx($spreadsheet))->save($temporaryFile);
+            $contents = file_get_contents($temporaryFile);
+            if ($contents === false) {
+                throw new \RuntimeException('Unable to read the payments Excel export.');
+            }
+        } finally {
+            if (is_file($temporaryFile) && ! unlink($temporaryFile)) {
+                throw new \RuntimeException('Unable to clean up the temporary payments Excel export.');
+            }
+        }
+        $spreadsheet->disconnectWorksheets();
+
+        $actorName = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', $user->id)
+            ->value('full_name');
+        abort_unless(is_string($actorName) && $actorName !== '', 403);
+
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => $yearId,
+            'actor_user_id' => (int) $user->id,
+            'actor_name' => $actorName,
+            'action_type' => 'exported',
+            'entity_type' => 'payment',
+            'entity_id' => null,
+            'summary_key' => 'payment.table_exported',
+            'changes' => json_encode([
+                'format' => 'xlsx',
+                'page' => 'payments',
+                'record_count' => $payments->count(),
+                'filters' => [
+                    'role_scope' => $user->role === 'secretary' ? 'collections' : 'all_payments',
+                    'student_id' => $filters['student_id'] ?? null,
+                    'payment_id' => $filters['payment_id'] ?? null,
+                    'status' => $filters['status'] ?? null,
+                    'period_date' => $filters['period_date'] ?? null,
+                    'search_applied' => $search !== '',
+                    'sort_by' => $filters['sort_by'] ?? null,
+                    'sort_direction' => $filters['sort_direction'] ?? null,
+                ],
+            ], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+        ]);
+
+        return response($contents, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="payments.xlsx"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Export-Record-Count' => (string) $payments->count(),
         ]);
     }
 
@@ -1113,6 +1434,61 @@ class PaymentsController extends Controller
                 'period_start' => 'The billing period overlaps another payment for this student.',
             ]);
         }
+    }
+
+    private function paymentsListQuery(
+        int $schoolId,
+        int $yearId,
+        array $filters,
+        string $search = '',
+    ): Builder {
+        $query = DB::table('payments')
+            ->join('students', function (JoinClause $join) {
+                $join->on('students.id', '=', 'payments.student_id')
+                    ->on('students.school_id', '=', 'payments.school_id')
+                    ->on('students.year_id', '=', 'payments.year_id');
+            })
+            ->leftJoin('users as recorders', function (JoinClause $join) {
+                $join->on('recorders.id', '=', 'payments.recorded_by')
+                    ->on('recorders.school_id', '=', 'payments.school_id');
+            })
+            ->where('payments.school_id', $schoolId)
+            ->where('payments.year_id', $yearId);
+
+        if (! empty($filters['student_id'])) {
+            $query->where('payments.student_id', (int) $filters['student_id']);
+        }
+        if (! empty($filters['payment_id'])) {
+            $query->where('payments.id', (int) $filters['payment_id']);
+        }
+        if (! empty($filters['status'])) {
+            $query->where('payments.status', $filters['status']);
+        }
+        if (! empty($filters['period_date'])) {
+            $query
+                ->where('payments.period_start', '<=', $filters['period_date'])
+                ->where('payments.period_end', '>=', $filters['period_date']);
+        }
+        if ($search !== '') {
+            $query->where(function (Builder $searchQuery) use ($search) {
+                $searchTerm = '%'.str_replace(
+                    ['!', '%', '_'],
+                    ['!!', '!%', '!_'],
+                    $search,
+                ).'%';
+                foreach ([
+                    'students.full_name',
+                    'students.student_number',
+                    'payments.payment_method',
+                    'payments.reference',
+                    'payments.notes',
+                ] as $column) {
+                    $searchQuery->orWhereRaw($column." LIKE ? ESCAPE '!'", [$searchTerm]);
+                }
+            });
+        }
+
+        return $query;
     }
 
     private function decimalAmount(string $amount): string

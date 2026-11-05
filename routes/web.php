@@ -139,6 +139,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-dashboard')
         ->name('payments.table');
 
+    Route::get('/payments/export', [PaymentsController::class, 'exportExcel'])
+        ->middleware('can:access-dashboard')
+        ->name('payments.export');
+
     Route::get('/payments/{paymentId}/receipt', [PaymentsController::class, 'receipt'])
         ->middleware('can:access-dashboard')
         ->whereNumber('paymentId')

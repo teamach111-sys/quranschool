@@ -7,6 +7,7 @@ export default function SearchInput({
     isRTL,
     placeholder,
     ariaLabel,
+    maxLength,
 }) {
     return (
         <span className="relative block min-w-0 w-full">
@@ -20,6 +21,7 @@ export default function SearchInput({
                 onChange={onChange}
                 placeholder={placeholder}
                 aria-label={ariaLabel}
+                maxLength={maxLength}
                 className={`min-h-11 w-full rounded-lg border border-transparent bg-surface-container-low px-3 text-[13px] text-on-surface outline-none placeholder:text-outline focus:border-primary dark:bg-[#1a2520] dark:text-[#f0fcf3] dark:placeholder:text-[#9fd1bd]/40 dark:focus:border-[#9fd1bd] ${isRTL ? 'pr-10' : 'pl-10'}`}
             />
         </span>

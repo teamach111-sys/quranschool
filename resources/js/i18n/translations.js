@@ -535,6 +535,11 @@ export const translations = {
             exportingReceipt: 'Préparation du reçu PDF…',
             receiptExported: 'Le reçu PDF a été téléchargé.',
             receiptExportError: 'Impossible de télécharger le reçu. Réessayez.',
+            exportExcel: (count) => `Exporter ${count} ligne${count === 1 ? '' : 's'} en Excel`,
+            exportingExcel: 'Préparation du fichier Excel…',
+            excelExported: (count) => `Le fichier Excel des paiements correspondant aux filtres (${count} ligne${count === 1 ? '' : 's'}) a été téléchargé.`,
+            excelExportError: 'Impossible d’exporter les paiements. Réessayez.',
+            excelExportEmpty: 'Aucun paiement ne correspond aux filtres sélectionnés.',
             receiptLabels: {
                 title: 'Reçu de paiement',
                 paymentConfirmation: 'Ce document confirme uniquement un paiement enregistré.',
@@ -1498,6 +1503,11 @@ export const translations = {
             exportingReceipt: 'جارٍ إعداد إيصال PDF…',
             receiptExported: 'تم تنزيل إيصال PDF.',
             receiptExportError: 'تعذر تنزيل الإيصال. حاول مرة أخرى.',
+            exportExcel: (count) => `تصدير ${count} سجل إلى Excel`,
+            exportingExcel: 'جارٍ إعداد ملف Excel…',
+            excelExported: (count) => `تم تنزيل ملف Excel للمدفوعات المطابقة لعوامل التصفية، ويحتوي على ${count} سجل.`,
+            excelExportError: 'تعذر تصدير المدفوعات. حاول مرة أخرى.',
+            excelExportEmpty: 'لا توجد مدفوعات تطابق عوامل التصفية المحددة.',
             receiptLabels: {
                 title: 'إيصال الدفع',
                 paymentConfirmation: 'يؤكد هذا المستند دفعة مسجلة فقط.',
