@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
-import SearchInput from '../../../components/SearchInput';
 import DateInput from '../../../components/DateInput';
 import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
@@ -33,41 +32,21 @@ function initialValues(session, defaultDate) {
     };
 }
 
-function getSurahOptions(searchTerm, selectedSurahId) {
-    const options = searchSurahs(searchTerm);
-    const selectedSurah = getSurah(selectedSurahId);
-
-    return selectedSurah && !options.some((surah) => surah.id === selectedSurah.id)
-        ? [selectedSurah, ...options]
-        : options;
-}
-
 function SurahPicker({
     label,
     name,
     value,
-    searchTerm,
     options,
-    isRTL,
     lang,
     inputClass,
     labelClass,
-    searchLabel,
     selectLabel,
     placeholder,
-    onSearchChange,
     onChange,
 }) {
     return (
         <div className={labelClass}>
             <span>{label}</span>
-            <SearchInput
-                isRTL={isRTL}
-                ariaLabel={searchLabel}
-                placeholder={searchLabel}
-                value={searchTerm}
-                onChange={onSearchChange}
-            />
             <SelectInput
                 aria-label={selectLabel}
                 name={name}
@@ -102,8 +81,6 @@ export default function MemorizationSessionFormModal({
     const [form, setForm] = useState(() => initialValues(session, defaultDate));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
-    const [startSurahSearch, setStartSurahSearch] = useState('');
-    const [endSurahSearch, setEndSurahSearch] = useState('');
     const [progressSessions, setProgressSessions] = useState([]);
     const [progressLoading, setProgressLoading] = useState(false);
     const [progressError, setProgressError] = useState(false);
@@ -118,8 +95,6 @@ export default function MemorizationSessionFormModal({
 
         setForm(initialValues(session, defaultDate));
         setError(null);
-        setStartSurahSearch('');
-        setEndSurahSearch('');
     }, [open, session, defaultDate]);
 
     useEffect(() => {
@@ -379,14 +354,7 @@ export default function MemorizationSessionFormModal({
     const teacherOptions = session?.teacher_id && !teachers.some((teacher) => teacher.id === session.teacher_id)
         ? [...teachers, { id: session.teacher_id, name: session.teacher_name }]
         : teachers;
-    const startSurahOptions = useMemo(
-        () => getSurahOptions(startSurahSearch, form.surah_start),
-        [startSurahSearch, form.surah_start],
-    );
-    const endSurahOptions = useMemo(
-        () => getSurahOptions(endSurahSearch, form.surah_end),
-        [endSurahSearch, form.surah_end],
-    );
+    const surahOptions = useMemo(() => searchSurahs(''), []);
     const hasRangeInput = Boolean(
         form.surah_start || form.ayah_start || form.surah_end || form.ayah_end,
     );
@@ -570,6 +538,7 @@ export default function MemorizationSessionFormModal({
                             name="portion_label"
                             value={form.portion_label}
                             onChange={handleChange}
+                            placeholder={t.memorization.portionPlaceholder}
                             className={inputClass}
                         />
                         {formatPortionRange(form, lang) && (
@@ -589,20 +558,13 @@ export default function MemorizationSessionFormModal({
                                     label={t.memorization.surahStart}
                                     name="surah_start"
                                     value={form.surah_start}
-                                    searchTerm={startSurahSearch}
-                                    options={startSurahOptions}
-                                    isRTL={isRTL}
+                                    options={surahOptions}
                                     lang={lang}
                                     inputClass={inputClass}
                                     labelClass={labelClass}
-                                    searchLabel={t.memorization.searchSurahs}
                                     selectLabel={t.memorization.surahStart}
                                     placeholder={t.memorization.selectSurah}
-                                    onSearchChange={(event) => setStartSurahSearch(event.target.value)}
-                                    onChange={(event) => {
-                                        handleChange(event);
-                                        setStartSurahSearch('');
-                                    }}
+                                    onChange={handleChange}
                                 />
                                 <label className={labelClass}>
                                 {t.memorization.ayahStart}
@@ -623,20 +585,13 @@ export default function MemorizationSessionFormModal({
                                     label={t.memorization.surahEnd}
                                     name="surah_end"
                                     value={form.surah_end}
-                                    searchTerm={endSurahSearch}
-                                    options={endSurahOptions}
-                                    isRTL={isRTL}
+                                    options={surahOptions}
                                     lang={lang}
                                     inputClass={inputClass}
                                     labelClass={labelClass}
-                                    searchLabel={t.memorization.searchSurahs}
                                     selectLabel={t.memorization.surahEnd}
                                     placeholder={t.memorization.selectSurah}
-                                    onSearchChange={(event) => setEndSurahSearch(event.target.value)}
-                                    onChange={(event) => {
-                                        handleChange(event);
-                                        setEndSurahSearch('');
-                                    }}
+                                    onChange={handleChange}
                                 />
                                 <label className={labelClass}>
                                 {t.memorization.ayahEnd}
