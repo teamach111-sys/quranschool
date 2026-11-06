@@ -124,12 +124,6 @@ export default function Dashboard({ user }) {
                         <div className="flex items-center gap-3">
                             <LanguageSwitcher />
                             <ThemeToggle theme={theme} onToggle={toggleTheme} />
-                            <div className="flex items-center text-outline dark:text-[#9bb2a8]">
-                                <button className="w-8 h-8 rounded border border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] flex items-center justify-center hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" title={t.notifications} type="button">
-                                    <Icon name="notifications" className="text-[18px]" />
-                                </button>
-                            </div>
-                            <div className="h-4 w-px bg-outline-variant dark:bg-[#2f4239]" />
                             <ProfileMenu user={user} onLogout={handleLogout} />
                         </div>
                     </header>
@@ -173,9 +167,6 @@ export default function Dashboard({ user }) {
                         <div className="flex items-center gap-1.5">
                             <LanguageSwitcher compact />
                             <ThemeToggle theme={theme} onToggle={toggleTheme} compact />
-                            <button className="w-7 h-7 rounded border border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] flex items-center justify-center hover:bg-surface-container-high dark:hover:bg-[#2c3d36] text-outline dark:text-[#9bb2a8] hover:text-on-surface dark:hover:text-[#ecf3ef] transition-colors" title={t.notifications} type="button">
-                                <Icon name="notifications" className="text-[15px]" />
-                            </button>
                             <ProfileMenu user={user} onLogout={handleLogout} compact />
                         </div>
                     </div>
