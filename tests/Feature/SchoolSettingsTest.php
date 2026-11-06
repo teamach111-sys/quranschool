@@ -127,6 +127,41 @@ class SchoolSettingsTest extends TestCase
         $this->getJson('/admin/school-settings')->assertForbidden();
     }
 
+    public function test_admin_can_download_a_square_blank_receipt_template_for_their_school(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/admin/school-settings/receipt-template?lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'attachment; filename="payment-receipt-template.pdf"');
+        $pdfContents = $response->getContent();
+        $this->assertStringStartsWith('%PDF-', $pdfContents);
+        $this->assertSame(
+            1,
+            preg_match('/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/', $pdfContents, $pageDimensions),
+        );
+        $this->assertEqualsWithDelta((float) $pageDimensions[1], (float) $pageDimensions[2], 0.01);
+        $this->assertLessThan(500, (float) $pageDimensions[1]);
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
+    public function test_non_admin_cannot_download_a_blank_receipt_template(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->get('/admin/school-settings/receipt-template')->assertForbidden();
+    }
+
     public function test_omitted_optional_settings_are_preserved_and_audited_from_the_saved_state(): void
     {
         DB::table('schools')->where('id', 1)->update([

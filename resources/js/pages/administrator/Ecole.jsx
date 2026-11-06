@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
+import { useToast } from '../../components/ToastProvider';
 import { apiFetch } from '../../lib/api';
 import { useLanguage } from '../../hooks/useLanguage';
 
@@ -15,7 +16,8 @@ const emptySchool = {
 };
 
 export default function Ecole() {
-    const { t } = useLanguage();
+    const { lang, t } = useLanguage();
+    const toast = useToast();
     const [school, setSchool] = useState(emptySchool);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -23,6 +25,7 @@ export default function Ecole() {
     const [saveError, setSaveError] = useState(false);
     const [saved, setSaved] = useState(false);
     const [newPaymentMethod, setNewPaymentMethod] = useState('');
+    const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -73,6 +76,35 @@ export default function Ecole() {
             setSaveError(true);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const downloadReceiptTemplate = async () => {
+        if (downloadingTemplate) return;
+        setDownloadingTemplate(true);
+
+        try {
+            const response = await apiFetch(`/admin/school-settings/receipt-template?lang=${lang}`, {
+                headers: { Accept: 'application/pdf' },
+            });
+            if (!response.ok || !response.headers.get('Content-Type')?.toLowerCase().includes('application/pdf')) {
+                throw new Error('Failed to download receipt template');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'payment-receipt-template.pdf';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast.success(t.schoolSettings.templateDownloaded);
+        } catch {
+            toast.error(t.schoolSettings.templateDownloadError);
+        } finally {
+            setDownloadingTemplate(false);
         }
     };
 
@@ -200,6 +232,15 @@ export default function Ecole() {
             )}
 
             <div className="flex flex-wrap items-center gap-3">
+                <button
+                    type="button"
+                    disabled={loading || downloadingTemplate}
+                    onClick={downloadReceiptTemplate}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-outline-variant px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-tertiary-container dark:text-inverse-on-surface"
+                >
+                    <Icon name={downloadingTemplate ? 'progress_activity' : 'download'} className="text-[18px]" />
+                    {downloadingTemplate ? t.schoolSettings.downloadingTemplate : t.schoolSettings.downloadTemplate}
+                </button>
                 <button
                     type="submit"
                     disabled={loading || saving}

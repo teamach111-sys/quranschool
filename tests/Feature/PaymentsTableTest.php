@@ -208,9 +208,10 @@ class PaymentsTableTest extends TestCase
         $this->assertStringStartsWith('%PDF-', $pdfContents);
         $this->assertSame(
             1,
-            preg_match('/\/MediaBox\s*\[\s*0\s+0\s+[\d.]+\s+([\d.]+)\s*\]/', $pdfContents, $pageDimensions),
+            preg_match('/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/', $pdfContents, $pageDimensions),
         );
-        $this->assertLessThan(842, (float) $pageDimensions[1]);
+        $this->assertEqualsWithDelta((float) $pageDimensions[1], (float) $pageDimensions[2], 0.01);
+        $this->assertLessThan(500, (float) $pageDimensions[1]);
         $event = DB::table('audit_events')->first();
         $this->assertDatabaseCount('audit_events', 1);
         $this->assertNotNull($event);

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <style>
         body {
-            color: #26342b;
+            color: #000;
             font-family: dejavusans, sans-serif;
             font-size: 11pt;
             margin: 0;
@@ -16,34 +16,33 @@
         }
 
         .school {
-            color: #315b45;
+            color: #000;
             font-size: 13pt;
             font-weight: bold;
-            margin-bottom: 8mm;
+            margin-bottom: 4mm;
         }
 
         h1 {
-            color: #26342b;
+            color: #000;
             font-size: 24pt;
             margin: 0 0 3mm;
         }
 
         .confirmation {
-            color: #617066;
+            color: #444;
             font-size: 10pt;
-            margin: 0 0 10mm;
+            margin: 0 0 5mm;
         }
 
         .amount {
-            background: #edf5ef;
-            border: 1px solid #c8d8ce;
-            color: #174e3c;
-            margin-bottom: 8mm;
-            padding: 7mm;
+            border: 1px solid #999;
+            color: #000;
+            margin-bottom: 4mm;
+            padding: 4mm;
         }
 
         .amount-label {
-            color: #52665d;
+            color: #444;
             font-size: 9pt;
             margin-bottom: 2mm;
         }
@@ -53,26 +52,32 @@
             font-weight: bold;
         }
 
+        .amount-value-template {
+            font-size: 11pt;
+            font-weight: normal;
+            white-space: nowrap;
+        }
+
         table {
             border-collapse: collapse;
             width: 100%;
         }
 
         td {
-            border-bottom: 1px solid #dce5df;
-            padding: 4mm 3mm;
+            border-bottom: 1px solid #ccc;
+            padding: 2mm 3mm;
             vertical-align: top;
         }
 
         .label {
-            color: #52665d;
+            color: #444;
             width: 38%;
         }
 
         .generated {
-            color: #617066;
+            color: #444;
             font-size: 8pt;
-            margin-top: 7mm;
+            margin-top: 4mm;
         }
 
     </style>
@@ -84,7 +89,7 @@
         <p class="confirmation">{{ $labels['paymentConfirmation'] }}</p>
         <div class="amount">
             <div class="amount-label">{{ $labels['amountReceived'] }}</div>
-            <div class="amount-value">{{ $amount }} {{ $currency }}</div>
+            <div class="amount-value{{ !empty($isTemplate) ? ' amount-value-template' : '' }}">{{ $amount }}{{ $currency !== '' ? ' '.$currency : '' }}</div>
         </div>
         <table>
             <tbody>

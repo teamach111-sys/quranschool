@@ -319,6 +319,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access-admin')
         ->name('admin.school-settings.show');
 
+    Route::get('/admin/school-settings/receipt-template', [SchoolSettingsController::class, 'receiptTemplate'])
+        ->middleware('can:access-admin')
+        ->name('admin.school-settings.receipt-template');
+
     Route::put('/admin/school-settings', [SchoolSettingsController::class, 'update'])
         ->middleware('can:access-admin')
         ->name('admin.school-settings.update');

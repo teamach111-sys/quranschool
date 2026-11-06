@@ -6,11 +6,102 @@ use App\Support\AuditEventLogger;
 use App\Support\PaymentMethods;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 
 class SchoolSettingsController extends Controller
 {
+    public function receiptTemplate(Request $request): Response
+    {
+        $schoolId = $this->schoolId();
+        $language = $request->validate([
+            'lang' => ['nullable', Rule::in(['fr', 'ar'])],
+        ])['lang'] ?? data_get(Auth::user(), 'language', 'fr');
+        $language = in_array($language, ['fr', 'ar'], true) ? $language : 'fr';
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->first(['name_fr', 'name_ar']);
+        abort_unless($school, 404);
+
+        $labels = $language === 'ar'
+            ? [
+                'title' => 'إيصال الدفع',
+                'paymentConfirmation' => 'يؤكد هذا المستند دفعة مسجلة فقط.',
+                'student' => 'الطالب',
+                'academicYear' => 'السنة الدراسية',
+                'billingPeriod' => 'فترة الاستحقاق',
+                'amountReceived' => 'المبلغ المستلم',
+                'paidAt' => 'تاريخ الدفع',
+                'paymentMethod' => 'طريقة الدفع',
+                'reference' => 'المرجع',
+                'generatedAt' => 'تاريخ الإنشاء',
+            ]
+            : [
+                'title' => 'Reçu de paiement',
+                'paymentConfirmation' => 'Ce document confirme uniquement un paiement enregistré.',
+                'student' => 'Élève',
+                'academicYear' => 'Année scolaire',
+                'billingPeriod' => 'Période de paiement',
+                'amountReceived' => 'Montant reçu',
+                'paidAt' => 'Payé le',
+                'paymentMethod' => 'Mode de paiement',
+                'reference' => 'Référence',
+                'generatedAt' => 'Généré le',
+            ];
+        $dots = '................................';
+        $schoolName = $language === 'ar' ? $school->name_ar : $school->name_fr;
+        $temporaryDirectory = storage_path('framework/cache/mpdf');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $pdfOptions = [
+            'mode' => 'utf-8',
+            'format' => [160, 400],
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+            'tempDir' => $temporaryDirectory,
+        ];
+        $receiptHtml = view('exports.payment-receipt', [
+            'language' => $language,
+            'labels' => $labels,
+            'isTemplate' => true,
+            'schoolName' => $schoolName,
+            'yearLabel' => $dots,
+            'studentName' => $dots,
+            'periodStart' => $dots,
+            'periodEnd' => $dots,
+            'amount' => $dots,
+            'currency' => '',
+            'paidAt' => $dots,
+            'paymentMethod' => $dots,
+            'reference' => $dots,
+            'generatedAt' => $dots,
+        ])->render();
+
+        $pdf = new Mpdf($pdfOptions);
+        $pdf->WriteHTML($receiptHtml);
+        $pageSide = max(160, (int) ceil($pdf->y + 4));
+        $pdfOptions['format'] = [$pageSide, $pageSide];
+        $pdf = new Mpdf($pdfOptions);
+        $pdf->SetTitle($labels['title']);
+        $pdf->WriteHTML($receiptHtml);
+
+        return response($pdf->Output('', Destination::STRING_RETURN), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="payment-receipt-template.pdf"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function show(): JsonResponse
     {
         $school = DB::table('schools')

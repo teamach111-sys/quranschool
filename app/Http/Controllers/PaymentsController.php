@@ -681,7 +681,7 @@ class PaymentsController extends Controller
         File::ensureDirectoryExists($temporaryDirectory);
         $pdfOptions = [
             'mode' => 'utf-8',
-            'format' => 'A4',
+            'format' => [160, 400],
             'default_font' => 'dejavusans',
             'autoScriptToLang' => true,
             'autoLangToFont' => true,
@@ -708,9 +708,9 @@ class PaymentsController extends Controller
         ])->render();
         $pdf = new Mpdf($pdfOptions);
         $pdf->WriteHTML($receiptHtml);
-        $pageHeight = (int) ceil($pdf->y + 4);
+        $pageSide = max(160, (int) ceil($pdf->y + 4));
 
-        $pdfOptions['format'] = [210, $pageHeight];
+        $pdfOptions['format'] = [$pageSide, $pageSide];
         $pdf = new Mpdf($pdfOptions);
         $pdf->SetTitle($labels['title']);
         $pdf->WriteHTML($receiptHtml);
