@@ -96,6 +96,7 @@ class StudentsTableTest extends TestCase
             $table->unsignedSmallInteger('ayah_end')->nullable();
             $table->string('portion_label');
             $table->string('evaluation');
+            $table->text('notes')->nullable();
         });
 
         Schema::create('payments', function (Blueprint $table) {
@@ -556,7 +557,7 @@ class StudentsTableTest extends TestCase
         ]));
 
         $this->patchJson('/students/4/status', [
-            'year_id' => 2,
+            'year_id' => 3,
             'status' => 'paused',
         ])->assertNotFound();
     }
@@ -1205,6 +1206,94 @@ class StudentsTableTest extends TestCase
             ->assertJsonPath('student.payment_summary.0.due_count', 1)
             ->assertJsonPath('student.payment_summary.0.late_count', 1)
             ->assertJsonPath('student.payment_summary.0.waived_count', 1);
+    }
+
+    public function test_admin_exports_a_student_progress_register_for_the_selected_year(): void
+    {
+        DB::table('academic_years')->insert([
+            'id' => 3,
+            'school_id' => 1,
+            'year_label' => '2025-2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-06-30',
+            'is_current' => false,
+            'is_active' => false,
+        ]);
+        DB::table('memorization_sessions')->insert([
+            'id' => 10,
+            'student_id' => 1,
+            'school_id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'year_id' => 1,
+            'session_date' => '2026-10-12',
+            'surah_start' => 1,
+            'ayah_start' => 1,
+            'surah_end' => 1,
+            'ayah_end' => 7,
+            'portion_label' => 'Al-Fatiha',
+            'evaluation' => 'excellent',
+            'notes' => 'Bonne récitation',
+        ]);
+        DB::table('memorization_sessions')->insert([
+            'id' => 11,
+            'student_id' => 1,
+            'school_id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'year_id' => 3,
+            'session_date' => '2026-10-13',
+            'portion_label' => 'Other academic year',
+            'evaluation' => 'good',
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/students/1/progress-export?year_id=1&lang=fr');
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', 'attachment; filename="student-progress-1.pdf"')
+            ->assertHeader('X-Export-Record-Count', '1');
+        $pdfContents = $response->getContent();
+        $this->assertStringStartsWith('%PDF-', $pdfContents);
+        $this->assertSame(
+            1,
+            preg_match('/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/', $pdfContents, $pageDimensions),
+        );
+        $this->assertEqualsWithDelta(595.28, (float) $pageDimensions[1], 0.1);
+        $this->assertEqualsWithDelta(841.89, (float) $pageDimensions[2], 0.1);
+        $this->assertDatabaseHas('audit_events', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'actor_user_id' => 10,
+            'action_type' => 'exported',
+            'entity_type' => 'student',
+            'entity_id' => 1,
+            'summary_key' => 'student.progress_exported',
+        ]);
+        $changes = json_decode(DB::table('audit_events')->value('changes'), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('student_progress', $changes['page']);
+        $this->assertSame(1, $changes['record_count']);
+    }
+
+    public function test_teacher_progress_register_export_is_limited_to_assigned_students(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->get('/students/1/progress-export?year_id=1&lang=ar')
+            ->assertOk()
+            ->assertHeader('X-Export-Record-Count', '0');
+
+        $this->get('/students/4/progress-export?year_id=2&lang=fr')->assertNotFound();
+        $this->assertDatabaseCount('audit_events', 1);
     }
 
     public function test_student_options_are_limited_to_active_rooms_in_the_selected_school_and_year(): void

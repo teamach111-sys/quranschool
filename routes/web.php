@@ -72,6 +72,11 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('studentId')
         ->name('students.show');
 
+    Route::get('/students/{studentId}/progress-export', [StudentsController::class, 'exportProgress'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('studentId')
+        ->name('students.progress-export');
+
     Route::post('/students', [StudentsController::class, 'store'])
         ->middleware('can:access-dashboard')
         ->name('students.store');

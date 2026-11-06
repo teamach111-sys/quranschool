@@ -4,6 +4,7 @@ import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import Modal from '../../../modals/desktopmodal';
+import { useToast } from '../../../components/ToastProvider';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 import {
@@ -88,11 +89,13 @@ export default function StudentFormModal({
     onSaved,
 }) {
     const { isRTL, lang, t } = useLanguage();
+    const toast = useToast();
     const [form, setForm] = useState(() => initialValues(student));
     const [rooms, setRooms] = useState([]);
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [exportingProgress, setExportingProgress] = useState(false);
     const [confirmingStatus, setConfirmingStatus] = useState(null);
     const [canEditYear, setCanEditYear] = useState(false);
     const [error, setError] = useState(null);
@@ -103,6 +106,41 @@ export default function StudentFormModal({
     const [lastAutoFilledReEnrollment, setLastAutoFilledReEnrollment] = useState(null);
     const formId = useId();
     const isEditing = Boolean(student?.id);
+
+    const exportProgress = async () => {
+        if (!student?.id || exportingProgress) return;
+        setExportingProgress(true);
+
+        try {
+            const query = new URLSearchParams({ lang });
+            if (yearId) query.set('year_id', String(yearId));
+            const response = await apiFetch(`/students/${student.id}/progress-export?${query}`, {
+                headers: { Accept: 'application/pdf' },
+            });
+            if (!response.ok || !response.headers.get('Content-Type')?.toLowerCase().includes('application/pdf')) {
+                throw new Error('Student progress export failed');
+            }
+            const sessionCount = Number(response.headers.get('X-Export-Record-Count'));
+            if (!Number.isInteger(sessionCount) || sessionCount < 0) {
+                throw new Error('Student progress export count was invalid');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `student-progress-${student.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast.success(t.students.profile.progressExported(sessionCount));
+        } catch {
+            toast.error(t.students.profile.progressExportError);
+        } finally {
+            setExportingProgress(false);
+        }
+    };
 
     useEffect(() => {
         if (!open) return undefined;
@@ -669,9 +707,20 @@ export default function StudentFormModal({
 
     const footer = readOnly
         ? (
-            <button type="button" onClick={onClose} className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]">
-                {t.students.form.close}
-            </button>
+            <>
+                <button
+                    type="button"
+                    disabled={loading || exportingProgress || !student?.id}
+                    onClick={exportProgress}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:text-[#ecf3ef]"
+                >
+                    <Icon name={exportingProgress ? 'progress_activity' : 'download'} className={`text-[18px] ${exportingProgress ? 'animate-spin' : ''}`} />
+                    {exportingProgress ? t.students.profile.exportingProgress : t.students.profile.exportProgress}
+                </button>
+                <button type="button" onClick={onClose} className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]">
+                    {t.students.form.close}
+                </button>
+            </>
         )
         : (
             <>

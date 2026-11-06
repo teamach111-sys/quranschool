@@ -490,6 +490,200 @@ class StudentsController extends Controller
         ]);
     }
 
+    public function exportProgress(Request $request, int $studentId): Response
+    {
+        $user = Auth::user();
+        abort_unless($user, 403);
+
+        $schoolId = (int) data_get($user, 'school_id');
+        abort_unless($schoolId, 403);
+
+        $role = $user->role ?? null;
+        abort_unless(in_array($role, ['admin', 'teacher', 'secretary'], true), 403);
+
+        $validated = $request->validate([
+            'year_id' => ['nullable', 'integer'],
+            'lang' => ['nullable', Rule::in(['fr', 'ar'])],
+        ]);
+        $yearId = $this->resolveYearId($request, $schoolId);
+        $studentQuery = DB::table('students')
+            ->leftJoin('rooms', function ($join) {
+                $join->on('rooms.id', '=', 'students.room_id')
+                    ->on('rooms.school_id', '=', 'students.school_id')
+                    ->on('rooms.year_id', '=', 'students.year_id');
+            })
+            ->where('students.id', $studentId)
+            ->where('students.school_id', $schoolId)
+            ->where('students.year_id', $yearId);
+
+        if ($role === 'teacher') {
+            $today = now()->toDateString();
+            $studentQuery->whereIn('students.status', ['active', 'paused'])
+                ->whereExists(function ($assignment) use ($schoolId, $yearId, $user, $today) {
+                    $assignment->selectRaw('1')
+                        ->from('room_teachers')
+                        ->whereColumn('room_teachers.room_id', 'students.room_id')
+                        ->where('room_teachers.school_id', $schoolId)
+                        ->where('room_teachers.year_id', $yearId)
+                        ->where('room_teachers.teacher_id', $user->id)
+                        ->where('room_teachers.assigned_from', '<=', $today)
+                        ->where(function ($dates) use ($today) {
+                            $dates->whereNull('room_teachers.assigned_until')
+                                ->orWhere('room_teachers.assigned_until', '>=', $today);
+                        });
+                });
+        }
+
+        $student = $studentQuery->first([
+            'students.id',
+            'students.student_number',
+            'students.full_name',
+            'students.room_id',
+            'rooms.name as room_name',
+        ]);
+        abort_unless($student, 404);
+
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->first(['name_fr', 'name_ar']);
+        abort_unless($school, 404);
+        $yearLabel = DB::table('academic_years')
+            ->where('id', $yearId)
+            ->where('school_id', $schoolId)
+            ->value('year_label');
+        abort_unless(is_string($yearLabel) && $yearLabel !== '', 404);
+
+        $language = $validated['lang'] ?? 'fr';
+        $labels = $language === 'ar'
+            ? [
+                'title' => 'سجل التقدم في الحفظ',
+                'school' => 'المؤسسة',
+                'student' => 'الطالب',
+                'studentNumber' => 'رقم الطالب',
+                'group' => 'المجموعة',
+                'year' => 'السنة الدراسية',
+                'generated' => 'تاريخ الإصدار',
+                'sessionCount' => 'عدد الحصص',
+                'date' => 'التاريخ',
+                'portion' => 'المحفوظ',
+                'evaluation' => 'التقييم',
+                'notes' => 'ملاحظات الحصة',
+                'excellent' => 'ممتاز',
+                'good' => 'جيد',
+                'needs_review' => 'يحتاج إلى مراجعة',
+                'noSessions' => 'لا توجد حصص مسجلة لهذه السنة الدراسية.',
+                'observations' => 'ملاحظات عامة',
+                'teacherSignature' => 'توقيع المعلم',
+                'page' => 'صفحة',
+                'of' => 'من',
+            ]
+            : [
+                'title' => 'Registre de progression',
+                'school' => 'Établissement',
+                'student' => 'Élève',
+                'studentNumber' => 'N° élève',
+                'group' => 'Groupe',
+                'year' => 'Année scolaire',
+                'generated' => 'Édité le',
+                'sessionCount' => 'Nombre de séances',
+                'date' => 'Date',
+                'portion' => 'Portion mémorisée',
+                'evaluation' => 'Évaluation',
+                'notes' => 'Note de séance',
+                'excellent' => 'Excellent',
+                'good' => 'Bien',
+                'needs_review' => 'À revoir',
+                'noSessions' => 'Aucune séance enregistrée pour cette année scolaire.',
+                'observations' => 'Observations générales',
+                'teacherSignature' => 'Signature de l’enseignant',
+                'page' => 'Page',
+                'of' => 'sur',
+            ];
+        $sessions = DB::table('memorization_sessions')
+            ->where('student_id', $studentId)
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->orderBy('session_date')
+            ->orderBy('id')
+            ->get([
+                'session_date',
+                'portion_label',
+                'evaluation',
+                'notes',
+            ])
+            ->map(fn ($session): array => [
+                'session_date' => $session->session_date,
+                'portion_label' => $session->portion_label,
+                'evaluation' => $labels[$session->evaluation] ?? $session->evaluation,
+                'notes' => $session->notes,
+            ]);
+
+        $schoolName = $language === 'ar' ? $school->name_ar : $school->name_fr;
+        abort_unless(is_string($schoolName) && $schoolName !== '', 500);
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        $temporaryDirectory = storage_path('framework/cache/mpdf');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $pdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+            'margin_left' => 12,
+            'margin_right' => 12,
+            'margin_top' => 12,
+            'margin_bottom' => 16,
+            'tempDir' => $temporaryDirectory,
+        ]);
+        $pdf->SetTitle($labels['title'].' - '.$student->full_name);
+        $pdf->SetHTMLFooter(
+            '<div style="text-align:center;font-size:8pt;color:#555;">'
+                .$labels['page'].' {PAGENO} '.$labels['of'].' {nbpg}'
+                .'</div>',
+        );
+        $pdf->WriteHTML(view('exports.student-progress-register', [
+            'language' => $language,
+            'labels' => $labels,
+            'schoolName' => $schoolName,
+            'student' => $student,
+            'studentNumber' => $role === 'teacher' ? null : $student->student_number,
+            'yearLabel' => $yearLabel,
+            'generatedAt' => $generatedAt,
+            'sessions' => $sessions,
+        ])->render());
+        $contents = $pdf->Output('', Destination::STRING_RETURN);
+
+        $actor = DB::table('users')
+            ->where('school_id', $schoolId)
+            ->where('id', $user->id)
+            ->first(['id', 'full_name']);
+        abort_unless($actor && is_string($actor->full_name) && $actor->full_name !== '', 403);
+        DB::table('audit_events')->insert([
+            'school_id' => $schoolId,
+            'year_id' => $yearId,
+            'actor_user_id' => (int) $actor->id,
+            'actor_name' => $actor->full_name,
+            'action_type' => 'exported',
+            'entity_type' => 'student',
+            'entity_id' => $studentId,
+            'summary_key' => 'student.progress_exported',
+            'changes' => json_encode([
+                'format' => 'pdf',
+                'page' => 'student_progress',
+                'record_count' => $sessions->count(),
+            ], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+        ]);
+
+        return response($contents, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="student-progress-'.$studentId.'.pdf"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Export-Record-Count' => (string) $sessions->count(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         [, $schoolId] = $this->managerContext();
