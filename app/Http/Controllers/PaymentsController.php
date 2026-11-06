@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use DateTimeImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
@@ -864,6 +865,16 @@ class PaymentsController extends Controller
                     ],
                     $rowsToInsert,
                 ));
+                AuditEventLogger::record(
+                    $schoolId,
+                    (int) $year->id,
+                    'payment',
+                    null,
+                    'created',
+                    'payment.periods_generated',
+                    [],
+                    ['record_count' => count($rowsToInsert), 'student_count' => count($studentIds)],
+                );
             }
 
             return [
@@ -896,7 +907,7 @@ class PaymentsController extends Controller
                 ? $this->generatePaymentReceipt($schoolId)
                 : null;
 
-            return DB::table('payments')->insertGetId([
+            $paymentId = DB::table('payments')->insertGetId([
                 ...$this->paymentAttributes($validated, $schoolCurrency, $receipt),
                 'school_id' => $schoolId,
                 'year_id' => (int) $year->id,
@@ -904,6 +915,20 @@ class PaymentsController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            AuditEventLogger::record(
+                $schoolId,
+                (int) $year->id,
+                'payment',
+                (int) $paymentId,
+                'created',
+                'payment.created',
+                [],
+                array_intersect_key($validated, array_flip([
+                    'student_id', 'period_start', 'period_end', 'amount', 'status', 'payment_method',
+                ])),
+            );
+
+            return $paymentId;
         });
 
         return response()->json(['payment_id' => $paymentId], 201);
@@ -931,7 +956,7 @@ class PaymentsController extends Controller
                     ->where('school_id', $schoolId)
                     ->where('year_id', $yearId)
                     ->lockForUpdate()
-                    ->first(['status', 'payment_method', 'reference', 'notes']);
+                    ->first(['status', 'paid_at', 'payment_method', 'notes']);
                 abort_unless($payment && in_array($payment->status, ['due', 'late', 'waived'], true), 404);
                 $receipt = $validated['status'] === 'paid'
                     ? $this->generatePaymentReceipt($schoolId)
@@ -946,13 +971,33 @@ class PaymentsController extends Controller
                         'payment_method' => $validated['status'] === 'paid'
                             ? $validated['payment_method']
                             : null,
+                        'notes' => $validated['notes'] ?? $payment->notes,
                         'reference' => $validated['status'] === 'paid'
                             ? $receipt['reference']
                             : null,
-                        'notes' => $validated['notes'] ?? $payment->notes,
                         'recorded_by' => (int) $user->id,
                         'updated_at' => now(),
                     ]);
+                AuditEventLogger::record(
+                    $schoolId,
+                    $yearId,
+                    'payment',
+                    $paymentId,
+                    'updated',
+                    'payment.updated',
+                    [
+                        'status' => $payment->status,
+                        'paid_at' => $payment->paid_at,
+                        'payment_method' => $payment->payment_method,
+                        'notes' => $payment->notes,
+                    ],
+                    [
+                        'status' => $validated['status'],
+                        'paid_at' => $receipt['paid_at'] ?? null,
+                        'payment_method' => $validated['status'] === 'paid' ? $validated['payment_method'] : null,
+                        'notes' => $validated['notes'] ?? $payment->notes,
+                    ],
+                );
             });
 
             return response()->json(['updated' => true]);
@@ -968,7 +1013,10 @@ class PaymentsController extends Controller
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
                 ->lockForUpdate()
-                ->first(['student_id', 'status', 'paid_at', 'reference']);
+                ->first([
+                    'student_id', 'status', 'paid_at', 'payment_method', 'reference', 'notes',
+                    'period_start', 'period_end', 'amount', 'currency',
+                ]);
             abort_unless($payment, 404);
 
             $this->lockStudentsForPayment(
@@ -997,6 +1045,38 @@ class PaymentsController extends Controller
                     'recorded_by' => (int) $user->id,
                     'updated_at' => now(),
                 ]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'payment',
+                $paymentId,
+                'updated',
+                'payment.updated',
+                [
+                    'student_id' => (int) $payment->student_id,
+                    'status' => $payment->status,
+                    'paid_at' => $payment->paid_at,
+                    'payment_method' => $payment->payment_method,
+                    'reference' => $payment->reference,
+                    'notes' => $payment->notes,
+                    'period_start' => $payment->period_start,
+                    'period_end' => $payment->period_end,
+                    'amount' => (string) $payment->amount,
+                    'currency' => $payment->currency,
+                ],
+                [
+                    'student_id' => (int) $validated['student_id'],
+                    'status' => $validated['status'],
+                    'paid_at' => $receipt['paid_at'] ?? $payment->paid_at,
+                    'payment_method' => $validated['payment_method'],
+                    'reference' => $receipt['reference'] ?? $payment->reference,
+                    'notes' => $validated['notes'] ?? null,
+                    'period_start' => $validated['period_start'],
+                    'period_end' => $validated['period_end'],
+                    'amount' => (string) $validated['amount'],
+                    'currency' => $schoolCurrency,
+                ],
+            );
         });
 
         return response()->json(['updated' => true]);

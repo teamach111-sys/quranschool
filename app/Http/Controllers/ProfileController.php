@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,15 +32,35 @@ class ProfileController extends Controller
             'language' => ['required', Rule::in(['fr', 'ar'])],
         ]);
 
-        DB::table('users')
-            ->where('id', (int) $user->id)
-            ->where('school_id', (int) $user->school_id)
-            ->update([
+        DB::transaction(function () use ($validated, $user) {
+            $before = DB::table('users')
+                ->where('id', (int) $user->id)
+                ->where('school_id', (int) $user->school_id)
+                ->lockForUpdate()
+                ->first(['full_name', 'phone', 'language']);
+            abort_unless($before, 404);
+
+            $after = [
                 'full_name' => $validated['full_name'],
                 'phone' => $validated['phone'] ?? null,
                 'language' => $validated['language'],
-                'updated_at' => now(),
-            ]);
+            ];
+            DB::table('users')
+                ->where('id', (int) $user->id)
+                ->where('school_id', (int) $user->school_id)
+                ->update([...$after, 'updated_at' => now()]);
+
+            AuditEventLogger::record(
+                (int) $user->school_id,
+                null,
+                'user',
+                (int) $user->id,
+                'updated',
+                'user.profile_updated',
+                (array) $before,
+                $after,
+            );
+        });
 
         return $this->profileResponse((int) $user->id, (int) $user->school_id);
     }
@@ -57,21 +78,31 @@ class ProfileController extends Controller
         $userQuery = DB::table('users')
             ->where('id', (int) $user->id)
             ->where('school_id', (int) $user->school_id);
-        $passwordHash = $userQuery->value('password_hash');
+        DB::transaction(function () use ($userQuery, $validated, $user) {
+            $passwordHash = (clone $userQuery)->lockForUpdate()->value('password_hash');
+            abort_unless($passwordHash, 404);
 
-        abort_unless($passwordHash, 404);
+            if (! Hash::check($validated['current_password'], $passwordHash)) {
+                throw ValidationException::withMessages([
+                    'current_password' => 'The current password is incorrect.',
+                ]);
+            }
 
-        if (! Hash::check($validated['current_password'], $passwordHash)) {
-            throw ValidationException::withMessages([
-                'current_password' => 'The current password is incorrect.',
+            $updated = $userQuery->update([
+                'password_hash' => Hash::make($validated['password']),
+                'updated_at' => now(),
             ]);
-        }
+            abort_unless($updated > 0, 404);
 
-        $updated = $userQuery->update([
-            'password_hash' => Hash::make($validated['password']),
-            'updated_at' => now(),
-        ]);
-        abort_unless($updated > 0, 404);
+            AuditEventLogger::record(
+                (int) $user->school_id,
+                null,
+                'user',
+                (int) $user->id,
+                'updated',
+                'user.password_changed',
+            );
+        });
 
         return response()->json(['updated' => true]);
     }

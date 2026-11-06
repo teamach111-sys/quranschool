@@ -14,6 +14,29 @@ class AcademicYearsTableTest extends TestCase
     {
         parent::setUp();
 
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->string('full_name');
+        });
+        DB::table('users')->insert(['id' => 10, 'school_id' => 1, 'full_name' => 'Admin User']);
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name', 120);
+            $table->string('action_type', 48);
+            $table->string('entity_type', 64);
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key', 100);
+            $table->json('changes')->nullable();
+            $table->string('reason', 255)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->nullable();
+        });
+
         Schema::create('academic_years', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('school_id');

@@ -29,6 +29,22 @@ class PaymentFormTest extends TestCase
             $table->string('full_name');
         });
 
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name', 120);
+            $table->string('action_type', 48);
+            $table->string('entity_type', 64);
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key', 100);
+            $table->json('changes')->nullable();
+            $table->string('reason', 255)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->nullable();
+        });
+
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
             $table->char('currency', 3);
@@ -92,6 +108,11 @@ class PaymentFormTest extends TestCase
             'payment_method' => 'cash',
             'reference' => 'REC-2026-0002',
         ]);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => $response->json('payment_id'),
+            'summary_key' => 'payment.created',
+            'actor_user_id' => 10,
+        ]);
     }
 
     public function test_admin_updates_a_payment_without_triggering_an_overlap_with_itself(): void
@@ -118,6 +139,13 @@ class PaymentFormTest extends TestCase
             'payment_method' => 'cash',
             'reference' => 'REC-2026-0002',
         ]);
+        $event = DB::table('audit_events')
+            ->where('entity_id', 2)
+            ->where('summary_key', 'payment.updated')
+            ->first();
+        $changes = json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('due', $changes['status']['before']);
+        $this->assertSame('paid', $changes['status']['after']);
     }
 
     public function test_admin_keeps_an_existing_receipt_when_editing_a_paid_payment(): void

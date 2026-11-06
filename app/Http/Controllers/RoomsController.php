@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -486,13 +487,27 @@ class RoomsController extends Controller
         $room = $this->validatedRoom($request, true);
         $now = now();
 
-        $roomId = DB::table('rooms')->insertGetId([
-            ...$room,
-            'school_id' => $schoolId,
-            'year_id' => $yearId,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
+        $roomId = DB::transaction(function () use ($room, $schoolId, $yearId, $now) {
+            $roomId = DB::table('rooms')->insertGetId([
+                ...$room,
+                'school_id' => $schoolId,
+                'year_id' => $yearId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'room',
+                (int) $roomId,
+                'created',
+                'room.created',
+                [],
+                $room,
+            );
+
+            return (int) $roomId;
+        });
 
         return response()->json(['room_id' => (int) $roomId], 201);
     }
@@ -503,7 +518,7 @@ class RoomsController extends Controller
         $existing = DB::table('rooms')
             ->where('id', $roomId)
             ->where('school_id', $schoolId)
-            ->first(['id', 'year_id']);
+            ->first(['id', 'year_id', 'name', 'level', 'age_min', 'age_max', 'capacity', 'is_active']);
         abort_unless($existing, 404);
 
         $yearId = $this->validateYearId($request, $schoolId);
@@ -511,11 +526,23 @@ class RoomsController extends Controller
         $this->ensureYearIsEditable($schoolId, $yearId);
         $room = $this->validatedRoom($request);
 
-        DB::table('rooms')
-            ->where('id', $roomId)
-            ->where('school_id', $schoolId)
-            ->where('year_id', $yearId)
-            ->update([...$room, 'updated_at' => now()]);
+        DB::transaction(function () use ($room, $roomId, $schoolId, $yearId, $existing) {
+            DB::table('rooms')
+                ->where('id', $roomId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->update([...$room, 'updated_at' => now()]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'room',
+                $roomId,
+                'updated',
+                'room.updated',
+                array_intersect_key((array) $existing, $room),
+                $room,
+            );
+        });
 
         return response()->json(['room_id' => $roomId]);
     }
@@ -526,18 +553,30 @@ class RoomsController extends Controller
         $existing = DB::table('rooms')
             ->where('id', $roomId)
             ->where('school_id', $schoolId)
-            ->first(['id', 'year_id']);
+            ->first(['id', 'year_id', 'name', 'is_active']);
         abort_unless($existing, 404);
 
         $yearId = $this->validateYearId($request, $schoolId);
         abort_unless((int) $existing->year_id === $yearId, 404);
         $this->ensureYearIsEditable($schoolId, $yearId);
 
-        DB::table('rooms')
-            ->where('id', $roomId)
-            ->where('school_id', $schoolId)
-            ->where('year_id', $yearId)
-            ->update(['is_active' => false, 'updated_at' => now()]);
+        DB::transaction(function () use ($roomId, $schoolId, $yearId, $existing) {
+            DB::table('rooms')
+                ->where('id', $roomId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->update(['is_active' => false, 'updated_at' => now()]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'room',
+                $roomId,
+                'archived',
+                'room.archived',
+                ['name' => $existing->name, 'is_active' => (bool) $existing->is_active],
+                ['name' => $existing->name, 'is_active' => false],
+            );
+        });
 
         return response()->json(['room_id' => $roomId, 'is_active' => false]);
     }
@@ -617,6 +656,20 @@ class RoomsController extends Controller
                 'assigned_from' => $validated['assigned_from'],
                 'assigned_until' => $validated['assigned_until'] ?? null,
             ]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'room',
+                $roomId,
+                'created',
+                'room.teacher_assigned',
+                [],
+                [
+                    'teacher_id' => (int) $validated['teacher_id'],
+                    'assigned_from' => $validated['assigned_from'],
+                    'assigned_until' => $validated['assigned_until'] ?? null,
+                ],
+            );
         });
 
         return response()->json(['room_id' => $roomId], 201);
@@ -658,6 +711,16 @@ class RoomsController extends Controller
                 ->where('assigned_from', $validated['assigned_from'])
                 ->whereNull('assigned_until')
                 ->update(['assigned_until' => $today]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'room',
+                $roomId,
+                'updated',
+                'room.teacher_assignment_ended',
+                ['teacher_id' => $teacherId, 'assigned_from' => $assignment->assigned_from, 'assigned_until' => null],
+                ['teacher_id' => $teacherId, 'assigned_from' => $assignment->assigned_from, 'assigned_until' => $today],
+            );
         });
 
         return response()->json([
@@ -700,7 +763,7 @@ class RoomsController extends Controller
                 ->where('year_id', $yearId)
                 ->whereIn('status', ['active', 'paused'])
                 ->lockForUpdate()
-                ->first(['id']);
+                ->first(['id', 'room_id']);
             abort_unless($student, 404);
 
             if ($validated['room_id'] !== null) {
@@ -736,6 +799,16 @@ class RoomsController extends Controller
                     'room_id' => $validated['room_id'],
                     'updated_at' => now(),
                 ]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'student',
+                $studentId,
+                'updated',
+                'student.room_changed',
+                ['room_id' => $student->room_id === null ? null : (int) $student->room_id],
+                ['room_id' => $validated['room_id'] === null ? null : (int) $validated['room_id']],
+            );
         });
 
         return response()->json([

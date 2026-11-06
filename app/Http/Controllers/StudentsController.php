@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -507,13 +508,27 @@ class StudentsController extends Controller
                 $this->ensureRoomHasCapacity($schoolId, $yearId, $student['room_id']);
             }
 
-            return DB::table('students')->insertGetId([
+            $studentId = DB::table('students')->insertGetId([
                 ...$student,
                 'school_id' => $schoolId,
                 'year_id' => $yearId,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'student',
+                (int) $studentId,
+                'created',
+                'student.created',
+                [],
+                array_intersect_key($student, array_flip([
+                    'student_number', 'full_name', 'status', 'enrollment_date', 'room_id',
+                ])),
+            );
+
+            return $studentId;
         });
 
         return response()->json([
@@ -534,14 +549,14 @@ class StudentsController extends Controller
         abort_unless((int) $existing->year_id === $yearId, 404);
         $this->ensureYearIsEditable($schoolId, $yearId);
         $student = $this->validatedStudent($request, $schoolId, $yearId, $studentId);
-
         DB::transaction(function () use ($student, $studentId, $schoolId, $yearId) {
-            DB::table('students')
+            $before = DB::table('students')
                 ->where('id', $studentId)
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
                 ->lockForUpdate()
-                ->first(['id']);
+                ->first(['student_number', 'full_name', 'status', 'enrollment_date', 'room_id']);
+            abort_unless($before, 404);
 
             if ($student['room_id'] !== null && $student['status'] !== 'withdrawn') {
                 $this->ensureRoomHasCapacity($schoolId, $yearId, $student['room_id'], $studentId);
@@ -552,6 +567,18 @@ class StudentsController extends Controller
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
                 ->update([...$student, 'updated_at' => now()]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'student',
+                $studentId,
+                'updated',
+                'student.updated',
+                (array) $before,
+                array_intersect_key($student, array_flip([
+                    'student_number', 'full_name', 'status', 'enrollment_date', 'room_id',
+                ])),
+            );
         });
 
         return response()->json([
@@ -574,15 +601,34 @@ class StudentsController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(['paused', 'withdrawn'])],
         ]);
+        DB::transaction(function () use ($studentId, $schoolId, $yearId, $validated) {
+            $before = DB::table('students')
+                ->where('id', $studentId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->lockForUpdate()
+                ->value('status');
+            abort_unless($before !== null, 404);
 
-        DB::table('students')
-            ->where('id', $studentId)
-            ->where('school_id', $schoolId)
-            ->where('year_id', $yearId)
-            ->update([
-                'status' => $validated['status'],
-                'updated_at' => now(),
-            ]);
+            DB::table('students')
+                ->where('id', $studentId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->update([
+                    'status' => $validated['status'],
+                    'updated_at' => now(),
+                ]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'student',
+                $studentId,
+                'updated',
+                'student.status_changed',
+                ['status' => $before],
+                ['status' => $validated['status']],
+            );
+        });
 
         return response()->json([
             'student' => $this->findStudentPayload($studentId, $schoolId, $yearId),

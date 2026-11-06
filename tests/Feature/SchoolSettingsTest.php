@@ -14,6 +14,29 @@ class SchoolSettingsTest extends TestCase
     {
         parent::setUp();
 
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->string('full_name');
+        });
+        DB::table('users')->insert(['id' => 10, 'school_id' => 1, 'full_name' => 'Admin User']);
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name', 120);
+            $table->string('action_type', 48);
+            $table->string('entity_type', 64);
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key', 100);
+            $table->json('changes')->nullable();
+            $table->string('reason', 255)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->nullable();
+        });
+
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
             $table->string('name_fr', 150);
@@ -85,6 +108,11 @@ class SchoolSettingsTest extends TestCase
             'name_fr' => 'École 2',
             'currency' => 'MAD',
         ]);
+        $event = DB::table('audit_events')->first();
+        $this->assertSame('school.settings_updated', $event->summary_key);
+        $changes = json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('École 1', $changes['name_fr']['before']);
+        $this->assertSame('Nouvelle école', $changes['name_fr']['after']);
     }
 
     public function test_non_admin_cannot_read_school_settings(): void
@@ -96,6 +124,39 @@ class SchoolSettingsTest extends TestCase
         ]));
 
         $this->getJson('/admin/school-settings')->assertForbidden();
+    }
+
+    public function test_omitted_optional_settings_are_preserved_and_audited_from_the_saved_state(): void
+    {
+        DB::table('schools')->where('id', 1)->update([
+            'monthly_fee' => '75.00',
+            'address' => 'Existing address',
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/admin/school-settings', [
+            'name_fr' => 'École mise à jour',
+            'name_ar' => 'مدرسة محدثة',
+            'currency' => 'MAD',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('schools', [
+            'id' => 1,
+            'address' => 'Existing address',
+            'monthly_fee' => '75.00',
+        ]);
+        $changes = json_decode(
+            DB::table('audit_events')->value('changes'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+        $this->assertArrayNotHasKey('monthly_fee', $changes);
+        $this->assertArrayNotHasKey('address', $changes);
     }
 
     public function test_admin_cannot_save_a_negative_monthly_fee(): void

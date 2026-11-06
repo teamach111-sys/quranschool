@@ -56,6 +56,8 @@ class RoomsTableTest extends TestCase
             $table->unsignedBigInteger('entity_id')->nullable();
             $table->string('summary_key');
             $table->json('changes')->nullable();
+            $table->string('reason')->nullable();
+            $table->string('request_id', 100)->nullable();
             $table->timestamp('created_at')->nullable();
         });
 
@@ -368,6 +370,16 @@ class RoomsTableTest extends TestCase
             'name' => 'Gamma Advanced',
             'level' => 'advanced',
         ]);
+        $changeEvent = DB::table('audit_events')
+            ->where('entity_type', 'room')
+            ->where('entity_id', 4)
+            ->where('summary_key', 'room.updated')
+            ->first();
+        $changes = json_decode($changeEvent->changes, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('Gamma', $changes['name']['before']);
+        $this->assertSame('Gamma Advanced', $changes['name']['after']);
+        $this->assertArrayNotHasKey('id', $changes);
+        $this->assertArrayNotHasKey('year_id', $changes);
     }
 
     public function test_room_validation_rejects_reversed_ages_and_zero_capacity(): void
@@ -432,6 +444,15 @@ class RoomsTableTest extends TestCase
             ->assertJsonPath('room_id', null);
 
         $this->assertDatabaseHas('students', ['id' => 1, 'room_id' => null]);
+        $placementEvents = DB::table('audit_events')
+            ->where('entity_type', 'student')
+            ->where('entity_id', 1)
+            ->where('summary_key', 'student.room_changed')
+            ->orderBy('id')
+            ->get();
+        $this->assertCount(2, $placementEvents);
+        $this->assertSame(1, json_decode($placementEvents[0]->changes, true)['room_id']['before']);
+        $this->assertNull(json_decode($placementEvents[1]->changes, true)['room_id']['after']);
     }
 
     public function test_student_placement_cannot_exceed_room_capacity(): void

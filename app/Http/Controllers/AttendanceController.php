@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
@@ -847,6 +848,20 @@ class AttendanceController extends Controller
                 ['student_id', 'year_id', 'attendance_date'],
                 ['room_id', 'recorded_by', 'status'],
             );
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'attendance',
+                null,
+                'created',
+                'attendance.bulk_marked',
+                [],
+                [
+                    'record_count' => count($rows),
+                    'attendance_date' => $today,
+                    'status_counts' => collect($rows)->countBy('status')->all(),
+                ],
+            );
 
             return count($rows);
         });
@@ -958,6 +973,16 @@ class AttendanceController extends Controller
                     ->whereIn('student_id', $studentIdsForStatus)
                     ->update(['status' => $status]);
             }
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'attendance',
+                null,
+                'updated',
+                'attendance.bulk_undone',
+                ['record_count' => 0],
+                ['record_count' => count($entries['entries'])],
+            );
 
             return count($entries['entries']);
         });
@@ -1034,7 +1059,7 @@ class AttendanceController extends Controller
                 ->where('year_id', $yearId)
                 ->where('attendance_date', $validated['attendance_date'])
                 ->lockForUpdate()
-                ->first(['id', 'room_id', 'recorded_by']);
+                ->first(['id', 'room_id', 'recorded_by', 'status', 'note']);
 
             if ($user->role === 'secretary') {
                 abort_unless($existing, 404);
@@ -1043,6 +1068,16 @@ class AttendanceController extends Controller
                     ->where('id', $existing->id)
                     ->where('school_id', $schoolId)
                     ->update(['note' => $validated['note']]);
+                AuditEventLogger::record(
+                    $schoolId,
+                    (int) $yearId,
+                    'attendance',
+                    (int) $existing->id,
+                    'updated',
+                    'attendance.updated',
+                    ['note' => $existing->note],
+                    ['note' => $validated['note']],
+                );
 
                 return ['attendance_id' => (int) $existing->id, 'created' => false];
             }
@@ -1094,6 +1129,25 @@ class AttendanceController extends Controller
                 ->where('year_id', $yearId)
                 ->where('attendance_date', $validated['attendance_date'])
                 ->value('id');
+            AuditEventLogger::record(
+                $schoolId,
+                (int) $yearId,
+                'attendance',
+                (int) $attendanceId,
+                $existing ? 'updated' : 'created',
+                $existing ? 'attendance.updated' : 'attendance.created',
+                $existing ? [
+                    'status' => $existing->status,
+                    'note' => $existing->note,
+                    'room_id' => $existing->room_id === null ? null : (int) $existing->room_id,
+                ] : [],
+                [
+                    'student_id' => (int) $student->id,
+                    'attendance_date' => $validated['attendance_date'],
+                    'status' => $validated['status'],
+                    'room_id' => $roomId === null ? null : (int) $roomId,
+                ],
+            );
 
             return ['attendance_id' => (int) $attendanceId, 'created' => ! $existing];
         });
@@ -1122,7 +1176,7 @@ class AttendanceController extends Controller
                 ->where('year_id', $yearId)
                 ->where('attendance_date', $attendanceDate)
                 ->lockForUpdate()
-                ->first(['room_id', 'recorded_by']);
+                ->first(['student_id', 'room_id', 'recorded_by', 'status', 'attendance_date']);
             abort_unless($attendance, 404);
 
             abort_unless((int) $attendance->recorded_by === (int) $user->id, 403);
@@ -1144,6 +1198,21 @@ class AttendanceController extends Controller
                 ->where('year_id', $yearId)
                 ->where('attendance_date', $attendanceDate)
                 ->delete();
+            AuditEventLogger::record(
+                $schoolId,
+                (int) $yearId,
+                'attendance',
+                $attendanceId,
+                'deleted',
+                'attendance.deleted',
+                [
+                    'student_id' => (int) $attendance->student_id,
+                    'room_id' => $attendance->room_id === null ? null : (int) $attendance->room_id,
+                    'attendance_date' => $attendance->attendance_date,
+                    'status' => $attendance->status,
+                ],
+                [],
+            );
         });
 
         return response()->json(['deleted' => true]);

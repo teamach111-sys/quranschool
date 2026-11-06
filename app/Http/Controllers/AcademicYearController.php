@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -108,7 +109,7 @@ class AcademicYearController extends Controller
             $query->where('school_id', $schoolId);
         }
 
-        $year = $query->first(['id', 'is_current']);
+        $year = $query->first(['id', 'is_current', 'is_active']);
         abort_unless($year, 404);
 
         if ($validated['action'] === 'close' && $year->is_current) {
@@ -117,8 +118,20 @@ class AcademicYearController extends Controller
             ], 422);
         }
 
-        if ($validated['action'] === 'set_current') {
-            DB::transaction(function () use ($schoolId, $yearId) {
+        DB::transaction(function () use ($schoolId, $yearId, $year, $validated) {
+            if ($validated['action'] === 'set_current') {
+                $years = DB::table('academic_years');
+
+                if (Schema::hasColumn('academic_years', 'school_id')) {
+                    $years->where('school_id', $schoolId);
+                }
+
+                $previousCurrentYears = $years
+                    ->where('is_current', true)
+                    ->where('id', '<>', $yearId)
+                    ->lockForUpdate()
+                    ->get(['id']);
+
                 $years = DB::table('academic_years');
 
                 if (Schema::hasColumn('academic_years', 'school_id')) {
@@ -141,13 +154,50 @@ class AcademicYearController extends Controller
                     'is_current' => true,
                     'updated_at' => now(),
                 ]);
-            });
-        } else {
-            $query->update([
-                'is_active' => $validated['action'] === 'open',
-                'updated_at' => now(),
-            ]);
-        }
+
+                foreach ($previousCurrentYears as $previousYear) {
+                    AuditEventLogger::record(
+                        (int) $schoolId,
+                        (int) $previousYear->id,
+                        'academic_year',
+                        (int) $previousYear->id,
+                        'updated',
+                        'academic_year.status_changed',
+                        ['is_current' => true],
+                        ['is_current' => false],
+                    );
+                }
+            } else {
+                $query = DB::table('academic_years')->where('id', $yearId);
+
+                if (Schema::hasColumn('academic_years', 'school_id')) {
+                    $query->where('school_id', $schoolId);
+                }
+
+                $isActive = $validated['action'] === 'open';
+                $query->update([
+                    'is_active' => $isActive,
+                    'updated_at' => now(),
+                ]);
+            }
+
+            AuditEventLogger::record(
+                (int) $schoolId,
+                $yearId,
+                'academic_year',
+                $yearId,
+                'updated',
+                'academic_year.status_changed',
+                [
+                    'is_active' => (bool) $year->is_active,
+                    'is_current' => (bool) $year->is_current,
+                ],
+                [
+                    'is_active' => $validated['action'] === 'close' ? false : true,
+                    'is_current' => $validated['action'] === 'set_current' ? true : (bool) $year->is_current,
+                ],
+            );
+        });
 
         return $this->table();
     }
@@ -157,17 +207,47 @@ class AcademicYearController extends Controller
         $schoolId = $this->adminSchoolId();
         $year = $this->validatedYear($request, $schoolId);
 
-        DB::transaction(function () use ($schoolId, $year) {
+        $yearId = DB::transaction(function () use ($schoolId, $year) {
+            $previousCurrentYears = collect();
             if ($year['is_current']) {
+                $query = DB::table('academic_years')->where('is_current', true);
+                if (Schema::hasColumn('academic_years', 'school_id')) {
+                    $query->where('school_id', $schoolId);
+                }
+                $previousCurrentYears = $query->lockForUpdate()->get(['id']);
                 $this->clearCurrentYear($schoolId);
             }
 
-            DB::table('academic_years')->insert([
+            $yearId = DB::table('academic_years')->insertGetId([
                 ...$year,
                 'school_id' => $schoolId,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            AuditEventLogger::record(
+                $schoolId,
+                (int) $yearId,
+                'academic_year',
+                (int) $yearId,
+                'created',
+                'academic_year.created',
+                [],
+                $year,
+            );
+            foreach ($previousCurrentYears as $previousYear) {
+                AuditEventLogger::record(
+                    $schoolId,
+                    (int) $previousYear->id,
+                    'academic_year',
+                    (int) $previousYear->id,
+                    'updated',
+                    'academic_year.status_changed',
+                    ['is_current' => true],
+                    ['is_current' => false],
+                );
+            }
+
+            return (int) $yearId;
         });
 
         return $this->table();
@@ -182,7 +262,7 @@ class AcademicYearController extends Controller
             $yearQuery->where('school_id', $schoolId);
         }
 
-        $existing = $yearQuery->first(['id', 'is_active', 'is_current']);
+        $existing = $yearQuery->first(['id', 'year_label', 'start_date', 'end_date', 'is_active', 'is_current']);
         abort_unless($existing, 404);
 
         if (! $existing->is_active) {
@@ -199,8 +279,16 @@ class AcademicYearController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($schoolId, $yearId, $year) {
+        DB::transaction(function () use ($schoolId, $yearId, $year, $existing) {
+            $previousCurrentYears = collect();
             if ($year['is_current']) {
+                $query = DB::table('academic_years')
+                    ->where('is_current', true)
+                    ->where('id', '<>', $yearId);
+                if (Schema::hasColumn('academic_years', 'school_id')) {
+                    $query->where('school_id', $schoolId);
+                }
+                $previousCurrentYears = $query->lockForUpdate()->get(['id']);
                 $this->clearCurrentYear($schoolId, $yearId);
             }
 
@@ -211,6 +299,34 @@ class AcademicYearController extends Controller
             }
 
             $query->update([...$year, 'updated_at' => now()]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'academic_year',
+                $yearId,
+                'updated',
+                'academic_year.updated',
+                [
+                    'year_label' => $existing->year_label,
+                    'start_date' => $existing->start_date,
+                    'end_date' => $existing->end_date,
+                    'is_active' => (bool) $existing->is_active,
+                    'is_current' => (bool) $existing->is_current,
+                ],
+                $year,
+            );
+            foreach ($previousCurrentYears as $previousYear) {
+                AuditEventLogger::record(
+                    $schoolId,
+                    (int) $previousYear->id,
+                    'academic_year',
+                    (int) $previousYear->id,
+                    'updated',
+                    'academic_year.status_changed',
+                    ['is_current' => true],
+                    ['is_current' => false],
+                );
+            }
         });
 
         return $this->table();

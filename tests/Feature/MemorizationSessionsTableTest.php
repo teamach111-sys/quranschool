@@ -42,6 +42,8 @@ class MemorizationSessionsTableTest extends TestCase
             $table->unsignedBigInteger('entity_id')->nullable();
             $table->string('summary_key');
             $table->text('changes');
+            $table->string('reason')->nullable();
+            $table->string('request_id', 100)->nullable();
             $table->dateTime('created_at');
         });
 

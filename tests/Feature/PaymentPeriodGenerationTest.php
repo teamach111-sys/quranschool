@@ -36,6 +36,22 @@ class PaymentPeriodGenerationTest extends TestCase
             $table->string('full_name');
         });
 
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name', 120);
+            $table->string('action_type', 48);
+            $table->string('entity_type', 64);
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key', 100);
+            $table->json('changes')->nullable();
+            $table->string('reason', 255)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->nullable();
+        });
+
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('school_id');
@@ -182,6 +198,11 @@ class PaymentPeriodGenerationTest extends TestCase
             'currency' => 'MAD',
             'status' => 'due',
             'paid_at' => null,
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'summary_key' => 'payment.periods_generated',
+            'entity_type' => 'payment',
+            'actor_user_id' => 12,
         ]);
 
         $secondPreview = $this->postJson('/payments/generation-preview', $request)

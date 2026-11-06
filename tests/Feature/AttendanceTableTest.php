@@ -54,6 +54,8 @@ class AttendanceTableTest extends TestCase
             $table->unsignedBigInteger('entity_id')->nullable();
             $table->string('summary_key');
             $table->json('changes')->nullable();
+            $table->string('reason')->nullable();
+            $table->string('request_id', 100)->nullable();
             $table->timestamp('created_at')->nullable();
         });
 
@@ -1132,6 +1134,13 @@ class AttendanceTableTest extends TestCase
             'note' => 'Guardian contacted',
             'recorded_by' => 21,
         ]);
+        $event = DB::table('audit_events')
+            ->where('entity_id', 2)
+            ->where('summary_key', 'attendance.updated')
+            ->first();
+        $changes = json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('Family informed', $changes['note']['before']);
+        $this->assertSame('Guardian contacted', $changes['note']['after']);
     }
 
     public function test_secretary_cannot_change_attendance_status(): void

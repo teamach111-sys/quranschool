@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -92,6 +93,24 @@ class AdminUsersController extends Controller
                 'reason' => $validated['reason'],
                 'created_at' => now(),
             ]);
+            AuditEventLogger::record(
+                $schoolId,
+                null,
+                'user',
+                (int) $userId,
+                'created',
+                'user.created',
+                [],
+                [
+                    'full_name' => $validated['full_name'],
+                    'email' => $validated['email'],
+                    'phone' => $validated['phone'],
+                    'language' => $validated['language'],
+                    'role_id' => $validated['role_id'],
+                    'is_active' => $validated['is_active'],
+                ],
+                $validated['reason'],
+            );
 
             return $userId;
         });
@@ -110,7 +129,7 @@ class AdminUsersController extends Controller
                 ->where('school_id', $schoolId)
                 ->where('id', $userId)
                 ->lockForUpdate()
-                ->first(['id', 'role_id', 'is_active']);
+                ->first(['id', 'role_id', 'is_active', 'full_name', 'email', 'phone', 'language']);
             abort_unless($user, 404);
 
             $roleChanged = (int) $user->role_id !== $validated['role_id'];
@@ -160,6 +179,42 @@ class AdminUsersController extends Controller
                 ->where('school_id', $schoolId)
                 ->where('id', $userId)
                 ->update($updates);
+
+            $profileBefore = [
+                'full_name' => $user->full_name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'language' => $user->language,
+            ];
+            $profileAfter = [
+                'full_name' => $validated['full_name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'language' => $validated['language'],
+            ];
+            if ($profileBefore !== $profileAfter) {
+                AuditEventLogger::record(
+                    $schoolId,
+                    null,
+                    'user',
+                    $userId,
+                    'updated',
+                    'user.updated',
+                    $profileBefore,
+                    $profileAfter,
+                    $validated['reason'],
+                );
+            }
+            if ($validated['password'] !== null) {
+                AuditEventLogger::record(
+                    $schoolId,
+                    null,
+                    'user',
+                    $userId,
+                    'updated',
+                    'user.access_reset',
+                );
+            }
 
             if ($roleChanged) {
                 DB::table('role_change_history')->insert([
@@ -335,15 +390,25 @@ class AdminUsersController extends Controller
             'password' => ['required', 'string', 'min:12', 'max:255', 'confirmed'],
         ]);
 
-        $updated = DB::table('users')
-            ->where('school_id', $schoolId)
-            ->where('id', $userId)
-            ->update([
-                'password_hash' => Hash::make($validated['password']),
-                'updated_at' => now(),
-            ]);
+        DB::transaction(function () use ($schoolId, $userId, $validated) {
+            $updated = DB::table('users')
+                ->where('school_id', $schoolId)
+                ->where('id', $userId)
+                ->update([
+                    'password_hash' => Hash::make($validated['password']),
+                    'updated_at' => now(),
+                ]);
+            abort_unless($updated > 0, 404);
 
-        abort_unless($updated > 0, 404);
+            AuditEventLogger::record(
+                $schoolId,
+                null,
+                'user',
+                $userId,
+                'updated',
+                'user.access_reset',
+            );
+        });
 
         return response()->json(['updated' => true]);
     }
@@ -365,34 +430,17 @@ class AdminUsersController extends Controller
         int $newRoleId,
         string $reason,
     ): void {
-        $actorId = (int) Auth::id();
-        $actorName = DB::table('users')
-            ->where('school_id', $schoolId)
-            ->where('id', $actorId)
-            ->value('full_name');
-
-        if (! is_string($actorName) || $actorName === '') {
-            throw new \RuntimeException('Unable to resolve the authenticated actor for the audit event.');
-        }
-
-        DB::table('audit_events')->insert([
-            'school_id' => $schoolId,
-            'year_id' => null,
-            'actor_user_id' => $actorId,
-            'actor_name' => $actorName,
-            'action_type' => 'updated',
-            'entity_type' => 'user',
-            'entity_id' => $userId,
-            'summary_key' => 'user.role_changed',
-            'changes' => json_encode([
-                'role_id' => [
-                    'before' => $oldRoleId,
-                    'after' => $newRoleId,
-                ],
-            ], JSON_THROW_ON_ERROR),
-            'reason' => $reason,
-            'created_at' => now(),
-        ]);
+        AuditEventLogger::record(
+            $schoolId,
+            null,
+            'user',
+            $userId,
+            'updated',
+            'user.role_changed',
+            ['role_id' => $oldRoleId],
+            ['role_id' => $newRoleId],
+            $reason,
+        );
     }
 
     private function recordUserStatusAuditEvent(
@@ -402,34 +450,17 @@ class AdminUsersController extends Controller
         bool $isActive,
         string $reason,
     ): void {
-        $actorId = (int) Auth::id();
-        $actorName = DB::table('users')
-            ->where('school_id', $schoolId)
-            ->where('id', $actorId)
-            ->value('full_name');
-
-        if (! is_string($actorName) || $actorName === '') {
-            throw new \RuntimeException('Unable to resolve the authenticated actor for the audit event.');
-        }
-
-        DB::table('audit_events')->insert([
-            'school_id' => $schoolId,
-            'year_id' => null,
-            'actor_user_id' => $actorId,
-            'actor_name' => $actorName,
-            'action_type' => 'updated',
-            'entity_type' => 'user',
-            'entity_id' => $userId,
-            'summary_key' => 'user.status_changed',
-            'changes' => json_encode([
-                'is_active' => [
-                    'before' => $wasActive,
-                    'after' => $isActive,
-                ],
-            ], JSON_THROW_ON_ERROR),
-            'reason' => $reason,
-            'created_at' => now(),
-        ]);
+        AuditEventLogger::record(
+            $schoolId,
+            null,
+            'user',
+            $userId,
+            'updated',
+            'user.status_changed',
+            ['is_active' => $wasActive],
+            ['is_active' => $isActive],
+            $reason,
+        );
     }
 
     /**

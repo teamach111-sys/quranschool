@@ -88,7 +88,7 @@ class AdminUsersTableTest extends TestCase
         $response = $this->postJson('/admin/users', [
             ...$this->validUser(),
             'reason' => 'New teaching staff member.',
-        ]);
+        ], ['X-Request-ID' => str_repeat('r', 150)]);
 
         $response->assertCreated()->assertJsonStructure(['user_id']);
         $userId = $response->json('user_id');
@@ -113,6 +113,16 @@ class AdminUsersTableTest extends TestCase
             'new_role_id' => 2,
             'reason' => 'New teaching staff member.',
         ]);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_type' => 'user',
+            'entity_id' => $userId,
+            'summary_key' => 'user.created',
+            'actor_user_id' => 10,
+        ]);
+        $this->assertSame(
+            100,
+            strlen(DB::table('audit_events')->where('entity_id', $userId)->value('request_id')),
+        );
     }
 
     public function test_admin_cannot_create_a_user_with_an_existing_email(): void
@@ -179,7 +189,10 @@ class AdminUsersTableTest extends TestCase
             'new_role_id' => 3,
             'reason' => 'Moving to office administration.',
         ]);
-        $event = DB::table('audit_events')->where('entity_id', 20)->first();
+        $event = DB::table('audit_events')
+            ->where('entity_id', 20)
+            ->where('summary_key', 'user.role_changed')
+            ->first();
         $this->assertNotNull($event);
         $this->assertSame(1, (int) $event->school_id);
         $this->assertSame(10, (int) $event->actor_user_id);
@@ -190,6 +203,10 @@ class AdminUsersTableTest extends TestCase
             ['role_id' => ['before' => 2, 'after' => 3]],
             json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR),
         );
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => 20,
+            'summary_key' => 'user.updated',
+        ]);
     }
 
     public function test_admin_cannot_change_a_role_without_a_reason(): void

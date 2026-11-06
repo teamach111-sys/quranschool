@@ -29,6 +29,22 @@ class ProfileTest extends TestCase
             $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
         });
+
+        Schema::create('audit_events', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id')->nullable();
+            $table->unsignedBigInteger('actor_user_id');
+            $table->string('actor_name', 120);
+            $table->string('action_type', 48);
+            $table->string('entity_type', 64);
+            $table->unsignedBigInteger('entity_id')->nullable();
+            $table->string('summary_key', 100);
+            $table->json('changes')->nullable();
+            $table->string('reason', 255)->nullable();
+            $table->string('request_id', 100)->nullable();
+            $table->timestamp('created_at')->nullable();
+        });
     }
 
     public static function staffRoles(): array
@@ -93,6 +109,11 @@ class ProfileTest extends TestCase
             'language' => 'ar',
             'is_active' => true,
         ]);
+        $event = DB::table('audit_events')->where('summary_key', 'user.profile_updated')->first();
+        $this->assertNotNull($event);
+        $changes = json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('Profile User', $changes['full_name']['before']);
+        $this->assertSame('Updated Profile User', $changes['full_name']['after']);
         $this->assertTrue(Hash::check(
             'current-password-value',
             DB::table('users')->where('id', 10)->value('password_hash'),
@@ -133,6 +154,9 @@ class ProfileTest extends TestCase
             'new-secure-password-value',
             DB::table('users')->where('id', 10)->value('password_hash'),
         ));
+        $event = DB::table('audit_events')->first();
+        $this->assertSame('user.password_changed', $event->summary_key);
+        $this->assertSame([], json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR));
         $response->assertJsonMissing(['password' => 'new-secure-password-value']);
     }
 

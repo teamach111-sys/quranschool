@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,9 +41,42 @@ class SchoolSettingsController extends Controller
             'monthly_fee' => ['nullable', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
         ]);
 
-        DB::table('schools')
-            ->where('id', $this->schoolId())
-            ->update([...$validated, 'updated_at' => now()]);
+        $schoolId = $this->schoolId();
+        DB::transaction(function () use ($validated, $schoolId) {
+            $before = DB::table('schools')
+                ->where('id', $schoolId)
+                ->lockForUpdate()
+                ->first(['name_fr', 'name_ar', 'address', 'phone', 'email', 'currency', 'monthly_fee']);
+            abort_unless($before, 404);
+
+            $beforeValues = (array) $before;
+            $beforeValues['monthly_fee'] = $before->monthly_fee === null
+                ? null
+                : number_format((float) $before->monthly_fee, 2, '.', '');
+
+            DB::table('schools')
+                ->where('id', $schoolId)
+                ->update([...$validated, 'updated_at' => now()]);
+            $after = DB::table('schools')
+                ->where('id', $schoolId)
+                ->first(['name_fr', 'name_ar', 'address', 'phone', 'email', 'currency', 'monthly_fee']);
+            abort_unless($after, 404);
+            $afterValues = (array) $after;
+            $afterValues['monthly_fee'] = $after->monthly_fee === null
+                ? null
+                : number_format((float) $after->monthly_fee, 2, '.', '');
+
+            AuditEventLogger::record(
+                $schoolId,
+                null,
+                'school',
+                $schoolId,
+                'updated',
+                'school.settings_updated',
+                $beforeValues,
+                $afterValues,
+            );
+        });
 
         return $this->show();
     }

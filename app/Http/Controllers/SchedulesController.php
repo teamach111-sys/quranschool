@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -694,12 +695,24 @@ class SchedulesController extends Controller
             $this->lockScheduleResources($validated, $schoolId, $yearId);
             $this->ensureNoScheduleOverlap($validated, $schoolId, $yearId);
 
-            return DB::table('schedules')->insertGetId([
+            $scheduleId = DB::table('schedules')->insertGetId([
                 ...$validated,
                 'school_id' => $schoolId,
                 'year_id' => $yearId,
                 'created_at' => now(),
             ]);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'schedule',
+                (int) $scheduleId,
+                'created',
+                'schedule.created',
+                [],
+                $validated,
+            );
+
+            return $scheduleId;
         });
 
         return response()->json(['schedule_id' => $scheduleId], 201);
@@ -718,7 +731,10 @@ class SchedulesController extends Controller
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
                 ->lockForUpdate()
-                ->first(['id']);
+                ->first([
+                    'id', 'room_id', 'teacher_id', 'day_of_week', 'starts_at', 'ends_at',
+                    'valid_from', 'valid_until', 'label',
+                ]);
             abort_unless($schedule, 404);
 
             $this->lockScheduleResources($validated, $schoolId, $yearId);
@@ -729,6 +745,16 @@ class SchedulesController extends Controller
                 ->where('school_id', $schoolId)
                 ->where('year_id', $yearId)
                 ->update($validated);
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'schedule',
+                $scheduleId,
+                'updated',
+                'schedule.updated',
+                (array) $schedule,
+                $validated,
+            );
         });
 
         return response()->json(['schedule_id' => $scheduleId]);

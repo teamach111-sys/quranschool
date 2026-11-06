@@ -119,12 +119,15 @@ class StudentsTableTest extends TestCase
             $table->unsignedBigInteger('entity_id')->nullable();
             $table->string('summary_key');
             $table->json('changes')->nullable();
+            $table->string('reason')->nullable();
+            $table->string('request_id', 100)->nullable();
             $table->timestamp('created_at')->nullable();
         });
 
         DB::table('users')->insert([
             ['id' => 10, 'school_id' => 1, 'full_name' => 'Admin User'],
             ['id' => 20, 'school_id' => 1, 'full_name' => 'Teacher User'],
+            ['id' => 12, 'school_id' => 1, 'full_name' => 'Secretary User'],
         ]);
 
         DB::table('schools')->insert([
@@ -336,6 +339,11 @@ class StudentsTableTest extends TestCase
             'student_number' => 'S-103',
             'full_name' => 'New Student',
         ]);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_type' => 'student',
+            'summary_key' => 'student.created',
+            'actor_user_id' => 10,
+        ]);
     }
 
     /**
@@ -449,6 +457,13 @@ class StudentsTableTest extends TestCase
             'room_id' => 2,
             'status' => 'paused',
         ]);
+        $event = DB::table('audit_events')
+            ->where('entity_id', 1)
+            ->where('summary_key', 'student.updated')
+            ->first();
+        $changes = json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('Zayd Ali', $changes['full_name']['before']);
+        $this->assertSame('Zayd Ali Updated', $changes['full_name']['after']);
     }
 
     public function test_admin_can_pause_a_student_without_changing_student_details(): void
@@ -493,6 +508,10 @@ class StudentsTableTest extends TestCase
         $this->assertDatabaseHas('students', [
             'id' => 1,
             'status' => 'withdrawn',
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'entity_id' => 1,
+            'summary_key' => 'student.status_changed',
         ]);
     }
 

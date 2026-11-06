@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditEventLogger;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
@@ -733,13 +734,32 @@ class MemorizationSessionsController extends Controller
                 $validated['session_date'],
             );
 
-            return DB::table('memorization_sessions')->insertGetId([
+            $sessionId = DB::table('memorization_sessions')->insertGetId([
                 ...$validated,
                 'school_id' => $schoolId,
                 'year_id' => (int) $year->id,
                 'teacher_id' => $teacherId,
                 'created_at' => now(),
             ]);
+            AuditEventLogger::record(
+                $schoolId,
+                (int) $year->id,
+                'memorization_session',
+                (int) $sessionId,
+                'created',
+                'memorization_session.created',
+                [],
+                [
+                    'student_id' => (int) $validated['student_id'],
+                    'room_id' => (int) $validated['room_id'],
+                    'session_date' => $validated['session_date'],
+                    'portion_label' => $validated['portion_label'],
+                    'evaluation' => $validated['evaluation'],
+                    'teacher_id' => $teacherId,
+                ],
+            );
+
+            return $sessionId;
         });
 
         return response()->json(['session_id' => $sessionId], 201);
@@ -758,7 +778,7 @@ class MemorizationSessionsController extends Controller
                 ->where('school_id', $schoolId)
                 ->where('year_id', $year->id)
                 ->lockForUpdate()
-                ->first(['id', 'teacher_id']);
+                ->first(['id', 'teacher_id', 'student_id', 'room_id', 'session_date', 'portion_label', 'evaluation']);
             abort_unless($session, 404);
             abort_unless(
                 $user->role === 'admin' || (int) $session->teacher_id === (int) $user->id,
@@ -783,6 +803,30 @@ class MemorizationSessionsController extends Controller
                     ...$validated,
                     'teacher_id' => $teacherId,
                 ]);
+            AuditEventLogger::record(
+                $schoolId,
+                (int) $year->id,
+                'memorization_session',
+                $sessionId,
+                'updated',
+                'memorization_session.updated',
+                [
+                    'student_id' => (int) $session->student_id,
+                    'room_id' => (int) $session->room_id,
+                    'session_date' => $session->session_date,
+                    'portion_label' => $session->portion_label,
+                    'evaluation' => $session->evaluation,
+                    'teacher_id' => (int) $session->teacher_id,
+                ],
+                [
+                    'student_id' => (int) $validated['student_id'],
+                    'room_id' => (int) $validated['room_id'],
+                    'session_date' => $validated['session_date'],
+                    'portion_label' => $validated['portion_label'],
+                    'evaluation' => $validated['evaluation'],
+                    'teacher_id' => $teacherId,
+                ],
+            );
         });
 
         return response()->json(['session_id' => $sessionId]);
