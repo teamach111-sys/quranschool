@@ -431,33 +431,59 @@ INSERT INTO users (school_id,role_id,full_name,email,password_hash,phone,languag
   (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'ostad4','ostad4@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE),
   (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'ostad5','ostad5@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE);
 
-INSERT INTO rooms (school_id,year_id,name,level,capacity)
-SELECT @seed_school_id,ay.id,sample.name,'beginner',12
+INSERT INTO rooms (school_id,year_id,name,level,age_min,age_max,capacity)
+SELECT @seed_school_id,ay.id,sample.name,'beginner',sample.age_min,sample.age_max,12
 FROM academic_years AS ay
 CROSS JOIN (
-  SELECT 'G1' AS name
-  UNION ALL SELECT 'G2'
-  UNION ALL SELECT 'G3'
-  UNION ALL SELECT 'G4'
-  UNION ALL SELECT 'G5'
+  SELECT 'G1' AS name, 6 AS age_min, 7 AS age_max
+  UNION ALL SELECT 'G2', 8, 9
+  UNION ALL SELECT 'G3', 10, 11
+  UNION ALL SELECT 'G4', 12, 13
+  UNION ALL SELECT 'G5', 14, 15
 ) AS sample
 WHERE ay.school_id=@seed_school_id AND ay.year_label='2026-2027';
 
 INSERT INTO students (
-  school_id,year_id,student_number,full_name,room_id,enrollment_date,status
+  school_id,year_id,student_number,full_name,birth_date,room_id,enrollment_date,status
 )
-SELECT @seed_school_id,ay.id,sample.student_number,sample.full_name,NULL,'2026-09-01','active'
+SELECT @seed_school_id,ay.id,sample.student_number,sample.full_name,sample.birth_date,NULL,'2026-09-01','active'
 FROM academic_years AS ay
 CROSS JOIN (
-  SELECT 'S-001' AS student_number, 'Élève Test 1' AS full_name
-  UNION ALL SELECT 'S-002', 'Élève Test 2'
-  UNION ALL SELECT 'S-003', 'Élève Test 3'
-  UNION ALL SELECT 'S-004', 'Élève Test 4'
-  UNION ALL SELECT 'S-005', 'Élève Test 5'
-  UNION ALL SELECT 'S-006', 'Élève Test 6'
-  UNION ALL SELECT 'S-007', 'Élève Test 7'
-  UNION ALL SELECT 'S-008', 'Élève Test 8'
-  UNION ALL SELECT 'S-009', 'Élève Test 9'
-  UNION ALL SELECT 'S-010', 'Élève Test 10'
+  SELECT 'S-001' AS student_number, 'Élève Test 1' AS full_name, '2020-01-15' AS birth_date
+  UNION ALL SELECT 'S-002', 'Élève Test 2', '2020-04-22'
+  UNION ALL SELECT 'S-003', 'Élève Test 3', '2020-07-09'
+  UNION ALL SELECT 'S-004', 'Élève Test 4', '2020-10-28'
+  UNION ALL SELECT 'S-005', 'Élève Test 5', '2019-02-11'
+  UNION ALL SELECT 'S-006', 'Élève Test 6', '2019-05-30'
+  UNION ALL SELECT 'S-007', 'Élève Test 7', '2019-08-17'
+  UNION ALL SELECT 'S-008', 'Élève Test 8', '2019-11-03'
+  UNION ALL SELECT 'S-009', 'Élève Test 9', '2018-01-26'
+  UNION ALL SELECT 'S-010', 'Élève Test 10', '2018-04-14'
+  UNION ALL SELECT 'S-011', 'Élève Test 11', '2018-07-31'
+  UNION ALL SELECT 'S-012', 'Élève Test 12', '2018-10-06'
+  UNION ALL SELECT 'S-013', 'Élève Test 13', '2017-02-19'
+  UNION ALL SELECT 'S-014', 'Élève Test 14', '2017-05-08'
+  UNION ALL SELECT 'S-015', 'Élève Test 15', '2017-08-25'
+  UNION ALL SELECT 'S-016', 'Élève Test 16', '2017-11-12'
+  UNION ALL SELECT 'S-017', 'Élève Test 17', '2016-01-04'
+  UNION ALL SELECT 'S-018', 'Élève Test 18', '2016-04-27'
+  UNION ALL SELECT 'S-019', 'Élève Test 19', '2016-07-16'
+  UNION ALL SELECT 'S-020', 'Élève Test 20', '2016-10-29'
+  UNION ALL SELECT 'S-021', 'Élève Test 21', '2015-02-07'
+  UNION ALL SELECT 'S-022', 'Élève Test 22', '2015-05-21'
+  UNION ALL SELECT 'S-023', 'Élève Test 23', '2015-08-02'
+  UNION ALL SELECT 'S-024', 'Élève Test 24', '2015-11-18'
+  UNION ALL SELECT 'S-025', 'Élève Test 25', '2014-01-23'
+  UNION ALL SELECT 'S-026', 'Élève Test 26', '2014-04-06'
+  UNION ALL SELECT 'S-027', 'Élève Test 27', '2014-07-28'
+  UNION ALL SELECT 'S-028', 'Élève Test 28', '2014-10-15'
+  UNION ALL SELECT 'S-029', 'Élève Test 29', '2013-02-02'
+  UNION ALL SELECT 'S-030', 'Élève Test 30', '2013-05-19'
+  UNION ALL SELECT 'S-031', 'Élève Test 31', '2013-08-07'
+  UNION ALL SELECT 'S-032', 'Élève Test 32', '2013-11-24'
+  UNION ALL SELECT 'S-033', 'Élève Test 33', '2012-01-12'
+  UNION ALL SELECT 'S-034', 'Élève Test 34', '2012-04-30'
+  UNION ALL SELECT 'S-035', 'Élève Test 35', '2012-07-03'
+  UNION ALL SELECT 'S-036', 'Élève Test 36', '2012-10-20'
 ) AS sample
 WHERE ay.school_id=@seed_school_id AND ay.year_label='2026-2027';
