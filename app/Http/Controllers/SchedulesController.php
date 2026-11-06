@@ -760,6 +760,44 @@ class SchedulesController extends Controller
         return response()->json(['schedule_id' => $scheduleId]);
     }
 
+    public function destroy(Request $request, int $scheduleId): JsonResponse
+    {
+        [, $schoolId] = $this->adminContext();
+        $yearId = $this->validateYearId($request, $schoolId);
+        $this->ensureYearIsEditable($schoolId, $yearId);
+
+        DB::transaction(function () use ($scheduleId, $schoolId, $yearId) {
+            $schedule = DB::table('schedules')
+                ->where('id', $scheduleId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->lockForUpdate()
+                ->first([
+                    'room_id', 'teacher_id', 'day_of_week', 'starts_at', 'ends_at',
+                    'valid_from', 'valid_until', 'label',
+                ]);
+            abort_unless($schedule, 404);
+
+            DB::table('schedules')
+                ->where('id', $scheduleId)
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->delete();
+
+            AuditEventLogger::record(
+                $schoolId,
+                $yearId,
+                'schedule',
+                $scheduleId,
+                'deleted',
+                'schedule.deleted',
+                (array) $schedule,
+            );
+        });
+
+        return response()->json(['schedule_id' => $scheduleId]);
+    }
+
     /**
      * @return array{room_id: int, teacher_id: int, day_of_week: int, starts_at: string, ends_at: string, valid_from: string, valid_until: ?string, label: string}
      */

@@ -229,6 +229,11 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('scheduleId')
         ->name('schedules.update');
 
+    Route::delete('/schedules/{scheduleId}', [SchedulesController::class, 'destroy'])
+        ->middleware('can:access-dashboard')
+        ->whereNumber('scheduleId')
+        ->name('schedules.destroy');
+
     Route::patch('/admin/academic-years/{yearId}/status', [AcademicYearController::class, 'changeStatus'])
         ->middleware('can:access-admin')
         ->name('admin.academic-years.status');

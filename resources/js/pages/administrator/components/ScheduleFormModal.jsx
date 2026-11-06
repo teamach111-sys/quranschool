@@ -4,6 +4,8 @@ import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import TimeInput from '../../../components/TimeInput';
 import Modal from '../../../modals/desktopmodal';
+import ConfirmDeleteModal from '../../../modals/confirmdelete';
+import { useToast } from '../../../components/ToastProvider';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { findScheduleConflict } from '../../../lib/scheduleConflicts';
@@ -39,8 +41,12 @@ export default function ScheduleFormModal({
     onSaved,
 }) {
     const { isRTL, t } = useLanguage();
+    const toast = useToast();
     const [form, setForm] = useState(() => initialValues(schedule));
     const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
     const [error, setError] = useState(null);
     const formId = useId();
     const isEditing = Boolean(schedule?.id);
@@ -53,8 +59,8 @@ export default function ScheduleFormModal({
                 ? t.schedules.overlapTeacher(conflict.schedule.teacher_name)
                 : '';
     const handleClose = useCallback(() => {
-        if (!saving) onClose();
-    }, [onClose, saving]);
+        if (!saving && !deleting) onClose();
+    }, [deleting, onClose, saving]);
     const days = [
         t.schedules.days.monday,
         t.schedules.days.tuesday,
@@ -70,6 +76,8 @@ export default function ScheduleFormModal({
 
         setForm(initialValues(schedule, defaultValues));
         setError(null);
+        setDeleteError(null);
+        setDeleteConfirmationOpen(false);
     }, [open, schedule, defaultValues]);
 
     const handleChange = (event) => {
@@ -133,6 +141,34 @@ export default function ScheduleFormModal({
             setError(t.schedules.saveError);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!schedule?.id) return;
+
+        setDeleting(true);
+        setDeleteError(null);
+
+        try {
+            const response = await apiFetch(`/schedules/${schedule.id}`, {
+                method: 'DELETE',
+                body: JSON.stringify({ year_id: yearId }),
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                setDeleteError(data?.errors?.year_id ? t.schedules.closedYearError : t.schedules.deleteError);
+                return;
+            }
+
+            setDeleteConfirmationOpen(false);
+            toast.success(t.schedules.deleted);
+            await onSaved();
+        } catch {
+            setDeleteError(t.schedules.deleteError);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -260,16 +296,30 @@ export default function ScheduleFormModal({
                 <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:flex-row">
                     <button
                         type="button"
-                        disabled={saving}
+                        disabled={saving || deleting}
                         onClick={handleClose}
                         className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
                     >
                         {t.schedules.cancel}
                     </button>
+                    {isEditing && (
+                        <button
+                            type="button"
+                            disabled={saving || deleting}
+                            onClick={() => {
+                                setDeleteError(null);
+                                setDeleteConfirmationOpen(true);
+                            }}
+                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-error-container px-4 py-2 text-[13px] font-semibold text-on-error-container transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#4a2626] dark:text-[#ffdad6]"
+                        >
+                            <Icon name="delete" className="text-[18px]" />
+                            {t.schedules.delete}
+                        </button>
+                    )}
                     <button
                         type="submit"
                         aria-describedby={conflict ? `${formId}-schedule-conflict` : undefined}
-                        disabled={saving || rooms.length === 0 || teachers.length === 0 || Boolean(conflict)}
+                        disabled={saving || deleting || rooms.length === 0 || teachers.length === 0 || Boolean(conflict)}
                         className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
                     >
                         <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
@@ -277,6 +327,23 @@ export default function ScheduleFormModal({
                     </button>
                 </footer>
             </form>
+            <ConfirmDeleteModal
+                open={deleteConfirmationOpen}
+                title={t.schedules.deleteTitle}
+                description={t.schedules.deleteMessage(schedule?.label ?? '', schedule?.room_name ?? '')}
+                confirmLabel={t.schedules.delete}
+                cancelLabel={t.schedules.cancel}
+                onConfirm={handleDelete}
+                onClose={() => {
+                    if (!deleting) {
+                        setDeleteConfirmationOpen(false);
+                        setDeleteError(null);
+                    }
+                }}
+                isLoading={deleting}
+                error={deleteError}
+                isRTL={isRTL}
+            />
         </Modal>
     );
 }

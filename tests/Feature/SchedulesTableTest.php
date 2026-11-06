@@ -694,6 +694,73 @@ class SchedulesTableTest extends TestCase
         $this->assertDatabaseCount('schedules', 2);
     }
 
+    public function test_admin_can_delete_a_schedule_and_the_deletion_is_audited(): void
+    {
+        $this->seedScheduleData();
+        DB::table('schedules')->insert([
+            'id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 1,
+            'day_of_week' => 1,
+            'starts_at' => '09:00:00',
+            'ends_at' => '10:00:00',
+            'valid_from' => '2026-09-01',
+            'valid_until' => null,
+            'label' => 'Morning Hifz',
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->deleteJson('/schedules/1', ['year_id' => 1])
+            ->assertOk()
+            ->assertJsonPath('schedule_id', 1);
+
+        $this->assertDatabaseMissing('schedules', ['id' => 1]);
+        $this->assertDatabaseHas('audit_events', [
+            'school_id' => 1,
+            'year_id' => 1,
+            'actor_user_id' => 10,
+            'action_type' => 'deleted',
+            'entity_type' => 'schedule',
+            'entity_id' => 1,
+            'summary_key' => 'schedule.deleted',
+        ]);
+    }
+
+    public function test_schedule_cannot_be_deleted_from_a_read_only_year(): void
+    {
+        $this->seedScheduleData();
+        DB::table('academic_years')->where('id', 1)->update(['is_active' => false]);
+        DB::table('schedules')->insert([
+            'id' => 1,
+            'room_id' => 1,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 1,
+            'day_of_week' => 1,
+            'starts_at' => '09:00:00',
+            'ends_at' => '10:00:00',
+            'valid_from' => '2026-09-01',
+            'label' => 'Historical slot',
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->deleteJson('/schedules/1', ['year_id' => 1])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('year_id');
+
+        $this->assertDatabaseHas('schedules', ['id' => 1]);
+    }
+
     public function test_secretary_can_read_schedules_but_cannot_write_them(): void
     {
         $this->seedScheduleData();
@@ -706,6 +773,7 @@ class SchedulesTableTest extends TestCase
         $this->getJson('/schedules/table?year_id=1')->assertOk();
 
         $this->postJson('/schedules', [])->assertForbidden();
+        $this->deleteJson('/schedules/1', ['year_id' => 1])->assertForbidden();
     }
 
     public function test_schedule_writes_are_allowed_for_an_active_noncurrent_year(): void
