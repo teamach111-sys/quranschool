@@ -606,12 +606,18 @@ class MemorizationSessionsController extends Controller
             'tempDir' => $temporaryDirectory,
         ]);
         $pdf->SetTitle($labels['title']);
+        $pdfRecords = $records->map(function (stdClass $record): stdClass {
+            $pdfRecord = clone $record;
+            $pdfRecord->portion_label = $this->isolateArabicRuns($record->portion_label);
+
+            return $pdfRecord;
+        });
         $pdf->WriteHTML(view('exports.memorization-sessions', [
             'language' => $language,
             'labels' => $labels,
             'schoolName' => $schoolName,
             'yearLabel' => $yearLabel,
-            'records' => $records,
+            'records' => $pdfRecords,
             'filters' => $filters,
             'generatedAt' => $generatedAt,
         ])->render());
@@ -621,6 +627,20 @@ class MemorizationSessionsController extends Controller
         }
 
         return $contents;
+    }
+
+    private function isolateArabicRuns(string $value): string
+    {
+        $isolated = preg_replace(
+            '/(\p{Arabic}[\p{Arabic}\p{M}\p{N}]*)/u',
+            "\u{2067}$1\u{2069}",
+            $value,
+        );
+        if ($isolated === null) {
+            throw new \RuntimeException('Unable to prepare Arabic text for the memorization sessions PDF export.');
+        }
+
+        return $isolated;
     }
 
     private function spreadsheetSafe(?string $value): string

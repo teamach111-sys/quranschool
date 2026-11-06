@@ -173,7 +173,7 @@ export default function MobileTable({
                 </ul>
             )}
 
-            <footer className={`flex flex-col items-center justify-between gap-2 rounded-md bg-inverse-surface px-3 py-2 text-[11px] text-inverse-on-surface dark:bg-[#1b2621] sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            <footer className={`flex flex-col items-center justify-between gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[11px] text-on-surface-variant dark:border-[#384c43] dark:bg-[#1b2621] dark:text-inverse-on-surface sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
                 <div className={`flex w-full items-center justify-between gap-2 sm:w-auto ${isRTL ? 'flex-row-reverse' : ''}`}>
                     {selectable && pageRows.length > 0 && (
                         <label className="flex items-center gap-2">
@@ -196,7 +196,7 @@ export default function MobileTable({
                             onClick={() => setPage((current) => Math.max(1, current - 1))}
                             disabled={visiblePage === 1}
                             aria-label={labels.previous}
-                            className="flex h-8 w-8 items-center justify-center rounded-md bg-white/10 hover:bg-white/15 disabled:opacity-40"
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-on-surface-variant hover:bg-surface-container disabled:opacity-40 dark:bg-white/10 dark:text-inverse-on-surface dark:hover:bg-white/15"
                         >
                             <Icon name={isRTL ? 'chevron_right' : 'chevron_left'} className="text-[18px]" />
                         </button>
@@ -209,7 +209,7 @@ export default function MobileTable({
                                 aria-label={labels.page(pageNumber)}
                                 className={`h-8 min-w-8 rounded-md px-2 ${pageNumber === visiblePage
                                     ? 'bg-primary-container font-semibold text-on-primary dark:bg-[#2e5e4e] dark:text-[#ecf3ef]'
-                                    : 'text-inverse-on-surface hover:bg-white/10'}`}
+                                    : 'text-on-surface hover:bg-surface-container dark:text-inverse-on-surface dark:hover:bg-white/10'}`}
                             >
                                 {pageNumber}
                             </button>
@@ -219,7 +219,7 @@ export default function MobileTable({
                             onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                             disabled={visiblePage === totalPages}
                             aria-label={labels.next}
-                            className="flex h-8 w-8 items-center justify-center rounded-md bg-white/10 hover:bg-white/15 disabled:opacity-40"
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-on-surface-variant hover:bg-surface-container disabled:opacity-40 dark:bg-white/10 dark:text-inverse-on-surface dark:hover:bg-white/15"
                         >
                             <Icon name={isRTL ? 'chevron_left' : 'chevron_right'} className="text-[18px]" />
                         </button>

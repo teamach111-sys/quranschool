@@ -256,6 +256,9 @@ class MemorizationSessionsTableTest extends TestCase
     public function test_memorization_pdf_and_xlsx_exports_are_valid_and_audited_by_format(): void
     {
         $this->seedMemorizationSessions();
+        DB::table('memorization_sessions')->where('id', 3)->update([
+            'portion_label' => 'Al-Fatiha (الْفَاتِحَة) 1 → An-Nisa (النِّسَاء) 1',
+        ]);
         $this->actingAs($this->user(10, 1, 'admin'));
 
         $pdf = $this->get('/memorization-sessions/export?year_id=1&room_id=2&lang=fr&format=pdf');
