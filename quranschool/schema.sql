@@ -392,8 +392,8 @@ CREATE TABLE cache_locks (
 -- ---------------------------------------------------------------------------
 -- Seed data
 -- These setup rows support the starter logins and the initial year selector.
--- Student, attendance, memorization, schedule, and payment records are created
--- through the application.
+-- Sample students and groups are unassigned so the app can be tested before
+-- users place students or assign teachers through the interface.
 INSERT INTO roles (role_key,name_fr,name_ar) VALUES
   ('admin','Administrateur','مدير النظام'),
   ('teacher','Enseignant','معلم'),
@@ -422,3 +422,42 @@ INSERT INTO users (school_id,role_id,full_name,email,password_hash,phone,languag
   (@seed_school_id,(SELECT id FROM roles WHERE role_key='admin'),'Admin Test','admin@example.com','$2y$12$x3avkoKP7/D/C.4iQO6ure8S9v33IB9gGfyhR9fQquBnZG6lXFqKm',NULL,'fr',TRUE),
   (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'Enseignant Test','teacher@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE),
   (@seed_school_id,(SELECT id FROM roles WHERE role_key='secretary'),'Secrétariat Test','secretary@example.com','$2y$12$0OsVx3/I8PC1E5wnLBfXSuGrm2J6J3WKAPqr9w25bvLLLD1QaxVmi',NULL,'fr',TRUE);
+
+-- Five sample teacher accounts (password: "password").
+INSERT INTO users (school_id,role_id,full_name,email,password_hash,phone,language,is_active) VALUES
+  (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'ostad1','ostad1@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE),
+  (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'ostad2','ostad2@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE),
+  (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'ostad3','ostad3@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE),
+  (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'ostad4','ostad4@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE),
+  (@seed_school_id,(SELECT id FROM roles WHERE role_key='teacher'),'ostad5','ostad5@example.com','$2y$12$Qeyfxr6Wz1U/GF/Hg39v0uRVBbznovOI6Qiv1xA5VgnQDmy0eCX4O',NULL,'fr',TRUE);
+
+INSERT INTO rooms (school_id,year_id,name,level,capacity)
+SELECT @seed_school_id,ay.id,sample.name,'beginner',12
+FROM academic_years AS ay
+CROSS JOIN (
+  SELECT 'G1' AS name
+  UNION ALL SELECT 'G2'
+  UNION ALL SELECT 'G3'
+  UNION ALL SELECT 'G4'
+  UNION ALL SELECT 'G5'
+) AS sample
+WHERE ay.school_id=@seed_school_id AND ay.year_label='2026-2027';
+
+INSERT INTO students (
+  school_id,year_id,student_number,full_name,room_id,enrollment_date,status
+)
+SELECT @seed_school_id,ay.id,sample.student_number,sample.full_name,NULL,'2026-09-01','active'
+FROM academic_years AS ay
+CROSS JOIN (
+  SELECT 'S-001' AS student_number, 'Élève Test 1' AS full_name
+  UNION ALL SELECT 'S-002', 'Élève Test 2'
+  UNION ALL SELECT 'S-003', 'Élève Test 3'
+  UNION ALL SELECT 'S-004', 'Élève Test 4'
+  UNION ALL SELECT 'S-005', 'Élève Test 5'
+  UNION ALL SELECT 'S-006', 'Élève Test 6'
+  UNION ALL SELECT 'S-007', 'Élève Test 7'
+  UNION ALL SELECT 'S-008', 'Élève Test 8'
+  UNION ALL SELECT 'S-009', 'Élève Test 9'
+  UNION ALL SELECT 'S-010', 'Élève Test 10'
+) AS sample
+WHERE ay.school_id=@seed_school_id AND ay.year_label='2026-2027';
