@@ -114,12 +114,6 @@ export default function DesktopTable({
             {toolbar && (
                 <div className="border-b border-outline-variant bg-surface-container-lowest p-3 dark:border-[#384c43] dark:bg-[#22302a] sm:p-4">
                     {toolbar}
-                    {loading && (
-                        <div aria-hidden="true" className="mt-3 inline-flex items-center gap-2 text-[12px] text-on-surface-variant dark:text-tertiary-fixed-dim">
-                            <Icon name="progress_activity" className="animate-spin text-[16px] text-primary" />
-                            <span>{t.modal.loading}</span>
-                        </div>
-                    )}
                 </div>
             )}
 

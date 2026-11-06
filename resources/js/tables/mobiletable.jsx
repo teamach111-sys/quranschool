@@ -73,12 +73,6 @@ export default function MobileTable({
             {toolbar && (
                 <div className="rounded-xl bg-surface-container-low p-3 dark:bg-[#22302a]">
                     {toolbar}
-                    {loading && (
-                        <div aria-hidden="true" className="mt-3 inline-flex items-center gap-2 text-[12px] text-on-surface-variant dark:text-tertiary-fixed-dim">
-                            <Icon name="progress_activity" className="animate-spin text-[16px] text-primary" />
-                            <span>{t.modal.loading}</span>
-                        </div>
-                    )}
                 </div>
             )}
 
