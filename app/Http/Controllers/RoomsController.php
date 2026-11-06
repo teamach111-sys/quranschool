@@ -817,6 +817,104 @@ class RoomsController extends Controller
         ]);
     }
 
+    public function placeStudents(Request $request): JsonResponse
+    {
+        [, $schoolId] = $this->placementContext();
+        $yearId = $this->validateYearId($request, $schoolId);
+        $this->ensureYearIsEditable($schoolId, $yearId);
+        $validated = $request->validate([
+            'student_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'student_ids.*' => ['required', 'integer', 'distinct'],
+            'room_id' => [
+                'present',
+                'nullable',
+                'integer',
+                Rule::exists('rooms', 'id')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId)
+                    ->where('is_active', true),
+            ],
+        ]);
+        $studentIds = array_map('intval', $validated['student_ids']);
+        sort($studentIds);
+
+        $updatedCount = DB::transaction(function () use ($validated, $studentIds, $schoolId, $yearId) {
+            $students = DB::table('students')
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->whereIn('id', $studentIds)
+                ->whereIn('status', ['active', 'paused'])
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get(['id', 'room_id']);
+            abort_unless($students->count() === count($studentIds), 404);
+
+            $room = null;
+            if ($validated['room_id'] !== null) {
+                $room = DB::table('rooms')
+                    ->where('id', $validated['room_id'])
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId)
+                    ->where('is_active', true)
+                    ->lockForUpdate()
+                    ->first(['id', 'capacity']);
+                abort_unless($room, 404);
+            }
+
+            if ($room !== null) {
+                $alreadyInRoom = $students->where('room_id', $room->id)->count();
+                $currentCount = DB::table('students')
+                    ->where('school_id', $schoolId)
+                    ->where('year_id', $yearId)
+                    ->where('room_id', $room->id)
+                    ->whereIn('status', ['active', 'paused'])
+                    ->count();
+                $projectedCount = $currentCount + count($studentIds) - $alreadyInRoom;
+
+                if ($projectedCount > (int) $room->capacity) {
+                    throw ValidationException::withMessages([
+                        'room_capacity' => 'The selected room does not have enough capacity for all selected students.',
+                    ]);
+                }
+            }
+
+            $studentsToMove = $students->filter(
+                fn ($student) => $student->room_id === null
+                    ? $validated['room_id'] !== null
+                    : (int) $student->room_id !== (int) $validated['room_id'],
+            );
+            if ($studentsToMove->isEmpty()) {
+                return 0;
+            }
+
+            DB::table('students')
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->whereIn('id', $studentsToMove->pluck('id'))
+                ->update([
+                    'room_id' => $validated['room_id'],
+                    'updated_at' => now(),
+                ]);
+
+            foreach ($studentsToMove as $student) {
+                AuditEventLogger::record(
+                    $schoolId,
+                    $yearId,
+                    'student',
+                    (int) $student->id,
+                    'updated',
+                    'student.room_changed',
+                    ['room_id' => $student->room_id === null ? null : (int) $student->room_id],
+                    ['room_id' => $validated['room_id'] === null ? null : (int) $validated['room_id']],
+                );
+            }
+
+            return $studentsToMove->count();
+        });
+
+        return response()->json(['updated_count' => $updatedCount]);
+    }
+
     private function validatedRoom(Request $request, bool $isCreating = false): array
     {
         $request->merge([

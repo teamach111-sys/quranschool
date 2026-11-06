@@ -124,6 +124,10 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('studentId')
         ->name('students.room');
 
+    Route::patch('/students/room', [RoomsController::class, 'placeStudents'])
+        ->middleware('can:access-dashboard')
+        ->name('students.rooms.bulk');
+
     Route::get('/schedules/table', [SchedulesController::class, 'table'])
         ->middleware('can:access-dashboard')
         ->name('schedules.table');

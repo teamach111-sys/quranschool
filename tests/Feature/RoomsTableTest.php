@@ -455,6 +455,67 @@ class RoomsTableTest extends TestCase
         $this->assertNull(json_decode($placementEvents[1]->changes, true)['room_id']['after']);
     }
 
+    public function test_secretary_can_place_multiple_students_in_a_group_in_one_request(): void
+    {
+        $this->seedRooms();
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $this->patchJson('/students/room', [
+            'year_id' => 1,
+            'student_ids' => [1, 3],
+            'room_id' => 2,
+        ])
+            ->assertOk()
+            ->assertJsonPath('updated_count', 2);
+
+        $this->assertDatabaseHas('students', ['id' => 1, 'room_id' => 2]);
+        $this->assertDatabaseHas('students', ['id' => 3, 'room_id' => 2]);
+        $this->assertDatabaseCount('audit_events', 2);
+        $this->assertSame(
+            2,
+            DB::table('audit_events')
+                ->where('summary_key', 'student.room_changed')
+                ->where('actor_user_id', 12)
+                ->count(),
+        );
+    }
+
+    public function test_bulk_student_placement_rejects_a_selection_that_exceeds_room_capacity_atomically(): void
+    {
+        $this->seedRooms();
+        DB::table('rooms')->where('id', 1)->update(['capacity' => 3]);
+        DB::table('students')->insert([
+            'id' => 6,
+            'school_id' => 1,
+            'year_id' => 1,
+            'room_id' => null,
+            'student_number' => 'S-105',
+            'full_name' => 'Student Four',
+            'status' => 'active',
+        ]);
+        $this->actingAs(new GenericUser([
+            'id' => 12,
+            'school_id' => 1,
+            'role' => 'secretary',
+        ]));
+
+        $this->patchJson('/students/room', [
+            'year_id' => 1,
+            'student_ids' => [3, 6],
+            'room_id' => 1,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('room_capacity');
+
+        $this->assertDatabaseHas('students', ['id' => 3, 'room_id' => null]);
+        $this->assertDatabaseHas('students', ['id' => 6, 'room_id' => null]);
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
     public function test_student_placement_cannot_exceed_room_capacity(): void
     {
         $this->seedRooms();
