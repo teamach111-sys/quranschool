@@ -11,6 +11,7 @@ const emptySchool = {
     email: '',
     currency: 'MAD',
     monthly_fee: '',
+    payment_methods: [],
 };
 
 export default function Ecole() {
@@ -21,6 +22,7 @@ export default function Ecole() {
     const [loadError, setLoadError] = useState(false);
     const [saveError, setSaveError] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [newPaymentMethod, setNewPaymentMethod] = useState('');
 
     useEffect(() => {
         let cancelled = false;
@@ -72,6 +74,26 @@ export default function Ecole() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const addPaymentMethod = () => {
+        const method = newPaymentMethod.trim();
+        if (!method || school.payment_methods.includes(method) || school.payment_methods.length >= 20) return;
+
+        setSchool((current) => ({ ...current, payment_methods: [...current.payment_methods, method] }));
+        setNewPaymentMethod('');
+        setSaved(false);
+        setSaveError(false);
+    };
+
+    const removePaymentMethod = (method) => {
+        if (school.payment_methods.length <= 1) return;
+        setSchool((current) => ({
+            ...current,
+            payment_methods: current.payment_methods.filter((currentMethod) => currentMethod !== method),
+        }));
+        setSaved(false);
+        setSaveError(false);
     };
 
     if (loadError) {
@@ -128,6 +150,52 @@ export default function Ecole() {
                             )}
                         </div>
                     ))}
+                    <fieldset className="flex flex-col gap-3 sm:col-span-2">
+                        <legend className="text-[12px] leading-4 font-medium text-on-surface dark:text-inverse-on-surface">
+                            {t.schoolSettings.paymentMethods}
+                        </legend>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <input
+                                value={newPaymentMethod}
+                                maxLength={40}
+                                aria-label={t.schoolSettings.newPaymentMethod}
+                                placeholder={t.schoolSettings.newPaymentMethod}
+                                onChange={(event) => setNewPaymentMethod(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        addPaymentMethod();
+                                    }
+                                }}
+                                className={inputClassName}
+                            />
+                            <button
+                                type="button"
+                                disabled={!newPaymentMethod.trim() || school.payment_methods.length >= 20}
+                                onClick={addPaymentMethod}
+                                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                <Icon name="add" className="text-[18px]" />
+                                {t.schoolSettings.addPaymentMethod}
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {school.payment_methods.map((method) => (
+                                <span key={method} className="inline-flex items-center gap-2 rounded-full bg-surface-container px-3 py-1.5 text-[12px] text-on-surface dark:bg-inverse-surface dark:text-inverse-on-surface">
+                                    {method}
+                                    <button
+                                        type="button"
+                                        aria-label={t.schoolSettings.removePaymentMethod(method)}
+                                        disabled={school.payment_methods.length <= 1}
+                                        onClick={() => removePaymentMethod(method)}
+                                        className="inline-flex size-5 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        <Icon name="close" className="text-[14px]" />
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                    </fieldset>
                 </div>
             )}
 

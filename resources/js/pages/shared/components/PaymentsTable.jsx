@@ -42,6 +42,7 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [filters, setFilters] = useState(emptyFilters);
     const [search, setSearch] = useState('');
     const [currency, setCurrency] = useState('MAD');
+    const [paymentMethods, setPaymentMethods] = useState([]);
     const [canManage, setCanManage] = useState(false);
     const [canRecord, setCanRecord] = useState(false);
     const [canGenerate, setCanGenerate] = useState(false);
@@ -91,6 +92,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             setUnpaidBalances(Array.isArray(data.unpaid_balances) ? data.unpaid_balances : []);
             setStudents(Array.isArray(data.students) ? data.students : []);
             setCurrency(data.currency ?? 'MAD');
+            setPaymentMethods(Array.isArray(data.payment_methods) ? data.payment_methods : []);
             setCanManage(Boolean(data.can_manage));
             setCanRecord(Boolean(data.can_record));
             setCanExportPayments(Boolean(data.can_export_payments));
@@ -656,6 +658,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     payment={entry.payment}
                     yearId={yearId}
                     currency={currency}
+                    paymentMethods={paymentMethods}
                     students={students}
                     canManage={canManage}
                     onClose={() => setEntry(null)}

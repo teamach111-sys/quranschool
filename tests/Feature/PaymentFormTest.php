@@ -48,6 +48,7 @@ class PaymentFormTest extends TestCase
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
             $table->char('currency', 3);
+            $table->json('payment_methods')->nullable();
         });
 
         Schema::create('students', function (Blueprint $table) {
@@ -113,6 +114,20 @@ class PaymentFormTest extends TestCase
             'summary_key' => 'payment.created',
             'actor_user_id' => 10,
         ]);
+    }
+
+    public function test_payment_method_must_be_configured_for_the_school(): void
+    {
+        $this->seedPaymentData();
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->postJson('/payments', [
+            ...$this->validAdminPayment(),
+            'status' => 'paid',
+            'payment_method' => 'Unconfigured method',
+        ])->assertUnprocessable()->assertJsonValidationErrors('payment_method');
+
+        $this->assertDatabaseCount('payments', 3);
     }
 
     public function test_admin_updates_a_payment_without_triggering_an_overlap_with_itself(): void
@@ -644,6 +659,8 @@ class PaymentFormTest extends TestCase
 
         $this->getJson('/payments/table?year_id=1')
             ->assertOk()
+            ->assertJsonPath('payment_methods.0', 'cash')
+            ->assertJsonPath('payment_methods.1', 'bank_transfer')
             ->assertJsonPath('students.0.last_payment_method', 'bank_transfer')
             ->assertJsonPath('students.1.last_payment_method', null);
     }
@@ -666,8 +683,8 @@ class PaymentFormTest extends TestCase
     private function seedPaymentData(): void
     {
         DB::table('schools')->insert([
-            ['id' => 1, 'currency' => 'MAD'],
-            ['id' => 2, 'currency' => 'EUR'],
+            ['id' => 1, 'currency' => 'MAD', 'payment_methods' => json_encode(['cash', 'bank_transfer'], JSON_THROW_ON_ERROR)],
+            ['id' => 2, 'currency' => 'EUR', 'payment_methods' => json_encode(['cash', 'bank_transfer'], JSON_THROW_ON_ERROR)],
         ]);
         DB::table('academic_years')->insert([
             ['id' => 1, 'school_id' => 1, 'year_label' => '2026-2027', 'start_date' => '2026-09-01', 'is_current' => true, 'is_active' => true],

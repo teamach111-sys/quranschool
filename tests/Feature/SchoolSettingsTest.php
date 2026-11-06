@@ -46,6 +46,7 @@ class SchoolSettingsTest extends TestCase
             $table->string('email', 190)->nullable();
             $table->char('currency', 3)->default('MAD');
             $table->decimal('monthly_fee', 10, 2)->nullable();
+            $table->json('payment_methods')->nullable();
             $table->timestamps();
         });
 
@@ -181,5 +182,49 @@ class SchoolSettingsTest extends TestCase
             'id' => 1,
             'monthly_fee' => null,
         ]);
+    }
+
+    public function test_admin_can_configure_school_payment_methods(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/admin/school-settings')
+            ->assertOk()
+            ->assertJsonPath('school.payment_methods.0', 'Espèces')
+            ->assertJsonPath('school.payment_methods.1', 'Virement bancaire');
+
+        $this->putJson('/admin/school-settings', [
+            'name_fr' => 'École 1',
+            'name_ar' => 'مدرسة ١',
+            'currency' => 'MAD',
+            'payment_methods' => ['Espèces', 'Prélèvement automatique'],
+        ])
+            ->assertOk()
+            ->assertJsonPath('school.payment_methods.1', 'Prélèvement automatique');
+
+        $this->assertSame(
+            ['Espèces', 'Prélèvement automatique'],
+            json_decode(DB::table('schools')->where('id', 1)->value('payment_methods'), true, 512, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    public function test_admin_cannot_save_an_empty_payment_method_list(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/admin/school-settings', [
+            'name_fr' => 'École 1',
+            'name_ar' => 'مدرسة ١',
+            'currency' => 'MAD',
+            'payment_methods' => [],
+        ])->assertUnprocessable()->assertJsonValidationErrors('payment_methods');
     }
 }

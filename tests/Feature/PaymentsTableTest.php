@@ -20,6 +20,7 @@ class PaymentsTableTest extends TestCase
             $table->char('currency', 3);
             $table->string('name_fr');
             $table->string('name_ar');
+            $table->json('payment_methods')->nullable();
         });
 
         Schema::create('academic_years', function (Blueprint $table) {

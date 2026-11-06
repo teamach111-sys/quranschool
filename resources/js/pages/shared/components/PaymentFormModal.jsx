@@ -6,7 +6,7 @@ import Modal from '../../../modals/desktopmodal';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 
-function initialValues(payment, canManage, students) {
+function initialValues(payment, canManage, students, paymentMethods) {
     const defaultStatus = !canManage && ['due', 'late'].includes(payment?.status)
         ? 'paid'
         : payment?.status ?? 'due';
@@ -18,7 +18,10 @@ function initialValues(payment, canManage, students) {
         period_end: payment?.period_end ?? '',
         amount: payment?.amount ?? '',
         status: defaultStatus,
-        payment_method: payment?.payment_method ?? selectedStudent?.last_payment_method ?? '',
+        payment_method: payment?.payment_method
+            ?? (paymentMethods.includes(selectedStudent?.last_payment_method)
+                ? selectedStudent.last_payment_method
+                : paymentMethods[0] ?? ''),
         notes: payment?.notes ?? '',
     };
 }
@@ -27,13 +30,14 @@ export default function PaymentFormModal({
     payment = null,
     yearId,
     currency,
+    paymentMethods = [],
     students,
     canManage,
     onClose,
     onSaved,
 }) {
     const { isRTL, t } = useLanguage();
-    const [form, setForm] = useState(() => initialValues(payment, canManage, students));
+    const [form, setForm] = useState(() => initialValues(payment, canManage, students, paymentMethods));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const formId = useId();
@@ -43,9 +47,9 @@ export default function PaymentFormModal({
     }, [onClose, saving]);
 
     useEffect(() => {
-        setForm(initialValues(payment, canManage, students));
+        setForm(initialValues(payment, canManage, students, paymentMethods));
         setError('');
-    }, [payment, canManage, students]);
+    }, [payment, canManage, students, paymentMethods]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -56,7 +60,11 @@ export default function PaymentFormModal({
             ...current,
             [name]: value,
             ...(name === 'student_id'
-                ? { payment_method: selectedStudent?.last_payment_method ?? '' }
+                ? {
+                    payment_method: paymentMethods.includes(selectedStudent?.last_payment_method)
+                        ? selectedStudent.last_payment_method
+                        : paymentMethods[0] ?? '',
+                }
                 : {}),
         }));
         setError('');
@@ -265,14 +273,21 @@ export default function PaymentFormModal({
                                     {t.payments.lastUsedMethod}: {selectedStudent.last_payment_method}
                                 </span>
                             )}
-                            <input
+                            <SelectInput
                                 required
-                                maxLength="40"
                                 name="payment_method"
                                 value={form.payment_method}
                                 onChange={handleChange}
                                 className={inputClass}
-                            />
+                            >
+                                <option value="">{t.payments.selectPaymentMethod}</option>
+                                {paymentMethods.map((method) => (
+                                    <option key={method} value={method}>{method}</option>
+                                ))}
+                                {payment?.payment_method && !paymentMethods.includes(payment.payment_method) && (
+                                    <option value={payment.payment_method}>{payment.payment_method}</option>
+                                )}
+                            </SelectInput>
                         </label>
                         <div className={labelClass}>
                             <span>{t.payments.columns.reference}</span>

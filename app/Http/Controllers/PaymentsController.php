@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\AuditEventLogger;
+use App\Support\PaymentMethods as PaymentMethodOptions;
 use DateTimeImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
@@ -163,6 +164,7 @@ class PaymentsController extends Controller
             'year_is_active' => (bool) $year->is_active,
             'year_is_current' => (bool) $year->is_current,
             'currency' => $schoolCurrency,
+            'payment_methods' => $this->schoolPaymentMethods($schoolId),
             'can_manage' => $user->role === 'admin' && (bool) $year->is_active,
             'can_record' => in_array($user->role, ['admin', 'secretary'], true)
                 && (bool) $year->is_active,
@@ -947,7 +949,12 @@ class PaymentsController extends Controller
         abort_unless($existingPayment, 404);
 
         if ($user->role === 'secretary') {
-            $validated = $this->validatedSecretaryPaymentUpdate($request, $existingPayment->status);
+            $validated = $this->validatedSecretaryPaymentUpdate(
+                $request,
+                $existingPayment->status,
+                $schoolId,
+                $existingPayment->payment_method,
+            );
 
             DB::transaction(function () use ($paymentId, $schoolId, $yearId, $validated, $user) {
                 $schoolCurrency = $this->lockSchoolForPayment($schoolId);
@@ -1004,7 +1011,7 @@ class PaymentsController extends Controller
         }
 
         abort_unless($user->role === 'admin', 403);
-        $validated = $this->validatedPayment($request, $schoolId, $yearId);
+        $validated = $this->validatedPayment($request, $schoolId, $yearId, $existingPayment->payment_method);
 
         DB::transaction(function () use ($validated, $user, $schoolId, $yearId, $paymentId) {
             $schoolCurrency = $this->lockSchoolForPayment($schoolId);
@@ -1431,8 +1438,17 @@ class PaymentsController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function validatedPayment(Request $request, int $schoolId, int $yearId): array
-    {
+    private function validatedPayment(
+        Request $request,
+        int $schoolId,
+        int $yearId,
+        ?string $existingPaymentMethod = null,
+    ): array {
+        $paymentMethods = $this->schoolPaymentMethods($schoolId);
+        if ($existingPaymentMethod !== null && ! in_array($existingPaymentMethod, $paymentMethods, true)) {
+            $paymentMethods[] = $existingPaymentMethod;
+        }
+
         return $request->validate([
             'student_id' => [
                 'required',
@@ -1453,6 +1469,7 @@ class PaymentsController extends Controller
                 'nullable',
                 'string',
                 'max:40',
+                Rule::in($paymentMethods),
             ],
             'reference' => ['prohibited'],
             'notes' => [
@@ -1467,9 +1484,17 @@ class PaymentsController extends Controller
     /**
      * @return array{status: string, payment_method: ?string, notes: ?string}
      */
-    private function validatedSecretaryPaymentUpdate(Request $request, string $currentStatus): array
-    {
+    private function validatedSecretaryPaymentUpdate(
+        Request $request,
+        string $currentStatus,
+        int $schoolId,
+        ?string $existingPaymentMethod,
+    ): array {
         abort_unless(in_array($currentStatus, ['due', 'late', 'waived'], true), 404);
+        $paymentMethods = $this->schoolPaymentMethods($schoolId);
+        if ($existingPaymentMethod !== null && ! in_array($existingPaymentMethod, $paymentMethods, true)) {
+            $paymentMethods[] = $existingPaymentMethod;
+        }
 
         return $request->validate([
             'status' => ['required', Rule::in(['paid', 'late', 'waived'])],
@@ -1480,6 +1505,7 @@ class PaymentsController extends Controller
                 'nullable',
                 'string',
                 'max:40',
+                Rule::in($paymentMethods),
             ],
             'reference' => ['prohibited'],
             'notes' => [
@@ -1534,6 +1560,16 @@ class PaymentsController extends Controller
         abort_unless($school, 404);
 
         return (string) $school->currency;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function schoolPaymentMethods(int $schoolId): array
+    {
+        $value = DB::table('schools')->where('id', $schoolId)->value('payment_methods');
+
+        return PaymentMethodOptions::fromJson($value);
     }
 
     /**
