@@ -679,16 +679,19 @@ class PaymentsController extends Controller
         $generatedAt = now()->format('Y-m-d H:i:s');
         $temporaryDirectory = storage_path('framework/cache/mpdf');
         File::ensureDirectoryExists($temporaryDirectory);
-        $pdf = new Mpdf([
+        $pdfOptions = [
             'mode' => 'utf-8',
             'format' => 'A4',
             'default_font' => 'dejavusans',
             'autoScriptToLang' => true,
             'autoLangToFont' => true,
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
             'tempDir' => $temporaryDirectory,
-        ]);
-        $pdf->SetTitle($labels['title']);
-        $pdf->WriteHTML(view('exports.payment-receipt', [
+        ];
+        $receiptHtml = view('exports.payment-receipt', [
             'language' => $language,
             'labels' => $labels,
             'schoolName' => $schoolName,
@@ -702,7 +705,15 @@ class PaymentsController extends Controller
             'paymentMethod' => $payment->payment_method,
             'reference' => $payment->reference,
             'generatedAt' => $generatedAt,
-        ])->render());
+        ])->render();
+        $pdf = new Mpdf($pdfOptions);
+        $pdf->WriteHTML($receiptHtml);
+        $pageHeight = (int) ceil($pdf->y + 4);
+
+        $pdfOptions['format'] = [210, $pageHeight];
+        $pdf = new Mpdf($pdfOptions);
+        $pdf->SetTitle($labels['title']);
+        $pdf->WriteHTML($receiptHtml);
         $contents = $pdf->Output('', Destination::STRING_RETURN);
 
         $actorName = DB::table('users')

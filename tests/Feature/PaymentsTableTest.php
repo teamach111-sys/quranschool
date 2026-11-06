@@ -204,7 +204,13 @@ class PaymentsTableTest extends TestCase
         $response->assertOk()
             ->assertHeader('content-type', 'application/pdf')
             ->assertHeader('content-disposition', 'attachment; filename="payment-receipt-1.pdf"');
-        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $pdfContents = $response->getContent();
+        $this->assertStringStartsWith('%PDF-', $pdfContents);
+        $this->assertSame(
+            1,
+            preg_match('/\/MediaBox\s*\[\s*0\s+0\s+[\d.]+\s+([\d.]+)\s*\]/', $pdfContents, $pageDimensions),
+        );
+        $this->assertLessThan(842, (float) $pageDimensions[1]);
         $event = DB::table('audit_events')->first();
         $this->assertDatabaseCount('audit_events', 1);
         $this->assertNotNull($event);
