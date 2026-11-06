@@ -37,6 +37,7 @@ export default function PaymentsTable({ routeParams = {} }) {
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [payments, setPayments] = useState([]);
     const [unpaidBalances, setUnpaidBalances] = useState([]);
+    const displayedUnpaidBalances = unpaidBalances.slice(0, 4);
     const [students, setStudents] = useState([]);
     const [filters, setFilters] = useState(emptyFilters);
     const [search, setSearch] = useState('');
@@ -432,13 +433,13 @@ export default function PaymentsTable({ routeParams = {} }) {
                     </p>
                 </div>
             )}
-            {isSecretary && unpaidBalances.length > 0 && (
+            {isSecretary && displayedUnpaidBalances.length > 0 && (
                 <div className="space-y-2">
                     <h3 className="text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.payments.unpaidBalancesTitle}
                     </h3>
                     <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-                        {unpaidBalances.map((balance) => (
+                        {displayedUnpaidBalances.map((balance) => (
                             <div key={balance.student_id} className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 dark:border-[#384d43] dark:bg-[#182620]">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
