@@ -143,6 +143,9 @@ export const translations = {
         },
         secretaryDashboard: {
             overview: 'Vue opérationnelle',
+            studentSummary: 'Inscriptions et dossiers élèves',
+            attendanceSummary: 'Suivi des présences',
+            paymentSummary: 'Suivi des paiements',
             activeStudents: 'Élèves actifs',
             newStudents: 'Nouvelles inscriptions (30 derniers jours)',
             incompleteStudents: 'Dossiers incomplets',
@@ -1343,6 +1346,9 @@ export const translations = {
         },
         secretaryDashboard: {
             overview: 'نظرة تشغيلية عامة',
+            studentSummary: 'التسجيلات وملفات الطلاب',
+            attendanceSummary: 'متابعة الحضور',
+            paymentSummary: 'متابعة المدفوعات',
             activeStudents: 'الطلاب النشطون',
             newStudents: 'تسجيلات جديدة (آخر 30 يومًا)',
             incompleteStudents: 'ملفات غير مكتملة',

@@ -12,7 +12,7 @@
             (function () {
                 try {
                     var stored = localStorage.getItem('tahfiz-theme');
-                    var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    var dark = stored === 'dark';
                     document.documentElement.classList.toggle('dark', dark);
 
                     // Apply the persisted language before first paint (avoids an RTL flash).

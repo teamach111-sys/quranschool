@@ -85,29 +85,49 @@ export default function TableauDeBordSecretariat() {
 
     if (!dashboard) return null;
 
-    const statCards = [
-        { label: t.secretaryDashboard.activeStudents, value: numberFormat.format(dashboard.stats.active_students), icon: 'group' },
-        { label: t.secretaryDashboard.newStudents, value: numberFormat.format(dashboard.stats.new_students), icon: 'person_add' },
-        { label: t.secretaryDashboard.incompleteStudents, value: numberFormat.format(dashboard.stats.incomplete_students), icon: 'assignment_late', trendTone: dashboard.stats.incomplete_students > 0 ? 'warning' : 'positive' },
-        { label: t.secretaryDashboard.attendanceFollowUp, value: numberFormat.format(dashboard.stats.attendance_follow_up), icon: 'fact_check', trendTone: dashboard.stats.attendance_follow_up > 0 ? 'warning' : 'positive' },
-        { label: t.secretaryDashboard.dueBalance, value: currencyFormat.format(dashboard.stats.payment_balances.due.amount), icon: 'payments' },
-        { label: t.secretaryDashboard.lateBalance, value: currencyFormat.format(dashboard.stats.payment_balances.late.amount), icon: 'warning', trendTone: dashboard.stats.payment_balances.late.amount > 0 ? 'warning' : 'positive' },
-        { label: t.secretaryDashboard.waivedBalance, value: currencyFormat.format(dashboard.stats.payment_balances.waived.amount), icon: 'check_circle', trendTone: dashboard.stats.payment_balances.waived.amount > 0 ? 'positive' : 'neutral' },
+    const statGroups = [
+        {
+            title: t.secretaryDashboard.studentSummary,
+            cards: [
+                { label: t.secretaryDashboard.activeStudents, value: numberFormat.format(dashboard.stats.active_students), icon: 'group' },
+                { label: t.secretaryDashboard.newStudents, value: numberFormat.format(dashboard.stats.new_students), icon: 'person_add' },
+                { label: t.secretaryDashboard.incompleteStudents, value: numberFormat.format(dashboard.stats.incomplete_students), icon: 'assignment_late', trendTone: dashboard.stats.incomplete_students > 0 ? 'warning' : 'positive' },
+            ],
+        },
+        {
+            title: t.secretaryDashboard.attendanceSummary,
+            cards: [
+                { label: t.secretaryDashboard.attendanceFollowUp, value: numberFormat.format(dashboard.stats.attendance_follow_up), icon: 'fact_check', trendTone: dashboard.stats.attendance_follow_up > 0 ? 'warning' : 'positive' },
+            ],
+        },
+        {
+            title: t.secretaryDashboard.paymentSummary,
+            cards: [
+                { label: t.secretaryDashboard.dueBalance, value: currencyFormat.format(dashboard.stats.payment_balances.due.amount), icon: 'payments' },
+                { label: t.secretaryDashboard.lateBalance, value: currencyFormat.format(dashboard.stats.payment_balances.late.amount), icon: 'warning', trendTone: dashboard.stats.payment_balances.late.amount > 0 ? 'warning' : 'positive' },
+                { label: t.secretaryDashboard.waivedBalance, value: currencyFormat.format(dashboard.stats.payment_balances.waived.amount), icon: 'check_circle', trendTone: dashboard.stats.payment_balances.waived.amount > 0 ? 'positive' : 'neutral' },
+            ],
+        },
     ];
 
     return (
         <div className="flex w-full flex-col gap-5">
-            <section aria-label={t.secretaryDashboard.overview} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {statCards.map((card) => (
-                    <StatCard
-                        key={card.label}
-                        label={card.label}
-                        value={card.value}
-                        icon={card.icon}
-                        trendTone={card.trendTone}
-                    />
-                ))}
-            </section>
+            {statGroups.map((group) => (
+                <section key={group.title} aria-label={group.title} className="flex w-full flex-col gap-3">
+                    <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{group.title}</h2>
+                    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {group.cards.map((card) => (
+                            <StatCard
+                                key={card.label}
+                                label={card.label}
+                                value={card.value}
+                                icon={card.icon}
+                                trendTone={card.trendTone}
+                            />
+                        ))}
+                    </div>
+                </section>
+            ))}
 
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                 <section className="flex min-w-0 flex-col gap-3">

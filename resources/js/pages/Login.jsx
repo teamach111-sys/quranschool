@@ -147,6 +147,11 @@ export default function Login() {
                                 <Icon name="arrow_forward" className="text-[18px]" />
                             </button>
                         </form>
+                        <div className="mt-4 flex justify-center gap-2">
+                            <button type="button" onClick={() => { setIdentifier('admin@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384c43] dark:bg-[#273831] dark:text-[#ecf3ef] dark:hover:bg-[#34483f]">Admin</button>
+                            <button type="button" onClick={() => { setIdentifier('teacher@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384c43] dark:bg-[#273831] dark:text-[#ecf3ef] dark:hover:bg-[#34483f]">Teacher</button>
+                            <button type="button" onClick={() => { setIdentifier('secretary@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384c43] dark:bg-[#273831] dark:text-[#ecf3ef] dark:hover:bg-[#34483f]">Secretary</button>
+                        </div>
                     </div>
                 </div>
             </main>
