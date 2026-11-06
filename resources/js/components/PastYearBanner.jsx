@@ -69,7 +69,7 @@ export default function PastYearBanner({ visible }) {
         <aside
             role="status"
             dir={isRTL ? 'rtl' : 'ltr'}
-            className="flex flex-col gap-3 rounded-lg border border-secondary/30 bg-secondary-container px-3 py-3 text-on-secondary-container dark:border-secondary-fixed-dim/30 dark:bg-[#3b321e] dark:text-[#ffdeaa] sm:flex-row sm:items-center sm:justify-between"
+            className="mb-3 flex w-full flex-col gap-3 rounded-lg border border-secondary/30 bg-secondary-container px-3 py-3 text-on-secondary-container dark:border-secondary-fixed-dim/30 dark:bg-[#3b321e] dark:text-[#ffdeaa] sm:flex-row sm:items-center sm:justify-between"
         >
             <div className="flex items-start gap-2">
                 <Icon name="lock" className="mt-0.5 shrink-0 text-[18px]" />

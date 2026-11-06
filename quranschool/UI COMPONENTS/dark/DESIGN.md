@@ -1,134 +1,136 @@
 ---
-name: Serene Tahfiz
+name: Fajr Mist
 colors:
-  surface: '#f0fcf3'
-  surface-dim: '#d1ddd4'
-  surface-bright: '#f0fcf3'
-  surface-container-lowest: '#ffffff'
-  surface-container-low: '#ebf7ed'
-  surface-container: '#e5f1e8'
-  surface-container-high: '#dfebe2'
-  surface-container-highest: '#d9e5dc'
-  on-surface: '#131e18'
-  on-surface-variant: '#404945'
-  inverse-surface: '#28332d'
-  inverse-on-surface: '#e8f4ea'
-  outline: '#707974'
-  outline-variant: '#c0c9c3'
-  surface-tint: '#376757'
-  primary: '#144637'
-  on-primary: '#ffffff'
-  primary-container: '#2e5e4e'
-  on-primary-container: '#a3d5c1'
-  inverse-primary: '#9fd1bd'
-  secondary: '#7d5700'
-  on-secondary: '#ffffff'
-  secondary-container: '#ffc55f'
-  on-secondary-container: '#755100'
-  tertiary: '#37413c'
-  on-tertiary: '#ffffff'
-  tertiary-container: '#4e5853'
-  on-tertiary-container: '#c3cdc7'
-  error: '#ba1a1a'
-  on-error: '#ffffff'
-  error-container: '#ffdad6'
-  on-error-container: '#93000a'
-  primary-fixed: '#baeed9'
-  primary-fixed-dim: '#9fd1bd'
-  on-primary-fixed: '#002117'
-  on-primary-fixed-variant: '#1e4f40'
-  secondary-fixed: '#ffdeaa'
-  secondary-fixed-dim: '#f5bd58'
-  on-secondary-fixed: '#271900'
-  on-secondary-fixed-variant: '#5f4100'
-  tertiary-fixed: '#dbe5de'
-  tertiary-fixed-dim: '#bfc9c2'
-  on-tertiary-fixed: '#151d19'
-  on-tertiary-fixed-variant: '#3f4944'
-  background: '#f0fcf3'
-  on-background: '#131e18'
-  surface-variant: '#d9e5dc'
+  surface: '#0f131b'
+  surface-dim: '#0f131b'
+  surface-bright: '#353942'
+  surface-container-lowest: '#0a0e16'
+  surface-container-low: '#181c24'
+  surface-container: '#1c2028'
+  surface-container-high: '#262a33'
+  surface-container-highest: '#31353e'
+  on-surface: '#dfe2ee'
+  on-surface-variant: '#c2c7d0'
+  inverse-surface: '#dfe2ee'
+  inverse-on-surface: '#2c3039'
+  outline: '#8c919a'
+  outline-variant: '#42474f'
+  surface-tint: '#9ccaff'
+  primary: '#c6dfff'
+  on-primary: '#003257'
+  primary-container: '#93c5fd'
+  on-primary-container: '#145283'
+  inverse-primary: '#2b6193'
+  secondary: '#ffb95f'
+  on-secondary: '#472a00'
+  secondary-container: '#ee9800'
+  on-secondary-container: '#5b3800'
+  tertiary: '#ffd2d0'
+  on-tertiary: '#670211'
+  tertiary-container: '#ffaba8'
+  on-tertiary-container: '#93262b'
+  error: '#ffb4ab'
+  on-error: '#690005'
+  error-container: '#93000a'
+  on-error-container: '#ffdad6'
+  primary-fixed: '#d0e4ff'
+  primary-fixed-dim: '#9ccaff'
+  on-primary-fixed: '#001d35'
+  on-primary-fixed-variant: '#03497a'
+  secondary-fixed: '#ffddb8'
+  secondary-fixed-dim: '#ffb95f'
+  on-secondary-fixed: '#2a1700'
+  on-secondary-fixed-variant: '#653e00'
+  tertiary-fixed: '#ffdad8'
+  tertiary-fixed-dim: '#ffb3b0'
+  on-tertiary-fixed: '#410006'
+  on-tertiary-fixed-variant: '#881d24'
+  background: '#0f131b'
+  on-background: '#dfe2ee'
+  surface-variant: '#31353e'
 typography:
-  headline-xl:
+  display-lg:
     fontFamily: Plus Jakarta Sans
-    fontSize: 36px
-    fontWeight: '700'
-    lineHeight: 44px
+    fontSize: 3rem
+    fontWeight: '600'
+    lineHeight: 3.75rem
     letterSpacing: -0.02em
-  headline-xl-mobile:
+  display-lg-mobile:
     fontFamily: Plus Jakarta Sans
-    fontSize: 28px
-    fontWeight: '700'
-    lineHeight: 36px
-    letterSpacing: -0.01em
+    fontSize: 2rem
+    fontWeight: '600'
+    lineHeight: 2.5rem
+    letterSpacing: -0.015em
   headline-lg:
     fontFamily: Plus Jakarta Sans
-    fontSize: 28px
+    fontSize: 2rem
     fontWeight: '600'
-    lineHeight: 36px
-    letterSpacing: -0.015em
+    lineHeight: 2.5rem
+    letterSpacing: -0.01em
   headline-lg-mobile:
     fontFamily: Plus Jakarta Sans
-    fontSize: 24px
+    fontSize: 1.5rem
     fontWeight: '600'
-    lineHeight: 32px
+    lineHeight: 2rem
     letterSpacing: -0.01em
   headline-md:
     fontFamily: Plus Jakarta Sans
-    fontSize: 22px
+    fontSize: 1.5rem
     fontWeight: '600'
-    lineHeight: 30px
-    letterSpacing: -0.01em
+    lineHeight: 2rem
+    letterSpacing: -0.005em
   headline-sm:
     fontFamily: Plus Jakarta Sans
-    fontSize: 18px
-    fontWeight: '600'
-    lineHeight: 26px
+    fontSize: 1.25rem
+    fontWeight: '500'
+    lineHeight: 1.75rem
   body-lg:
     fontFamily: Plus Jakarta Sans
-    fontSize: 16px
+    fontSize: 1.125rem
     fontWeight: '400'
-    lineHeight: 26px
+    lineHeight: 1.875rem
   body-md:
     fontFamily: Plus Jakarta Sans
-    fontSize: 14px
+    fontSize: 1rem
     fontWeight: '400'
-    lineHeight: 22px
+    lineHeight: 1.625rem
   body-sm:
     fontFamily: Plus Jakarta Sans
-    fontSize: 13px
+    fontSize: 0.875rem
     fontWeight: '400'
-    lineHeight: 20px
+    lineHeight: 1.375rem
   label-lg:
     fontFamily: Plus Jakarta Sans
-    fontSize: 14px
+    fontSize: 0.875rem
     fontWeight: '600'
-    lineHeight: 20px
+    lineHeight: 1.25rem
     letterSpacing: 0.01em
   label-md:
     fontFamily: Plus Jakarta Sans
-    fontSize: 12px
+    fontSize: 0.75rem
     fontWeight: '500'
-    lineHeight: 18px
+    lineHeight: 1rem
     letterSpacing: 0.02em
   label-sm:
     fontFamily: Plus Jakarta Sans
-    fontSize: 11px
-    fontWeight: '600'
-    lineHeight: 16px
-    letterSpacing: 0.03em
+    fontSize: 0.6875rem
+    fontWeight: '500'
+    lineHeight: 0.875rem
+    letterSpacing: 0.04em
 rounded:
-  sm: 0.125rem
-  DEFAULT: 0.25rem
-  md: 0.375rem
-  lg: 0.5rem
-  xl: 0.75rem
+  sm: 0.25rem
+  DEFAULT: 0.5rem
+  md: 0.75rem
+  lg: 1rem
+  xl: 1.5rem
   full: 9999px
 spacing:
-  gutter: 1.25rem
-  gutter-mobile: 0.75rem
-  margin: 2rem
-  margin-mobile: 1rem
+  gutter: 1rem
+  gutter-md: 1.5rem
+  gutter-lg: 2rem
+  margin: 1rem
+  margin-md: 2rem
+  margin-lg: 3rem
   space-xs: 0.25rem
   space-sm: 0.5rem
   space-md: 1rem
@@ -138,111 +140,78 @@ spacing:
 
 ## Brand & Style
 
-This design system is tailored for Tahfiz institutes, modern madrasahs, and sacred recitation environments. It embodies tranquility, clarity, and focused reverence. Rather than resorting to heavy, antiquated motifs or dense, opaque backgrounds, the visual direction embraces a luminous, airy aesthetic rooted in contemporary Islamic scholarship and mindfulness. 
+This design system establishes a tranquil, meditative environment tailored specifically for early-morning memorization, deep contemplation, and low-light Quranic recitation. Inspired by the calm stillness of Fajr—the transitional dawn twilight—the visual tone deliberately breaks away from ubiquitous pitch-black dark modes and traditional Islamic green palettes.
 
-The atmosphere evokes morning dew, fine parchment, and tranquil courtyard architecture. It prioritizes legibility, breathing room, and low cognitive friction to support deep memorization (Hifz), student tracking, and gentle evaluation.
-
-### Design Movement
-**Luminous Organic Minimalism:** Soft tonal layering, feather-light sage borders, generous margins, and subtle luminous accents. The UI recedes gracefully, letting Quranic text, memorization schedules, and student progress take center stage without visual fatigue.
+Instead, the UI cultivates an airy, contemplative atmospheric slate mood. The aesthetic embraces modern soft minimalism enriched with subtle tonal elevations and luminous sky accents. It feels whisper-quiet, respectful, and optically calming on tired eyes during pre-dawn hours, balancing structural clarity with warm sacred achievement cues.
 
 ## Colors
 
-The color palette is built around calming sage botanicals, warm porcelain surfaces, and soft honey-sand highlights. It deliberately avoids harsh black-and-white polarities and heavy earthen browns.
+The palette relies on nuanced tonal containment rather than raw contrast, eliminating visual glare while retaining pristine legibility.
 
-### Palette Architecture
-- **Primary (`#2E5E4E`):** Deep Sage Green. Symbolizes growth, tranquility, and dignity. Used for key navigational landmarks, primary action buttons, active states, and high-emphasis focal points.
-- **Secondary (`#D9A441` / `#B58428`):** Warm Amber Sand. Used sparingly for achievements, Tajweed reminders, bookmarks, and subtle badges.
-- **Tertiary Tint (`#E2ECE5`):** Soft Mint Wash. Used for delicate surface fills, selection pills, and gentle highlight backgrounds.
-- **Borders & Dividers (`#D8E2DA`, `#CBD7CE`):** Whisper Sage Gray. Delivers quiet structure without creating harsh compartmentalization.
-
-### Light Mode Surfaces
-- **Canvas Base:** `#FBFDFA` (Porcelain Warm White)
-- **Surface Level 1:** `#F4F7F4` (Soft Alabaster)
-- **Surface Level 2:** `#EBF1EB` (Pale Linen Sage)
-- **Primary Body Text:** `#1E2B26` (Muted Evergreen Ink)
-- **Secondary Text:** `#53685E` (Gentle Sage Slate)
-
-### Dim / Twilight Mode ("Soft Dusk" Reading)
-To support evening review and dawn (Fajr) recitation, the system uses a muted twilight slate rather than pitch black:
-- **Canvas Base:** `#1E2B26`
-- **Surface Level 1:** `#24332D`
-- **Surface Level 2:** `#2D3E37`
-- **Primary Text:** `#E9F0EC` (Warm Cream White)
-- **Secondary Text:** `#C2D1C8` (Muted Mint Mist)
-- **Borders & Rules:** `#384C43`
+- **Canvas / Root Background (`#333740`):** A serene, balanced dawn slate gray avoiding heavy black.
+- **Surface Lower / Recessed (`#2B2E36`):** Dedicated to recessed viewports, verse audio scrubbers, and verse playback states.
+- **Surface Default (`#3F444E`):** Standard card containers, reading panels, and modular blocks.
+- **Surface Elevated (`#4A505C`):** Floating navigation bars, active sheets, context drawers, and toolbars.
+- **Primary Dawn Azure (`#93C5FD`):** The guiding light of dawn. Reserved for active verse progress, focal markers, primary controls, and active pagination.
+- **Secondary Dawn Sun (`#F59E0B` / `#FDE047`):** Gentle golden morning sunlight deployed for Tajweed mastery stars, Hifz streaks, and milestone badges.
+- **Tertiary Warning (`#F87171`):** A soft dawn coral for pronunciation corrections and tajweed reminders, eliminating harsh warning reds.
+- **Text & Borders:** Text hierarchy transitions from crisp white (`#F8FAFC`) down to mist silver (`#CBD5E1` and `#94A3B8`). Structural lines leverage soft slate borders (`#525866` and `#474D5A`) for low-contrast definition.
 
 ## Typography
 
-Plus Jakarta Sans brings a warm, geometric clarity with gently softened terminal curves that echo natural letterforms without feeling playful. 
+The typography leverages Plus Jakarta Sans across all application levels to project a clean, modern, architectural aesthetic. The vertical rhythm is deliberately generous—line heights of 1.6x to 1.7x on body text provide ample visual breathing space, reducing eye strain during extended memorization and self-testing sessions. 
 
-### Typographic Principles
-- **Readability & Breath:** High line heights (1.5–1.6×) preserve open, readable text columns, preventing eye fatigue during lengthy tracking or annotation sessions.
-- **Hierarchy:** Clear weight steps (400, 500, 600, 700) differentiate student names, Surah classifications, Ayah ranges, and instructor notes.
-- **Arabic Text Pairings:** While Latin UI utilizes Plus Jakarta Sans, Arabic Scripture should be rendered using standard Quranic calligraphic typefaces (such as KFGQPC Hafs) at an optical size of 1.4× the adjacent body scale with a minimum line height of 2.2× to ensure complete diacritic (Tashkeel) distinction.
+When paired with script fonts for Quranic text, Plus Jakarta Sans serves as an unobtrusive, highly legible scaffold for translations, verse numbers, Juz indicators, and memorization prompts.
 
 ## Layout & Spacing
 
-The layout is grounded in a fluid grid balanced by quiet, uncluttered structural bounds. The goal is to cultivate a distraction-free environment that promotes focus and calm.
+Layouts adhere to an adaptive fluid-to-centered grid structured around rhythmic multiples of 4px and 8px.
 
-### Grid & Breakpoints
-- **Mobile (< 768px):** 4-column layout, `margin-mobile: 1rem`, `gutter-mobile: 0.75rem`. Cards and lists stack vertically with strict, clear separations.
-- **Tablet (768px - 1024px):** 8-column layout, `margin: 1.5rem`, `gutter: 1rem`. Ideal for split-pane teacher evaluation views (student roster on left, recitation sheet on right).
-- **Desktop (> 1024px):** 12-column layout, `margin: 2rem`, max-width content container bounded at `1280px` to maintain comfortable line lengths.
-
-### Spatial Rhythm
-Use `space-md` (16px) as the standard atomic distance between related components. Container padding scales comfortably from `space-md` on compact widgets to `space-xl` on primary reading dashboards.
+- **Mobile (< 768px):** Single-column layout with 1rem canvas margins and 1rem gutter. Content prioritizes full-width card containers with clean horizontal breathing room.
+- **Tablet (768px - 1024px):** 6-column grid with 2rem margins, enabling side-by-side memorization splits (e.g., Ayah recitation canvas alongside memorization logs).
+- **Desktop (> 1024px):** Centered max-width viewport (capped at 1200px) on a 12-column grid with 3rem margins, ensuring recitation lines never extend beyond comfortable scanning widths.
 
 ## Elevation & Depth
 
-Visual hierarchy relies on soft surface layers and muted sage outlines rather than heavy drop shadows.
+Visual hierarchy rejects intense, heavy drop shadows in favor of subtle tonal surface steps and low-contrast perimeter strokes.
 
-### Atmospheric Planes
-- **Surface Nesting:** Base canvases sit on `#FBFDFA`. Floating modules and cards use pure white `#FFFFFF` paired with an ultra-fine border (`1px solid #D8E2DA`). This creates crisp separation without shadow buildup.
-- **Diffuse Ambient Elevation:** When an element hovers or floats (modals, dropdown sheets, active drawer menus), use an ultra-diffused, tinted shadow:
-  - `box-shadow: 0 8px 30px -4px rgba(46, 94, 78, 0.05), 0 2px 6px -1px rgba(46, 94, 78, 0.03);`
-- **Dim Mode Planes:** In twilight mode, depth is articulated through tone stepping (`#1E2B26` canvas to `#24332D` container) bounded by `1px solid #384C43`, completely avoiding harsh black cast-shadows.
+- **Level 0 (Base Canvas):** Background `#333740` with zero elevation.
+- **Level 1 (Surface Containers):** Background `#3F444E` framed with a 1px border of `#525866`. No shadow is applied; depth is purely chromatic.
+- **Level 2 (Elevated Sheets & Floating Nav):** Background `#4A505C` framed by a 1px border of `#626978` and a diffused ambient twilight shadow: `0 8px 24px -4px rgba(27, 30, 36, 0.45)`.
+- **Level Recessed (Audio dock, Input Wells):** Background `#2B2E36` with a soft inset perimeter stroke `#3A3F4B`.
 
 ## Shapes
 
-The interface uses restrained, architectural radii that feel intentional, modern, and structured:
+Corner radii stay strictly within the modern 8px to 12px range (`roundedness: 2`), balancing structural precision with tactile softness. 
 
-- **Radius Tokens:** 
-  - Base (`rounded`): `6px` (`0.375rem`) for checkboxes, small badges, and micro-inputs.
-  - Intermediate (`rounded-lg`): `8px` (`0.5rem`) for buttons, text fields, cards, and dialogue containers.
-  - Large (`rounded-xl`): `12px` (`0.75rem`) for large study surfaces, audio recitation bars, and popover panels.
-- **Geometry:** Avoid exaggerated pill buttons or harsh 90-degree corners. The subtle 6px-8px curvature delivers a calm, collected discipline suitable for institutional study.
+- **Small Components (Chips, Tags, Badges):** 0.5rem (8px).
+- **Standard Containers (Cards, Modals, Action Buttons):** 0.75rem (12px).
+- **Recitation Viewport Surfaces:** 1rem (16px) for spacious outer boundaries.
+- **Pills:** Full rounded pill radius is reserved strictly for audio recording toggles, active recitation status pills, and Juz progression meters.
 
 ## Components
 
 ### Buttons
-- **Primary:** Background `#2E5E4E`, text `#FFFFFF`, border-radius 8px, padding `10px 20px`. Subtle hover state shifts to `#3D7563`.
-- **Secondary / Soft:** Background `#E2ECE5`, text `#2E5E4E`, 1px border `#CBD7CE`. Hover deepens slightly to `#D5E3DA`.
-- **Amber / Achievement Action:** Background `#D9A441`, text `#FFFFFF`. Reserved for graduation marks, completion checkpoints, and Hifz milestones.
+- **Primary:** Dawn Sky Blue (`#93C5FD`) background with `#1E293B` text in semi-bold weight. Provides an immediate, soft-luminous affordance without harsh glare. Hover: subtle brightness elevation; active: scale 0.98.
+- **Secondary / Tonal:** `#4A505C` background, 1px border `#525866`, text `#F8FAFC`.
+- **Ghost:** Transparent background, text `#CBD5E1`, hovering into `#3F444E`.
 
-### Cards & Progress Containers
-- Background `#FFFFFF` (in Light) or `#24332D` (in Dim mode).
-- Border: `1px solid #D8E2DA` (Light) or `1px solid #384C43` (Dim).
-- Padding: `20px` to `24px`.
-- Layout: Header with Surah title in bold, student progress indicator, and soft secondary status badge.
+### Cards & Reading Blocks
+- Constructed using `#3F444E` with 1px border `#525866` and 12px corners.
+- Padding uses `space-md` or `space-lg`.
+- Verse cards feature an active state displaying an inner accent line of `#93C5FD` on the right or left edge to identify the currently recited Ayah.
 
-### Input Fields & Search
-- Surface: `#F4F7F4`, transitioning to `#FFFFFF` on active focus.
-- Border: `1px solid #D8E2DA`, focusing to `1.5px solid #2E5E4E` with no glowing halo.
-- Text: `#1E2B26`, placeholder `#809489`.
-- Corner Radius: 8px.
+### Input Fields & Search Bars
+- Background `#2B2E36` (recessed), border `#525866`, text `#F8FAFC`, placeholder `#94A3B8`.
+- Focus state switches the border to `#93C5FD` accompanied by a soft glow ring `0 0 0 2px rgba(147, 197, 253, 0.2)`.
 
-### Chips & Badges
-- **Status Pills (e.g., Mumtaz / Excellent, Jayyid / Good, Muraja'ah Needed):**
-  - Success/Mastered: Tinted sage `#E2ECE5` with `#2E5E4E` text.
-  - In Progress / Revision: Tinted sand `#FBF4E6` with `#B58428` text.
-  - Needs Attention: Gentle rose-mint wash `#FBECEB` with `#8C4343` text.
-- Radius: 6px. Padding: `4px 10px`. Font: `label-sm`.
+### Chips & Verse Badges
+- Surface `#2B2E36` with `#525866` borders for neutral markers.
+- Achievement & Surah completion tags use a gentle dawn sunlight treatment: `#F59E0B` text on `rgba(245, 158, 11, 0.12)` fill with `rgba(245, 158, 11, 0.3)` border.
 
-### Checkboxes & Segmented Controls
-- Unchecked: 1px border `#CBD7CE` on `#F4F7F4`.
-- Checked: Fill `#2E5E4E` with a crisp white checkmark icon. Radius: 6px.
-- Segmented Tabs (e.g., Sabaq, Sabqi, Manzil): Housed in a shallow `#F4F7F4` pill track; active tab has a `#FFFFFF` card fill with a hairline `#D8E2DA` border and subtle ambient shadow.
+### Tajweed & Pronunciation Prompts
+- Inline flags use `#F87171` over a tonal tint `rgba(248, 113, 113, 0.1)` with 8px radius for calming, supportive error correction.
 
-### Specialized Tahfiz Modules
-- **Hifz Tracker / Rub' / Juz Progress Bar:** A slender 6px track in `#EBF1EB` with filled segments in `#2E5E4E` and milestone nodes in warm amber `#D9A441`.
-- **Recitation Playback Strip:** Floating dock at the bottom of the viewport with surface `#F4F7F4` (`#24332D` in twilight mode), containing playback controls, speed toggles, and Ayah repeat counters framed by thin `#CBD7CE` borders.
+### Recitation Audio Bar & Hifz Progress Tracker
+- A persistent anchored container at the screen bottom using `#4A505C` with a top border `#525866`.
+- Audio scrub track uses `#2B2E36`, filled by a `#93C5FD` progress line with a rounded 4px height.

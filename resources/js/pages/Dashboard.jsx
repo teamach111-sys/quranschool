@@ -141,7 +141,7 @@ export default function Dashboard({ user }) {
                             <p className="text-[13px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8] mt-1 max-w-4xl">{pageInfo.subtitle}</p>
                         </section>
                         <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200" style={{ padding: '10px' }}>
-                            <div className="flex flex-col w-full p-[10px] gap-3">
+                            <div className="flex flex-col w-full gap-3">
                                 <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-outline-variant dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center select-none'}`}>
                                     <PastYearBanner visible={showPastYearBanner} />
                                     {ActivePageComponent ? <ActivePageComponent routeParams={routeParams} /> : (

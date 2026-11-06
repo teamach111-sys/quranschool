@@ -616,11 +616,6 @@ export default function PaymentsTable({ routeParams = {} }) {
 
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
-            {!canRecord && (
-                <p className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
-                    {t.payments.readOnly}
-                </p>
-            )}
             {focusedAlertPayment && (
                 <p role="status" className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
                     {t.payments.alertRecordFocus(focusedAlertPayment.student_name)}

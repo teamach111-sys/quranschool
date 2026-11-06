@@ -1,488 +1,889 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_blank" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"tertiary-container":"#4e5853","primary":"#144637","inverse-surface":"#28332d","surface":"#f0fcf3","on-primary-container":"#a3d5c1","on-tertiary":"#ffffff","surface-container-low":"#ebf7ed","on-tertiary-fixed":"#151d19","surface-tint":"#376757","secondary":"#7d5700","on-tertiary-fixed-variant":"#3f4944","on-background":"#131e18","on-secondary-container":"#755100","on-secondary":"#ffffff","secondary-fixed-dim":"#f5bd58","on-secondary-fixed-variant":"#5f4100","on-primary":"#ffffff","outline-variant":"#c0c9c3","error-container":"#ffdad6","background":"#f0fcf3","secondary-container":"#ffc55f","on-primary-fixed-variant":"#1e4f40","inverse-on-surface":"#e8f4ea","tertiary-fixed-dim":"#bfc9c2","on-tertiary-container":"#c3cdc7","surface-container-highest":"#d9e5dc","surface-variant":"#d9e5dc","secondary-fixed":"#ffdeaa","on-surface-variant":"#404945","on-primary-fixed":"#002117","tertiary":"#37413c","on-surface":"#131e18","tertiary-fixed":"#dbe5de","outline":"#707974","primary-fixed-dim":"#9fd1bd","surface-bright":"#f0fcf3","primary-container":"#2e5e4e","error":"#ba1a1a","surface-dim":"#d1ddd4","inverse-primary":"#9fd1bd","primary-fixed":"#baeed9","surface-container-lowest":"#ffffff","on-secondary-fixed":"#271900","surface-container-high":"#dfebe2","on-error-container":"#93000a","surface-container":"#e5f1e8","on-error":"#ffffff"},borderRadius:{DEFAULT:"0.125rem",lg:"0.25rem",xl:"0.5rem",full:"0.75rem"},spacing:{"margin":"2rem","margin-mobile":"1rem","space-xl":"2.5rem","space-md":"1rem","space-sm":"0.5rem","gutter-mobile":"0.75rem","space-lg":"1.5rem","space-xs":"0.25rem","gutter":"1.25rem"},fontFamily:{"headline-lg":["Plus Jakarta Sans"],"headline-xl-mobile":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"label-md":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"headline-lg-mobile":["Plus Jakarta Sans"],"label-sm":["Plus Jakarta Sans"],"label-lg":["Plus Jakarta Sans"],"headline-xl":["Plus Jakarta Sans"]},fontSize:{"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.015em",fontWeight:"600"}],"headline-xl-mobile":["28px",{lineHeight:"36px",letterSpacing:"-0.01em",fontWeight:"700"}],"body-md":["14px",{lineHeight:"22px",fontWeight:"400"}],"body-sm":["13px",{lineHeight:"20px",fontWeight:"400"}],"label-md":["12px",{lineHeight:"18px",letterSpacing:"0.02em",fontWeight:"500"}],"headline-sm":["18px",{lineHeight:"26px",fontWeight:"600"}],"body-lg":["16px",{lineHeight:"26px",fontWeight:"400"}],"headline-md":["22px",{lineHeight:"30px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-lg-mobile":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"16px",letterSpacing:"0.03em",fontWeight:"600"}],"label-lg":["14px",{lineHeight:"20px",letterSpacing:"0.01em",fontWeight:"600"}],"headline-xl":["36px",{lineHeight:"44px",letterSpacing:"-0.02em",fontWeight:"700"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface min-h-screen antialiased" style="background-color: rgb(27, 38, 33); color: rgb(228, 243, 234);"><main class="w-full min-h-screen bg-surface" style="background-color: #1b2621;"><div class="flex flex-col w-full font-body-md text-body-md text-on-surface">
-<div class="max-w-7xl mx-auto py-10 px-8 w-full space-y-12"><!-- 1. Header Banner (Serene Dark) -->
-<header class="bg-[#24332d] border border-[#364d43] rounded-xl p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-<div class="absolute -right-12 -top-12 w-64 h-64 bg-[#2f423b] rounded-full opacity-40 blur-2xl pointer-events-none"></div>
-<div class="space-y-2 z-10">
-<div class="flex items-center gap-2 mb-1">
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs bg-[#2e4039] text-[#7ce0b8] font-semibold tracking-wide uppercase border border-[#3d554b]">
-<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
-        Design System v2.4 (Dark)
-      </span>
-<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-[#1f2b25] text-[#9eb5a8] font-medium border border-[#2d3e36]">
-        Soft Serene Palette • Non-Pitch Black
-      </span>
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_blank" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "outline-variant": "#42474f", "primary-fixed": "#d0e4ff", "background": "#0f131b", "inverse-primary": "#2b6193", "on-background": "#dfe2ee", "on-error-container": "#ffdad6", "on-tertiary": "#670211", "on-surface-variant": "#c2c7d0", "error-container": "#93000a", "tertiary-fixed": "#ffdad8", "secondary-fixed-dim": "#ffb95f", "on-secondary": "#472a00", "surface-container-lowest": "#0a0e16", "tertiary-fixed-dim": "#ffb3b0", "surface-container-low": "#181c24", "surface-variant": "#31353e", "on-primary-fixed": "#001d35", "secondary-container": "#ee9800", "on-tertiary-fixed": "#410006", "on-tertiary-container": "#93262b", "error": "#ffb4ab", "outline": "#8c919a", "on-secondary-fixed-variant": "#653e00", "surface": "#0f131b", "on-tertiary-fixed-variant": "#881d24", "surface-tint": "#9ccaff", "primary": "#c6dfff", "inverse-on-surface": "#2c3039", "inverse-surface": "#dfe2ee", "surface-container-high": "#262a33", "surface-bright": "#353942", "tertiary": "#ffd2d0", "secondary-fixed": "#ffddb8", "tertiary-container": "#ffaba8", "on-primary-container": "#145283", "on-error": "#690005", "primary-container": "#93c5fd", "primary-fixed-dim": "#9ccaff", "secondary": "#ffb95f", "surface-dim": "#0f131b", "on-surface": "#dfe2ee", "on-primary": "#003257", "surface-container": "#1c2028", "on-secondary-container": "#5b3800", "on-secondary-fixed": "#2a1700", "on-primary-fixed-variant": "#03497a", "surface-container-highest": "#31353e" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-md": "1.5rem", "margin-lg": "3rem", "space-xl": "2.5rem", "gutter": "1rem", "space-md": "1rem", "space-xs": "0.25rem", "space-lg": "1.5rem", "margin-md": "2rem", "margin": "1rem", "gutter-lg": "2rem", "space-sm": "0.5rem" }, "fontFamily": { "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "display-lg-mobile": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"] }, "fontSize": { "headline-lg-mobile": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-sm": ["1.25rem", { "lineHeight": "1.75rem", "fontWeight": "500" }], "body-md": ["1rem", { "lineHeight": "1.625rem", "fontWeight": "400" }], "headline-lg": ["2rem", { "lineHeight": "2.5rem", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-sm": ["0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.04em", "fontWeight": "500" }], "body-sm": ["0.875rem", { "lineHeight": "1.375rem", "fontWeight": "400" }], "body-lg": ["1.125rem", { "lineHeight": "1.875rem", "fontWeight": "400" }], "display-lg-mobile": ["2rem", { "lineHeight": "2.5rem", "letterSpacing": "-0.015em", "fontWeight": "600" }], "label-md": ["0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.02em", "fontWeight": "500" }], "label-lg": ["0.875rem", { "lineHeight": "1.25rem", "letterSpacing": "0.01em", "fontWeight": "600" }], "display-lg": ["3rem", { "lineHeight": "3.75rem", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-md": ["1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.005em", "fontWeight": "600" }] } } } };</script></head><body class="bg-background font-body-md text-body-md text-on-background min-h-screen"><main class="w-full max-w-[1200px] mx-auto px-margin md:px-margin-md lg:px-margin-lg py-margin-md"><div class="flex flex-col w-full text-on-surface">
+<!-- 1. HEADER BANNER SECTION -->
+<header class="relative overflow-hidden rounded-xl bg-surface-container-high p-space-lg md:p-space-xl shadow-xl mb-margin-md">
+<div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-primary/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -left-12 -bottom-12 w-64 h-64 rounded-full bg-secondary/10 blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-space-md">
+<!-- Status Badges Row -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-lowest text-primary font-label-md text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+          Design System v2.5
+        </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-variant text-on-surface-variant font-label-md text-label-md">
+          Canvas: #333740
+        </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container/20 text-secondary font-label-md text-label-md">
+          Fajr Mist • Light-Dark Hybrid
+        </span>
 </div>
-<h1 class="text-3xl font-bold text-[#e4f3ea] tracking-tight">TITLE GOES HERE</h1>
-<p class="text-[#a8c0b2] max-w-2xl leading-relaxed text-sm md:text-base">SUBTITLE GOES HERE</p>
+<!-- Title & Atmospheric Narrative -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-lg">
+<div class="max-w-3xl space-y-2">
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface tracking-tight">
+            Serene Tahfiz <span class="text-primary font-normal">• Fajr Mist Edition</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+            A serene “light-dark” hybrid aesthetic engineered for dawn recitation (5:00 AM) and low-light focus. Formulated with airy medium slate (<span class="text-primary-container font-mono">#333740</span>), soft stone containers (<span class="text-primary-container font-mono">#3F444E</span>), and luminous dawn sky accents (<span class="text-primary font-mono">#93C5FD</span>)—free from pitch-black voids and green hues.
+          </p>
 </div>
-<div class="flex items-center gap-3 z-10 flex-shrink-0">
-<button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#2d3f37] text-[#cde4d6] hover:bg-[#374c43] border border-[#3d554a] transition-colors shadow-sm" id="exportTokensBtn">
-<span class="material-symbols-outlined text-lg">data_object</span>
-      Export Tokens (JSON)
-    </button>
-<button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-[#3d7a61] text-[#f0fbf5] hover:bg-[#488e71] border border-[#529e7f] transition-all shadow-sm" id="liveDemoBtn">
-<span class="material-symbols-outlined text-lg">preview</span>
-      View Live Demo
-    </button>
+<!-- Banner Action Triggers -->
+<div class="flex flex-wrap items-center gap-space-sm shrink-0">
+<button class="inline-flex items-center gap-2 px-space-md py-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-variant transition-colors shadow-sm font-label-lg text-label-lg" type="button">
+<span class="material-symbols-outlined text-[1.125rem]">download</span>
+            Export Tokens (JSON)
+          </button>
+<a class="inline-flex items-center gap-2 px-space-md py-space-sm rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg hover:bg-primary transition-colors shadow-md" href="#ledger-table">
+<span class="material-symbols-outlined text-[1.125rem]">table_view</span>
+            View Live Demo / Table
+          </a>
+</div>
+</div>
 </div>
 </header>
-<!-- 2. Color Palette & Tokens (Soft Serene Dark Palette) -->
-<section class="space-y-4">
-<div class="flex items-center justify-between">
+<!-- 2. FOUNDATIONS: COLOR PALETTE & DESIGN TOKENS -->
+<section class="mb-margin-md">
+<div class="flex items-center justify-between mb-space-md">
 <div>
-<span class="text-xs uppercase tracking-wider text-[#e6b95d] font-semibold">Foundations</span>
-<h2 class="text-xl md:text-2xl font-bold text-[#d8eee1]">Color Palette &amp; Soft Dark Tokens</h2>
+<h2 class="font-headline-lg text-headline-sm md:text-headline-lg text-on-surface">Foundations: Color Palette &amp; Design Tokens</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Calibrated specifically for Fajr twilight illumination and minimum retina fatigue</p>
 </div>
-<span class="text-xs text-[#9cb4a6]">Serene Tahfiz Muted Dark Canvas System</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant bg-surface-container px-2.5 py-1 rounded">8 Base Values</span>
 </div>
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-<!-- Token 1: Soft Canvas / Main BG -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#1b2621] border border-[#2d4037] flex items-end p-3 shadow-inner">
-<span class="text-[#bfe0cd] font-mono text-xs bg-[#24342d] px-2 py-0.5 rounded border border-[#33493e]">#1B2621</span>
+<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-space-sm">
+<!-- Swatch 1 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#333740] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-slate-300">Base</span>
 </div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Muted Dark Canvas</h3>
-<p class="text-xs text-[#829e90]">token: canvas-background</p>
-<p class="text-xs text-[#a2baa9] mt-1">Components area bg, application base layer, gentle on the eyes.</p>
+<p class="font-label-lg text-label-md text-on-surface truncate">Workspace Canvas</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#333740</p>
+<span class="mt-1 font-label-sm text-label-sm text-primary truncate">surface-canvas</span>
 </div>
+<!-- Swatch 2 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#3F444E] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-slate-300">Card</span>
 </div>
-<!-- Token 2: Elevated Container Surface -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#273831] border border-[#384e44] flex items-end p-3 shadow-inner">
-<span class="text-[#e4f3ea] font-mono text-xs bg-[#1e2c26] px-2 py-0.5 rounded border border-[#33493e]">#273831</span>
+<p class="font-label-lg text-label-md text-on-surface truncate">Slate Card Surface</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#3F444E</p>
+<span class="mt-1 font-label-sm text-label-sm text-primary truncate">surface-card</span>
 </div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Elevated Card Surface</h3>
-<p class="text-xs text-[#829e90]">token: surface-elevated</p>
-<p class="text-xs text-[#a2baa9] mt-1">Container blocks, nested panels, card cards, and modal backdrops.</p>
+<!-- Swatch 3 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#93C5FD] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-slate-800">Primary</span>
 </div>
+<p class="font-label-lg text-label-md text-on-surface truncate">Dawn Sky Accent</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#93C5FD</p>
+<span class="mt-1 font-label-sm text-label-sm text-primary truncate">primary-accent</span>
 </div>
-<!-- Token 3: Emerald Accent -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#449171] border border-[#52a783] flex items-end p-3 shadow-inner">
-<span class="text-[#0d2319] font-mono text-xs bg-[#e4f6ed] font-semibold px-2 py-0.5 rounded">#449171</span>
+<!-- Swatch 4 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#FDE047] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-amber-900">Gold</span>
 </div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Emerald Accent</h3>
-<p class="text-xs text-[#829e90]">token: primary-accent</p>
-<p class="text-xs text-[#a2baa9] mt-1">Interactive primary buttons, active tabs, radio markers, key indicators.</p>
+<p class="font-label-lg text-label-md text-on-surface truncate">Sunlight Gold</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#FDE047</p>
+<span class="mt-1 font-label-sm text-label-sm text-secondary truncate">secondary-accent</span>
 </div>
+<!-- Swatch 5 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#F8FAFC] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-slate-700">Text</span>
 </div>
-<!-- Token 4: Soft Mint Text -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#e4f3ea] flex items-end p-3 shadow-inner">
-<span class="text-[#15241d] font-mono text-xs bg-[#c9e8d7] font-semibold px-2 py-0.5 rounded">#E4F3EA</span>
+<p class="font-label-lg text-label-md text-on-surface truncate">Morning Mist Type</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#F8FAFC</p>
+<span class="mt-1 font-label-sm text-label-sm text-on-surface-variant truncate">on-surface-prim</span>
 </div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Soft Mint Typography</h3>
-<p class="text-xs text-[#829e90]">token: on-surface-high</p>
-<p class="text-xs text-[#a2baa9] mt-1">High-contrast primary headlines and crystal clear legibility text.</p>
+<!-- Swatch 6 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#59606E] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-slate-300">Stroke</span>
 </div>
+<p class="font-label-lg text-label-md text-on-surface truncate">Slate Outline</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#59606E</p>
+<span class="mt-1 font-label-sm text-label-sm text-on-surface-variant truncate">outline-border</span>
 </div>
-<!-- Token 5: Sage Border -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#334a41] flex items-end p-3 shadow-inner">
-<span class="text-[#d8efe2] font-mono text-xs bg-[#24352f] px-2 py-0.5 rounded border border-[#435e53]">#334A41</span>
+<!-- Swatch 7 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#F87171] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-red-950">Warn</span>
 </div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Sage Border &amp; Outline</h3>
-<p class="text-xs text-[#829e90]">token: outline-variant</p>
-<p class="text-xs text-[#a2baa9] mt-1">Crisp separation strokes, table dividers, input borders, and focus rings.</p>
+<p class="font-label-lg text-label-md text-on-surface truncate">Alert Coral</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#F87171</p>
+<span class="mt-1 font-label-sm text-label-sm text-error truncate">alert-coral</span>
 </div>
+<!-- Swatch 8 -->
+<div class="flex flex-col bg-surface-container rounded-xl p-3 shadow-sm hover:scale-[1.02] transition-transform">
+<div class="h-14 rounded-lg bg-[#4A505C] shadow-inner mb-2.5 flex items-end justify-end p-1.5">
+<span class="text-[0.625rem] font-mono text-slate-300">Elevated</span>
 </div>
-<!-- Token 6: Muted Amber Warning -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#44381e] border border-[#6b582b] flex items-end p-3 shadow-inner">
-<span class="text-[#fde69e] font-mono text-xs bg-[#2b2413] px-2 py-0.5 rounded border border-[#524424]">#F3C35B</span>
-</div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Amber Revision</h3>
-<p class="text-xs text-[#829e90]">token: secondary-dark</p>
-<p class="text-xs text-[#a2baa9] mt-1">Sabqi checkpoints, revision warning toasts, and cautionary items.</p>
-</div>
-</div>
-<!-- Token 7: Terracotta Alert -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#4a2422] border border-[#753b38] flex items-end p-3 shadow-inner">
-<span class="text-[#ffc4be] font-mono text-xs bg-[#2e1615] px-2 py-0.5 rounded border border-[#5c2d2a]">#E36458</span>
-</div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Terracotta Alert</h3>
-<p class="text-xs text-[#829e90]">token: error-dark</p>
-<p class="text-xs text-[#a2baa9] mt-1">Tajweed mistakes, recitation retry markers, and critical notices.</p>
-</div>
-</div>
-<!-- Token 8: Surface Sub-layer -->
-<div class="bg-[#24332d] border border-[#334a41] p-4 rounded-xl shadow-sm space-y-3">
-<div class="h-20 rounded-lg bg-[#202d27] border border-[#2f4038] flex items-end p-3 shadow-inner">
-<span class="text-[#9cb7a7] font-mono text-xs bg-[#19231f] px-2 py-0.5 rounded border border-[#293831]">#202D27</span>
-</div>
-<div>
-<h3 class="font-semibold text-sm text-[#e4f3ea]">Surface Sub-tier</h3>
-<p class="text-xs text-[#829e90]">token: surface-inset</p>
-<p class="text-xs text-[#a2baa9] mt-1">Input backgrounds, recessed table headers, and sunken badge wells.</p>
-</div>
+<p class="font-label-lg text-label-md text-on-surface truncate">Dusk Container</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant font-mono">#4A505C</p>
+<span class="mt-1 font-label-sm text-label-sm text-primary-fixed truncate">surface-high</span>
 </div>
 </div>
 </section>
-<!-- 3. Buttons & Interactive Actions -->
-<section class="space-y-4">
-<div>
-<span class="text-xs uppercase tracking-wider text-[#e6b95d] font-semibold">Components</span>
-<h2 class="text-xl md:text-2xl font-bold text-[#d8eee1]">Buttons &amp; Interactive Actions</h2>
+<!-- 3. COMPONENTS: BUTTONS & INTERACTIVE ACTIONS -->
+<section class="mb-margin-md">
+<div class="mb-space-md">
+<h2 class="font-headline-lg text-headline-sm md:text-headline-lg text-on-surface">Interactive Actions &amp; Buttons</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Consistent dawn affordance hierarchy with high-contrast tactile feedback</p>
 </div>
-<div class="bg-[#24332d] border border-[#334a41] rounded-xl p-8 shadow-sm space-y-8">
-<div>
-<h3 class="text-lg font-semibold text-[#e4f3ea] mb-4">Button Variants &amp; States</h3>
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-<!-- Default -->
-<div class="space-y-3">
-<span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Default State</span>
-<div class="flex flex-col gap-2.5">
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#3d7a61] text-[#f1faf5] hover:bg-[#488e71] border border-[#4d9779] transition-colors shadow-sm">
-              Primary Button
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#2a3c34] text-[#cae2d4] hover:bg-[#344a41] border border-[#3d574b] transition-colors">
-              Secondary Button
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#1e2a24] text-[#a4c5b3] hover:bg-[#25352d] border border-[#354c41] transition-colors shadow-sm">
-              Outline / Muted
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-[#90cbb0] hover:bg-[#202c26] transition-colors">
-              Ghost Button
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#752e2a] text-[#ffdad6] hover:bg-[#883631] border border-[#94403a] transition-all shadow-sm">
-              Destructive Button
-            </button>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+<!-- Column 1: Variants & Scale -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg text-on-surface">Base Button Hierarchy</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Default md</span>
 </div>
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="px-space-md py-space-sm rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg hover:bg-primary transition shadow" type="button">
+            Primary Dawn
+          </button>
+<button class="px-space-md py-space-sm rounded-lg bg-surface-container-high text-on-surface font-label-lg text-label-lg hover:bg-surface-variant transition" type="button">
+            Secondary Slate
+          </button>
+<button class="px-space-md py-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface transition font-label-lg text-label-lg" type="button">
+            Subtle Well
+          </button>
+<button class="px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-variant/40 hover:text-on-surface transition font-label-lg text-label-lg" type="button">
+            Ghost Minimal
+          </button>
+<button class="inline-flex items-center gap-1.5 px-space-md py-space-sm rounded-lg bg-error-container/30 text-error hover:bg-error hover:text-on-error transition-colors shadow-sm font-label-lg text-label-lg" type="button"><span class="material-symbols-outlined text-[1.125rem]">delete</span>Destructive Coral</button>
 </div>
-<!-- Hover / Focus Preview -->
-<div class="space-y-3">
-<span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Hover Effect Hints</span>
-<div class="flex flex-col gap-2.5">
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#499173] text-[#ffffff] shadow-md border border-[#58a987]">
-              Primary:hover
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#364d42] text-[#e0f1e7] border border-[#486658]">
-              Secondary:hover
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#2a3a32] text-[#c0e0ce] border border-[#425e51] shadow-sm">
-              Outline:hover
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#212f29] text-[#b3dec8]">
-              Ghost:hover
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#8a3733] text-[#ffffff] border border-[#a64843] shadow-sm">
-              Destructive:hover
-            </button>
-</div>
-</div>
-<!-- Loading State -->
-<div class="space-y-3">
-<span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Loading / Spinner</span>
-<div class="flex flex-col gap-2.5">
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#346652] text-[#d6ede0] flex items-center justify-center gap-2 cursor-wait border border-[#437d65] opacity-90" disabled=""><span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> Loading State 1...</button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#263730] text-[#9fc4b0] flex items-center justify-center gap-2 cursor-wait border border-[#354c42] opacity-90" disabled=""><span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> Loading State 2...</button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#4e3f22] text-[#ffdf9e] flex items-center justify-center gap-2 cursor-wait border border-[#6b562e] opacity-90" disabled=""><span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> Loading State 3...</button>
-</div>
-</div>
-<!-- Disabled State -->
-<div class="space-y-3">
-<span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Disabled State</span>
-<div class="flex flex-col gap-2.5">
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-medium bg-[#1d2722] text-[#5d776b] border border-[#2b3932] cursor-not-allowed" disabled="">
-              Primary Disabled
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-medium bg-[#1d2722] text-[#5d776b] border border-[#2b3932] cursor-not-allowed" disabled="">
-              Secondary Disabled
-            </button>
-<button class="w-full px-4 py-2.5 rounded-lg text-sm font-medium bg-[#1d2722] text-[#6d4d4a] border border-[#2d2828] cursor-not-allowed" disabled="">
-              Destructive Disabled
-            </button>
-</div>
-</div>
-</div>
-</div>
-<!-- Button Sizing & Icon Buttons & Special Badges -->
-<div class="pt-6 border-t border-[#334a41] space-y-6">
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<!-- Sizes -->
-<div class="space-y-3">
-<span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Scale Dimensions</span>
-<div class="flex flex-wrap items-center gap-3">
-<button class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#3d7a61] text-[#f1faf5] hover:bg-[#488e71] border border-[#4d9779]">
+<div class="pt-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-space-xs">Button Scale Dimensions (sm • md • lg)</span>
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="px-2.5 py-1 text-label-sm font-label-sm rounded bg-primary-container text-on-primary" type="button">
               Small (sm)
             </button>
-<button class="px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#3d7a61] text-[#f1faf5] hover:bg-[#488e71] border border-[#4d9779]">
+<button class="px-space-md py-space-sm text-label-lg font-label-lg rounded-lg bg-primary-container text-on-primary" type="button">
               Medium (md)
             </button>
-<button class="px-6 py-3 rounded-lg text-base font-semibold bg-[#3d7a61] text-[#f1faf5] shadow-md hover:bg-[#488e71] border border-[#4d9779]">
+<button class="px-space-lg py-3 text-body-lg font-headline-sm rounded-xl bg-primary-container text-on-primary shadow-lg" type="button">
               Large (lg)
             </button>
 </div>
 </div>
-<!-- Icon Buttons -->
-<div class="space-y-3">
-<span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Dedicated Icon Buttons</span>
-<div class="flex items-center gap-2">
-<button class="p-2.5 rounded-lg bg-[#2a3c34] text-[#86d9b4] hover:bg-[#344b41] border border-[#3b5348] transition-colors" title="Audio Play">
-<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
-</button>
-<button class="p-2.5 rounded-lg bg-[#2a3c34] text-[#86d9b4] hover:bg-[#344b41] border border-[#3b5348] transition-colors" title="Edit Note">
-<span class="material-symbols-outlined text-lg">edit</span>
-</button>
-<button class="p-2.5 rounded-lg bg-[#4e2220] text-[#ffb4ab] hover:bg-[#632c29] border border-[#6b3330] transition-colors" title="Delete Item">
-<span class="material-symbols-outlined text-lg">delete</span>
-</button>
-<button class="p-2.5 rounded-lg bg-[#2a3c34] text-[#86d9b4] hover:bg-[#344b41] border border-[#3b5348] transition-colors" title="Download Mushaf">
-<span class="material-symbols-outlined text-lg">download</span>
-</button>
-<button class="p-2.5 rounded-lg bg-[#2a3c34] text-[#86d9b4] hover:bg-[#344b41] border border-[#3b5348] transition-colors" title="Settings">
-<span class="material-symbols-outlined text-lg">settings</span>
-</button>
+</div>
+<!-- Column 2: Loading & Disabled States -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex flex-col justify-between gap-space-md">
+<div>
+<span class="font-label-lg text-label-lg text-on-surface block mb-space-sm">Progressive &amp; Asynchronous States</span>
+<div class="flex flex-col gap-space-sm">
+<!-- Spinner 1 -->
+<button class="w-full flex items-center justify-center gap-2 px-space-md py-space-sm rounded-lg bg-primary-container/80 text-on-primary font-label-lg text-label-lg cursor-wait" disabled="" type="button">
+<svg class="animate-spin h-4 w-4 text-on-primary" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8v8H4z" fill="currentColor"></path>
+</svg>
+              Saving Audio Recitation...
+            </button>
+<!-- Spinner 2 -->
+<button class="w-full flex items-center justify-center gap-2 px-space-md py-space-sm rounded-lg bg-surface-container-high text-on-surface-variant font-label-lg text-label-lg cursor-wait" disabled="" type="button">
+<svg class="animate-spin h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8v8H4z" fill="currentColor"></path>
+</svg>
+              Syncing Cloud Mushaf
+            </button>
+<!-- Spinner 3 -->
+<button class="w-full flex items-center justify-center gap-2 px-space-md py-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-lg text-label-lg cursor-wait" disabled="" type="button">
+<svg class="animate-spin h-4 w-4 text-secondary" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8v8H4z" fill="currentColor"></path>
+</svg>
+              Grading Rub’ (Quarter Hizb)...
+            </button>
 </div>
 </div>
-<!-- Special Action Badges -->
-<div class="space-y-3">
-<span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Special Action Badges</span>
-<div class="flex flex-wrap items-center gap-2">
-<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs bg-[#4b3c1b] text-[#ffd885] font-semibold border border-[#6e5828] shadow-sm hover:bg-[#5a4821]"><span class="material-symbols-outlined text-sm" style="font-variation-settings: &quot;FILL&quot; 1;">workspace_premium</span> Special Badge 1</button>
-<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs bg-[#243f34] text-[#7ce0b8] font-semibold border border-[#376251] shadow-sm hover:bg-[#2c4e40]"><span class="material-symbols-outlined text-sm" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span> Special Badge 2</button>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-space-xs">Disabled States</span>
+<div class="flex flex-wrap items-center gap-space-xs">
+<button class="px-space-md py-space-sm rounded-lg bg-surface-variant/40 text-on-surface-variant/40 cursor-not-allowed font-label-md text-label-md" disabled="" type="button">
+              Primary Disabled
+            </button>
+<button class="px-space-md py-space-sm rounded-lg bg-surface-container-lowest text-on-surface-variant/30 cursor-not-allowed font-label-md text-label-md" disabled="" type="button">
+              Secondary Disabled
+            </button>
 </div>
+</div>
+</div>
+<!-- Column 3: Micro Action Badges & Icon Buttons -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex flex-col justify-between gap-space-md">
+<div>
+<span class="font-label-lg text-label-lg text-on-surface block mb-space-xs">Specialized Hifz Badges</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">Dawn gold certification &amp; validation pills</p>
+<div class="flex flex-wrap gap-space-xs">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-container/20 text-secondary font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-base">workspace_premium</span>
+              Sanad Certificate Issued
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-container/20 text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-base">verified</span>
+              Validate Tajweed
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-lowest text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-base text-primary">record_voice_over</span>
+              Live Recitation Mode
+            </span>
+</div>
+</div>
+<div>
+<span class="font-label-lg text-label-lg text-on-surface block mb-space-xs">Dedicated Tool Icons</span>
+<div class="flex flex-wrap items-center gap-space-xs">
+<button aria-label="Play recitation" class="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:scale-105 transition shadow" type="button">
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+<button aria-label="Edit student record" class="w-10 h-10 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-surface-variant transition" type="button">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button aria-label="Download audio log" class="w-10 h-10 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-surface-variant transition" type="button">
+<span class="material-symbols-outlined">cloud_download</span>
+</button>
+<button aria-label="Halaqah preferences" class="w-10 h-10 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center hover:bg-surface-variant transition" type="button">
+<span class="material-symbols-outlined">tune</span>
+</button>
+<button aria-label="Delete entry" class="w-10 h-10 rounded-lg bg-error-container/30 text-error flex items-center justify-center hover:bg-error hover:text-on-error transition shadow-sm" type="button"><span class="material-symbols-outlined text-[1.25rem]">delete</span></button>
 </div>
 </div>
 </div>
 </div>
 </section>
-<!-- 4. Form Controls & Inputs -->
-<section class="space-y-4">
+<!-- 4. FORM CONTROLS & INPUTS -->
+<section class="mb-margin-md">
+<div class="mb-space-md">
+<h2 class="font-headline-lg text-headline-sm md:text-headline-lg text-on-surface">Form Controls &amp; Input Fields</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Recessed dawn twilight inputs (<span class="font-mono text-primary">#2B2E36</span>) with focus rings</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+<!-- Card 1: Standard & Error Inputs -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex flex-col gap-space-md">
 <div>
-<span class="text-xs uppercase tracking-wider text-[#e6b95d] font-semibold">Inputs &amp; Selection</span>
-<h2 class="text-xl md:text-2xl font-bold text-[#d8eee1]">Form Controls &amp; Inputs</h2>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Surah Search / Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-[1.25rem]">search</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant font-body-md text-body-md outline-none focus:bg-surface-container-low transition" type="text" value="Al-Kahf">
 </div>
-<div class="bg-[#24332d] border border-[#334a41] rounded-xl p-8 shadow-sm space-y-8">
-<!-- Text Inputs Grid -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Input Label 1</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] placeholder-[#647f73] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm transition-colors text-sm" placeholder="Input example 1" type="text" value="Input example 1"><p class="text-xs text-[#809e91]">Helper text goes here</p></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#9fb8ac]">Input Label 2 (Read-only)</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-[#202c26] text-[#8ea79a] border border-[#2f4239] cursor-not-allowed shadow-none text-sm" readonly="" type="text" value="Read-only text goes here"><p class="text-xs text-[#718d80]">Read-only description goes here</p></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#ffb4ab] flex items-center justify-between">Error Input Label<span class="material-symbols-outlined text-sm text-[#ff897d]">error</span></label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-[#3b1e1d] text-[#ffdad6] placeholder-[#b86d67] border border-[#6b312e] focus:border-[#ff897d] focus:outline-none focus:ring-1 focus:ring-[#ff897d] shadow-sm text-sm" type="text" value="Error value example"><p class="text-xs text-[#ffb4ab] flex items-center gap-1 font-medium"><span class="material-symbols-outlined text-xs">warning</span> Error hint message goes here</p></div></div>
-<!-- Select & Date & Time Pickers Grid -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6"><div class="space-y-1.5 md:col-span-2"><label class="block text-xs font-semibold text-[#d8eee1]">Select Label</label><div class="relative w-full"><select class="w-full h-[42px] appearance-none pl-3.5 pr-10 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm transition-colors text-sm cursor-pointer"><option>Select Option 1</option><option>Select Option 2</option><option>Select Option 3</option><option>Select Option 4</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#809e91] pointer-events-none text-xl">expand_more</span></div></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Date Input Label</label><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#809e91] text-lg pointer-events-none">calendar_today</span><input class="w-full h-[42px] pl-10 pr-3.5 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm transition-colors" type="text" value="DD/MM/YYYY"></div></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Time Input Label</label><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#809e91] text-lg pointer-events-none">schedule</span><input class="w-full h-[42px] pl-10 pr-3.5 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm transition-colors" type="text" value="00:00 AM"></div></div></div>
-<!-- Search Bar with Shortcut -->
-<div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Search Input Label</label><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3.5 text-[#809e91] text-xl">search</span><input class="w-full h-[44px] pl-11 pr-20 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] placeholder-[#647f73] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm" placeholder="Search query goes here..." type="text"><div class="absolute right-3 flex items-center gap-1"><kbd class="px-2 py-1 rounded bg-[#273831] border border-[#3b5147] text-xs text-[#a3c3b4] font-semibold shadow-sm">⌘K</kbd></div></div></div>
-<!-- Checkboxes, Radios, Toggles -->
-<div class="pt-6 border-t border-[#334a41] grid grid-cols-1 md:grid-cols-3 gap-8"><div class="space-y-3"><span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Checkboxes</span><div class="space-y-2.5"><label class="flex items-center gap-3 cursor-pointer"><input checked="" class="w-4 h-4 rounded text-[#449171] focus:ring-0 cursor-pointer accent-[#449171] bg-[#1c2722] border-[#354c41]" type="checkbox"><span class="text-sm text-[#d8eee1]">Checkbox item 1</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 rounded text-[#449171] focus:ring-0 cursor-pointer accent-[#449171] bg-[#1c2722] border-[#354c41]" type="checkbox"><span class="text-sm text-[#d8eee1]">Checkbox item 2</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 rounded text-[#449171] focus:ring-0 cursor-pointer accent-[#449171] bg-[#1c2722] border-[#354c41]" id="indeterminateBox" type="checkbox"><span class="text-sm text-[#d8eee1]">Checkbox item 3</span></label></div></div><div class="space-y-3"><span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Evaluation Grading (Radio)</span><div class="space-y-2.5"><label class="flex items-center gap-3 cursor-pointer"><input checked="" class="w-4 h-4 text-[#449171] focus:ring-0 accent-[#449171] cursor-pointer" name="recitation_grade" type="radio"><span class="text-sm text-[#d8eee1]">Radio option 1</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 text-[#449171] focus:ring-0 accent-[#449171] cursor-pointer" name="recitation_grade" type="radio"><span class="text-sm text-[#d8eee1]">Radio option 2</span></label><label class="flex items-center gap-3 cursor-pointer"><input class="w-4 h-4 text-[#449171] focus:ring-0 accent-[#449171] cursor-pointer" name="recitation_grade" type="radio"><span class="text-sm text-[#d8eee1]">Radio option 3</span></label></div></div><div class="space-y-3"><span class="text-xs text-[#8daaa0] uppercase tracking-wider block font-semibold">Interactive Toggles</span><div class="space-y-3"><label class="flex items-center justify-between cursor-pointer"><span class="text-sm text-[#d8eee1]">Toggle label 1</span><input checked="" class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#2d3f37] border border-[#3e564b] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#d8eee1] after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3d7a61] relative"></div></label><label class="flex items-center justify-between cursor-pointer"><span class="text-sm text-[#d8eee1]">Toggle label 2</span><input class="sr-only peer" type="checkbox"><div class="w-11 h-6 bg-[#2d3f37] border border-[#3e564b] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#d8eee1] after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3d7a61] relative"></div></label></div></div></div>
+<span class="text-[0.75rem] font-label-sm text-on-surface-variant mt-1 block">Quick lookup by English or Arabic Surah title</span>
 </div>
-</section>
-<!-- 5. Functional Iconography Library -->
-<section class="space-y-4">
-<div class="flex items-center justify-between">
 <div>
-<span class="text-xs uppercase tracking-wider text-[#e6b95d] font-semibold">Visual Assets</span>
-<h2 class="text-xl md:text-2xl font-bold text-[#d8eee1]">Functional Iconography Library</h2>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Instructor Assigned</label>
+<input class="w-full px-3.5 py-2 rounded-lg bg-surface-container-lowest/60 text-on-surface-variant font-body-md text-body-md cursor-not-allowed outline-none" readonly="" type="text" value="Shaykh Tariq Al-Madani (Sanad Holder)">
+<span class="text-[0.75rem] font-label-sm text-on-surface-variant mt-1 block">Read-only assignment record</span>
 </div>
-<span class="text-xs text-[#9cb4a6]">Material Symbols 24px Clean Set (Soft Sage)</span>
-</div>
-<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">dashboard</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Dashboard</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">person</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Student / User</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl" style="font-variation-settings: 'FILL' 1;">menu_book</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Quran / Hifz</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">calendar_month</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Calendar</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">schedule</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Schedule / Clock</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">notifications</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Notifications</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl" style="font-variation-settings: 'FILL' 1;">verified</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Check / Verified</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">cancel</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Close / Cancel</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">filter_list</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Filter</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">unfold_more</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Sort / Unfold</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">search</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Search</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">cloud_download</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Download</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#ff8e82] text-2xl">delete_outline</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Trash / Delete</span>
-</div>
-<div class="bg-[#24332d] border border-[#334a41] p-3.5 rounded-lg flex flex-col items-center justify-center gap-2 hover:bg-[#2b3c35] transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[#7ce0b8] text-2xl">edit_note</span>
-<span class="text-xs text-[#d8eee1] font-medium text-center">Edit Note</span>
-</div>
-</div>
-</section>
-<!-- 6. Toast Alerts & Status Banners -->
-<section class="space-y-4">
 <div>
-<span class="text-xs uppercase tracking-wider text-[#e6b95d] font-semibold">Feedback Systems</span>
-<h2 class="text-xl md:text-2xl font-bold text-[#d8eee1]">Toast Alerts &amp; Status Banners</h2>
+<label class="block font-label-md text-label-md text-error mb-1">Tajweed Deviation Detected</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-error text-[1.25rem]">warning</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg bg-surface-container-lowest text-error font-body-md text-body-md outline-none" type="text" value="Surah Maryam, Ayah 12 (Idgham omitted)">
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-[#24332d] border border-[#38564a] p-4 rounded-xl shadow-sm flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#2b4438] text-[#7ce0b8] flex-shrink-0"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span></div><div class="flex-1 space-y-0.5"><h4 class="text-sm font-semibold text-[#8de0bf]">Toast Title 1</h4><p class="text-xs text-[#cae4d6]">Toast description goes here...</p></div><button class="text-[#79998b] hover:text-[#d8eee1] transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div><div class="bg-[#24332d] border border-[#524522] p-4 rounded-xl shadow-sm flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#443818] text-[#fed67d] flex-shrink-0"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">warning</span></div><div class="flex-1 space-y-0.5"><h4 class="text-sm font-semibold text-[#fed67d]">Toast Title 2</h4><p class="text-xs text-[#cae4d6]">Toast description goes here...</p></div><button class="text-[#79998b] hover:text-[#d8eee1] transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div><div class="bg-[#24332d] border border-[#39564c] p-4 rounded-xl shadow-sm flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#283d35] text-[#9de8c9] flex-shrink-0"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">info</span></div><div class="flex-1 space-y-0.5"><h4 class="text-sm font-semibold text-[#9de8c9]">Toast Title 3</h4><p class="text-xs text-[#cae4d6]">Toast description goes here...</p></div><button class="text-[#79998b] hover:text-[#d8eee1] transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div><div class="bg-[#24332d] border border-[#6b312e] p-4 rounded-xl shadow-sm flex items-start gap-3.5"><div class="p-2 rounded-lg bg-[#4d2320] text-[#ffb4ab] flex-shrink-0"><span class="material-symbols-outlined text-xl">sync_problem</span></div><div class="flex-1 space-y-0.5"><h4 class="text-sm font-semibold text-[#ffb4ab]">Toast Title 4</h4><p class="text-xs text-[#cae4d6]">Toast description goes here...</p></div><button class="text-[#79998b] hover:text-[#d8eee1] transition-colors p-1" title="Dismiss"><span class="material-symbols-outlined text-sm">close</span></button></div></div>
-</section>
-<!-- 7. Data Table with Pagination & Controls -->
-<section class="space-y-4">
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<p class="font-label-sm text-label-sm text-error mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">info</span>
+            Requires oral repeat session before Fajr completion
+          </p>
+</div>
+</div>
+<!-- Card 2: Dropdown, Date, Time & Search Bar -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex flex-col gap-space-md">
 <div>
-<span class="text-xs uppercase tracking-wider text-[#e6b95d] font-semibold">Data Views</span>
-<h2 class="text-xl md:text-2xl font-bold text-[#d8eee1]">DATA TABLE TITLE GOES HERE</h2>
-</div>
-<!-- Table Controls -->
-<div class="flex items-center gap-3">
-<div class="relative min-w-[220px]">
-<select class="w-full appearance-none pl-3.5 pr-8 py-2 rounded-lg bg-[#24332d] text-[#e4f3ea] border border-[#354c41] hover:border-[#4d6d5e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-xs cursor-pointer transition-colors">
-<option>Filter Select Label</option>
-<option>Halaqah Al-Fajr</option>
-<option>Halaqah Al-Furqan</option>
-<option>Halaqah Al-Noor</option>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Halaqah Timing / Batch</label>
+<div class="relative">
+<select class="w-full px-3.5 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md appearance-none outline-none focus:bg-surface-container-low transition pr-10">
+<option>Fajr Vanguard (05:00 - 06:15 AM)</option>
+<option>Duha Intensive (09:00 - 10:30 AM)</option>
+<option>Maghrib Revision (06:45 - 08:00 PM)</option>
 </select>
-<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[#809e91] text-base pointer-events-none">expand_more</span>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none">expand_more</span>
 </div>
-<button class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#24332d] text-[#86d9b4] hover:bg-[#2e4039] transition-colors shadow-sm text-xs border border-[#354c41]">
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Fajr Date</label>
+<div class="relative">
+<input class="w-full px-3 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none" type="text" value="2025-05-14">
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-on-surface-variant text-base pointer-events-none">calendar_today</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Dawn Bell</label>
+<div class="relative">
+<input class="w-full px-3 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none" type="text" value="05:15 AM">
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-on-surface-variant text-base pointer-events-none">schedule</span>
+</div>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Global Command Search</label>
+<div class="flex items-center justify-between px-3 py-2 rounded-lg bg-surface-container-lowest">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base">search</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Jump to Ayah, Riwayah...</span>
+</div>
+<kbd class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono text-[0.6875rem]">⌘K</kbd>
+</div>
+</div>
+</div>
+<!-- Card 3: Checkboxes, Radio Grading & Toggles -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex flex-col justify-between gap-space-md">
+<div>
+<span class="font-label-md text-label-md text-on-surface block mb-space-sm">Tahfiz Stage Checkbox Matrix</span>
+<div class="space-y-2">
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-lowest accent-primary text-primary" type="checkbox">
+<span class="font-body-sm text-body-sm text-on-surface">Sabaq (New Lesson Verified)</span>
+</label>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-lowest accent-primary text-primary" type="checkbox">
+<span class="font-body-sm text-body-sm text-on-surface">Sabqi (Past 5 Juz Recited)</span>
+</label>
+<label class="flex items-center gap-2.5 cursor-pointer">
+<input class="w-4 h-4 rounded bg-surface-container-lowest accent-primary text-primary" type="checkbox">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Manzil (Full Quran Retention Cycle)</span>
+</label>
+</div>
+</div>
+<div>
+<span class="font-label-md text-label-md text-on-surface block mb-space-sm">Instructor Evaluation Grade</span>
+<div class="flex items-center gap-space-sm">
+<label class="flex items-center gap-1.5 cursor-pointer">
+<input checked="" class="accent-primary" name="hifz-grade" type="radio">
+<span class="font-label-md text-label-md text-primary">Mumtaz (A+)</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer">
+<input class="accent-primary" name="hifz-grade" type="radio">
+<span class="font-label-md text-label-md text-on-surface-variant">Jayyid Jiddan</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer">
+<input class="accent-primary" name="hifz-grade" type="radio">
+<span class="font-label-md text-label-md text-secondary">Muraja’ah</span>
+</label>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div>
+<p class="font-label-md text-label-md text-on-surface">Auto-Mic Tajweed Assistant</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Real-time pitch &amp; madd tracker</p>
+</div>
+<!-- Toggle switch -->
+<button aria-checked="true" class="w-11 h-6 rounded-full bg-primary flex items-center px-0.5 transition-colors" role="switch" type="button">
+<span class="w-5 h-5 rounded-full bg-on-primary translate-x-5 transition-transform shadow-sm"></span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. FUNCTIONAL ICONOGRAPHY LIBRARY -->
+<section class="mb-margin-md">
+<div class="mb-space-md">
+<h2 class="font-headline-lg text-headline-sm md:text-headline-lg text-on-surface">Functional Iconography Library</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Crisp, optical-calibrated glyphs against #3F444E morning slate card tiles</p>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-space-sm">
+<!-- 1 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">space_dashboard</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Dashboard</span>
+</div>
+<!-- 2 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">account_circle</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Student / User</span>
+</div>
+<!-- 3 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">menu_book</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Quran / Hifz</span>
+</div>
+<!-- 4 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">calendar_month</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Calendar</span>
+</div>
+<!-- 5 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-secondary text-2xl">alarm</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Fajr Clock</span>
+</div>
+<!-- 6 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">notifications</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Notifications</span>
+</div>
+<!-- 7 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-secondary text-2xl">verified</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Sanad Verified</span>
+</div>
+<!-- 8 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-on-surface-variant text-2xl">close</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Close / Cancel</span>
+</div>
+<!-- 9 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">filter_list</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Filter Filter</span>
+</div>
+<!-- 10 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">swap_vert</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Sort Order</span>
+</div>
+<!-- 11 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">auto_stories</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Search Ayah</span>
+</div>
+<!-- 12 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">download</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Download Audio</span>
+</div>
+<!-- 13 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-error text-2xl">delete</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Trash / Delete</span>
+</div>
+<!-- 14 -->
+<div class="bg-surface-container rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:bg-surface-variant transition text-center">
+<span class="material-symbols-outlined text-primary text-2xl">stylus_note</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate w-full">Edit Note</span>
+</div>
+</div>
+</section>
+<!-- 6. FEEDBACK SYSTEMS: TOAST ALERTS & STATUS BANNERS -->
+<section class="mb-margin-md">
+<div class="mb-space-md">
+<h2 class="font-headline-lg text-headline-sm md:text-headline-lg text-on-surface">Feedback Systems: Status Notifications &amp; Toasts</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Calming, supportive toasts engineered to avoid harsh retinal flashes during Fajr</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Success Toast -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex items-start gap-space-md relative overflow-hidden">
+<div class="w-1.5 absolute left-0 top-0 bottom-0 bg-primary"></div>
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-label-lg text-label-lg text-on-surface">Sabaq Verified Successfully</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Just now</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Surah Ya-Sin Ayah 1–27 logged with grade Mumtaz by Shaykh Farhan.</p>
+</div>
+<button aria-label="Dismiss toast" class="text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<!-- Warning Toast -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex items-start gap-space-md relative overflow-hidden">
+<div class="w-1.5 absolute left-0 top-0 bottom-0 bg-secondary"></div>
+<div class="w-10 h-10 rounded-lg bg-secondary-container/20 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-label-lg text-label-lg text-on-surface">Revision (Sabqi) Due for 3 Students</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">12m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Juz 14 has not been evaluated in the past 7 days. Scheduled for tomorrow Fajr.</p>
+</div>
+<button aria-label="Dismiss toast" class="text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<!-- Info Cloud Sync Toast -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex items-start gap-space-md relative overflow-hidden">
+<div class="w-1.5 absolute left-0 top-0 bottom-0 bg-primary-fixed"></div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">cloud_sync</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-label-lg text-label-lg text-on-surface">Audio Archive Synchronized</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">42m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">24 FLAC recitation tracks safely uploaded to cloud storage with hash verification.</p>
+</div>
+<button aria-label="Dismiss toast" class="text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<!-- Error / Tajweed Correction Toast -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-md flex items-start gap-space-md relative overflow-hidden">
+<div class="w-1.5 absolute left-0 top-0 bottom-0 bg-error"></div>
+<div class="w-10 h-10 rounded-lg bg-error-container/30 text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">report_problem</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="font-label-lg text-label-lg text-error">Tajweed Flag: Ghunnah Insufficient</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">1h ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Ayah 44: Noon Mushaddadah held under 2 harakah count. Marked for repetition.</p>
+</div>
+<button aria-label="Dismiss toast" class="text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+</div>
+</section>
+<!-- 7. DATA VIEWS: TAHFIZ EVALUATION LEDGER (TABLE) -->
+<section class="mb-margin-md" id="ledger-table">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-md">
+<div>
+<h2 class="font-headline-lg text-headline-sm md:text-headline-lg text-on-surface">Tahfiz Evaluation Ledger</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Active Fajr halaqah recitation ledger with multi-column sorting and direct audio previews</p>
+</div>
+<div class="flex items-center gap-space-xs shrink-0">
+<div class="relative">
+<select class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md outline-none appearance-none pr-8">
+<option>Halaqah Al-Fajr (Dawn)</option>
+<option>Halaqah Al-Asr (Late Noon)</option>
+<option>Advanced Sanad Track</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2 text-on-surface-variant text-base pointer-events-none">arrow_drop_down</span>
+</div>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-variant transition font-label-md text-label-md" type="button">
 <span class="material-symbols-outlined text-base">file_download</span>
-        Export CSV
-      </button>
+          Export CSV
+        </button>
 </div>
 </div>
-<!-- Table Wrapper -->
-<div class="bg-[#24332d] border border-[#334a41] rounded-xl shadow-sm overflow-hidden">
+<!-- Table Container Card -->
+<div class="bg-surface-container rounded-xl overflow-hidden shadow-lg">
 <div class="overflow-x-auto">
-<table class="w-full text-left">
-<thead>
-<tr class="bg-[#1d2924] border-b border-[#334a41] text-[#9fb8ac] text-xs uppercase tracking-wider"><th class="py-3.5 px-4 w-12 text-center"><input class="w-4 h-4 rounded text-[#449171] focus:ring-0 accent-[#449171] bg-[#1c2722] border-[#354c41] cursor-pointer" type="checkbox"></th><th class="py-3.5 px-4 font-semibold">Item ID</th><th class="py-3.5 px-4 font-semibold">Item Name</th><th class="py-3.5 px-4 font-semibold">Category / Type</th><th class="py-3.5 px-4 font-semibold">Level / Stage</th><th class="py-3.5 px-4 font-semibold">Status Badge</th><th class="py-3.5 px-4 font-semibold">Date</th><th class="py-3.5 px-4 font-semibold text-right">Actions</th></tr>
+<table class="w-full text-left font-body-sm text-body-sm">
+<thead class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<tr>
+<th class="p-3 pl-4 w-10" scope="col">
+<input class="w-4 h-4 rounded bg-surface-container-lowest accent-primary" type="checkbox">
+</th>
+<th class="py-3 px-3" scope="col">Student ID</th>
+<th class="py-3 px-3" scope="col">Student Name</th>
+<th class="py-3 px-3" scope="col">Surah &amp; Ayah Range</th>
+<th class="py-3 px-3" scope="col">Stage</th>
+<th class="py-3 px-3" scope="col">Grade</th>
+<th class="py-3 px-3" scope="col">Timestamp</th>
+<th class="py-3 px-3 text-right pr-4" scope="col">Actions</th>
+</tr>
 </thead>
-<tbody class="divide-y divide-[#2d4038] text-sm text-[#e4f3ea]"><tr class="bg-[#2a3c34]/70 hover:bg-[#2c4038] transition-colors"><td class="py-3.5 px-4 text-center"><input checked="" class="w-4 h-4 rounded text-[#449171] focus:ring-0 accent-[#449171] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-[#7ce0b8]">#ID-001</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#344a40] border border-[#435e52] flex items-center justify-center font-semibold text-xs text-[#86d9b4]">01</div><div><p class="font-medium text-[#e4f3ea]">Item Name 1</p><p class="text-xs text-[#809e91]">Subtext 1</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#e4f3ea]">Category 1</span><span class="text-[#809e91] ml-1 text-xs">(Detail 1)</span></td><td class="py-3.5 px-4 text-[#bfdac9]">Stage 1</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs bg-[#244235] text-[#7ce0b8] border border-[#335c4b] font-semibold"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span> Status Label 1</span></td><td class="py-3.5 px-4 text-[#9fb8ac]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#7ce0b8] transition-colors" title="View"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#9fb8ac] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr><tr class="hover:bg-[#293b33] transition-colors"><td class="py-3.5 px-4 text-center"><input class="w-4 h-4 rounded text-[#449171] focus:ring-0 accent-[#449171] bg-[#1c2722] border-[#354c41] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-[#7ce0b8]">#ID-002</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#344a40] border border-[#435e52] flex items-center justify-center font-semibold text-xs text-[#86d9b4]">02</div><div><p class="font-medium text-[#e4f3ea]">Item Name 2</p><p class="text-xs text-[#809e91]">Subtext 2</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#e4f3ea]">Category 2</span><span class="text-[#809e91] ml-1 text-xs">(Detail 2)</span></td><td class="py-3.5 px-4 text-[#bfdac9]">Stage 2</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs bg-[#4b3c1b] text-[#ffd885] border border-[#6b562b] font-semibold"><span class="material-symbols-outlined text-xs">pending</span> Status Label 2</span></td><td class="py-3.5 px-4 text-[#9fb8ac]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#7ce0b8] transition-colors" title="View"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#9fb8ac] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr><tr class="hover:bg-[#293b33] transition-colors"><td class="py-3.5 px-4 text-center"><input class="w-4 h-4 rounded text-[#449171] focus:ring-0 accent-[#449171] bg-[#1c2722] border-[#354c41] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-[#7ce0b8]">#ID-003</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#344a40] border border-[#435e52] flex items-center justify-center font-semibold text-xs text-[#86d9b4]">03</div><div><p class="font-medium text-[#e4f3ea]">Item Name 3</p><p class="text-xs text-[#809e91]">Subtext 3</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#e4f3ea]">Category 3</span><span class="text-[#809e91] ml-1 text-xs">(Detail 3)</span></td><td class="py-3.5 px-4 text-[#bfdac9]">Stage 3</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs bg-[#244235] text-[#7ce0b8] border border-[#335c4b] font-semibold"><span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">check_circle</span> Status Label 3</span></td><td class="py-3.5 px-4 text-[#9fb8ac]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#7ce0b8] transition-colors" title="View"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#9fb8ac] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr><tr class="hover:bg-[#293b33] transition-colors"><td class="py-3.5 px-4 text-center"><input class="w-4 h-4 rounded text-[#449171] focus:ring-0 accent-[#449171] bg-[#1c2722] border-[#354c41] cursor-pointer" type="checkbox"></td><td class="py-3.5 px-4 font-semibold text-[#7ce0b8]">#ID-004</td><td class="py-3.5 px-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-[#344a40] border border-[#435e52] flex items-center justify-center font-semibold text-xs text-[#86d9b4]">04</div><div><p class="font-medium text-[#e4f3ea]">Item Name 4</p><p class="text-xs text-[#809e91]">Subtext 4</p></div></div></td><td class="py-3.5 px-4"><span class="font-medium text-[#e4f3ea]">Category 4</span><span class="text-[#809e91] ml-1 text-xs">(Detail 4)</span></td><td class="py-3.5 px-4 text-[#bfdac9]">Stage 4</td><td class="py-3.5 px-4"><span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs bg-[#4d2320] text-[#ffb4ab] border border-[#6b312e] font-semibold"><span class="material-symbols-outlined text-xs">restart_alt</span> Status Label 4</span></td><td class="py-3.5 px-4 text-[#9fb8ac]">DD/MM/YYYY</td><td class="py-3.5 px-4 text-right"><div class="flex items-center justify-end gap-1"><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#7ce0b8] transition-colors" title="View"><span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">play_circle</span></button><button class="p-1.5 rounded-md hover:bg-[#344b41] text-[#9fb8ac] transition-colors" title="Edit"><span class="material-symbols-outlined text-lg">edit</span></button></div></td></tr></tbody>
+<tbody class="divide-y-0 text-on-surface">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-high/60 transition-colors">
+<td class="p-3 pl-4">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-lowest accent-primary" type="checkbox">
+</td>
+<td class="py-3 px-3 font-mono text-on-surface-variant">#HF-2041</td>
+<td class="py-3 px-3 font-label-lg text-label-lg">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                    ZA
+                  </div>
+<div>
+<p class="font-medium text-on-surface">Zayd Al-Ansari</p>
+<p class="text-[0.6875rem] text-on-surface-variant">Riwayah Hafs 'an Asim</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-base">auto_stories</span>
+<span class="">Al-Baqarah (180–195)</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm">
+                  Sabaq
+                </span>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-secondary-container/20 text-secondary font-label-sm text-label-sm font-semibold">
+                  Mumtaz (A+)
+                </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant font-mono text-xs">05:14 AM</td>
+<td class="py-3 px-3 text-right pr-4">
+<div class="flex items-center justify-end gap-1">
+<button aria-label="Listen audio" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition" type="button">
+<span class="material-symbols-outlined text-lg">play_circle</span>
+</button>
+<button aria-label="Edit record" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition" type="button">
+<span class="material-symbols-outlined text-lg">edit_note</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-surface-container-low/40 hover:bg-surface-container-high/60 transition-colors">
+<td class="p-3 pl-4">
+<input class="w-4 h-4 rounded bg-surface-container-lowest accent-primary" type="checkbox">
+</td>
+<td class="py-3 px-3 font-mono text-on-surface-variant">#HF-2042</td>
+<td class="py-3 px-3 font-label-lg text-label-lg">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center font-bold text-xs">
+                    YM
+                  </div>
+<div>
+<p class="font-medium text-on-surface">Yusuf Mansoor</p>
+<p class="text-[0.6875rem] text-on-surface-variant">Riwayah Warsh 'an Nafi'</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-base">auto_stories</span>
+<span class="">An-Nisa (40–58)</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm">
+                  Sabqi
+                </span>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm">
+                  Jayyid Jiddan
+                </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant font-mono text-xs">05:27 AM</td>
+<td class="py-3 px-3 text-right pr-4">
+<div class="flex items-center justify-end gap-1">
+<button aria-label="Listen audio" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition" type="button">
+<span class="material-symbols-outlined text-lg">play_circle</span>
+</button>
+<button aria-label="Edit record" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition" type="button">
+<span class="material-symbols-outlined text-lg">edit_note</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-high/60 transition-colors">
+<td class="p-3 pl-4">
+<input class="w-4 h-4 rounded bg-surface-container-lowest accent-primary" type="checkbox">
+</td>
+<td class="py-3 px-3 font-mono text-on-surface-variant">#HF-2043</td>
+<td class="py-3 px-3 font-label-lg text-label-lg">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-error-container/40 text-error flex items-center justify-center font-bold text-xs">
+                    IB
+                  </div>
+<div>
+<p class="font-medium text-on-surface">Ibrahim Bilal</p>
+<p class="text-[0.6875rem] text-on-surface-variant">Riwayah Shu'bah</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-base">auto_stories</span>
+<span class="">Maryam (1–36)</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm">
+                  Manzil
+                </span>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-error-container/30 text-error font-label-sm text-label-sm">
+                  Needs Muraja’ah
+                </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant font-mono text-xs">05:41 AM</td>
+<td class="py-3 px-3 text-right pr-4">
+<div class="flex items-center justify-end gap-1">
+<button aria-label="Listen audio" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition" type="button">
+<span class="material-symbols-outlined text-lg">play_circle</span>
+</button>
+<button aria-label="Edit record" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition" type="button">
+<span class="material-symbols-outlined text-lg">edit_note</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="bg-surface-container-low/40 hover:bg-surface-container-high/60 transition-colors">
+<td class="p-3 pl-4">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-lowest accent-primary" type="checkbox">
+</td>
+<td class="py-3 px-3 font-mono text-on-surface-variant">#HF-2044</td>
+<td class="py-3 px-3 font-label-lg text-label-lg">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                    MF
+                  </div>
+<div>
+<p class="font-medium text-on-surface">Maryam Fatimah</p>
+<p class="text-[0.6875rem] text-on-surface-variant">Riwayah Qalun</p>
+</div>
+</div>
+</td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-base">auto_stories</span>
+<span class="">Al-Kahf (1–20)</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-primary font-label-sm text-label-sm">
+                  Sabaq
+                </span>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-secondary-container/20 text-secondary font-label-sm text-label-sm font-semibold">
+                  Mumtaz (A+)
+                </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant font-mono text-xs">05:58 AM</td>
+<td class="py-3 px-3 text-right pr-4">
+<div class="flex items-center justify-end gap-1">
+<button aria-label="Listen audio" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition" type="button">
+<span class="material-symbols-outlined text-lg">play_circle</span>
+</button>
+<button aria-label="Edit record" class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition" type="button">
+<span class="material-symbols-outlined text-lg">edit_note</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
 </table>
 </div>
-<!-- Complete Table Navigation & Pagination Bar -->
-<div class="px-6 py-4 bg-[#1e2a25] border-t border-[#334a41] flex flex-col sm:flex-row items-center justify-between gap-4">
-<div class="flex items-center gap-4">
-<span class="text-xs text-[#9fb8ac]">
-          Showing <strong class="text-[#e4f3ea] font-semibold">1 to 4</strong> of <strong class="text-[#e4f3ea] font-semibold">48</strong> students
-        </span>
-<div class="flex items-center gap-2">
-<span class="text-xs text-[#809e91]">Rows per page:</span>
-<div class="relative inline-flex items-center">
-<select class="appearance-none pl-2.5 pr-6 py-1.5 rounded-lg bg-[#24332d] text-xs text-[#e4f3ea] border border-[#354c41] hover:border-[#4d6d5e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm cursor-pointer transition-colors">
-<option>Filter Select Label</option>
+<!-- Pagination Footer -->
+<div class="bg-surface-container-high px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<div class="flex items-center gap-3">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Showing <strong class="text-on-surface">1 to 4</strong> of 48 items</span>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Per page:</span>
+<select class="px-2 py-1 rounded bg-surface-container text-on-surface font-label-sm text-label-sm outline-none">
+<option>10</option>
 <option>25</option>
 <option>50</option>
 </select>
-<span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[#809e91] text-sm pointer-events-none">expand_more</span>
-</div>
 </div>
 </div>
 <div class="flex items-center gap-1">
-<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#24332d] text-[#7ce0b8] hover:bg-[#2d4038] border border-[#354c41] transition-colors shadow-sm disabled:opacity-50 cursor-not-allowed" disabled="">
-<span class="material-symbols-outlined text-sm">chevron_left</span>
-          Previous
-        </button>
-<div class="flex items-center gap-1 px-2">
-<button class="w-8 h-8 rounded-lg bg-[#3d7a61] text-[#ffffff] text-xs font-semibold flex items-center justify-center border border-[#4d9779]">1</button>
-<button class="w-8 h-8 rounded-lg bg-[#24332d] text-[#e4f3ea] hover:bg-[#2d4038] text-xs font-semibold flex items-center justify-center border border-[#354c41] shadow-sm">2</button>
-<button class="w-8 h-8 rounded-lg bg-[#24332d] text-[#e4f3ea] hover:bg-[#2d4038] text-xs font-semibold flex items-center justify-center border border-[#354c41] shadow-sm">3</button>
-<span class="px-1 text-[#809e91] text-xs">...</span>
-<button class="w-8 h-8 rounded-lg bg-[#24332d] text-[#e4f3ea] hover:bg-[#2d4038] text-xs font-semibold flex items-center justify-center border border-[#354c41] shadow-sm">10</button>
+<button class="px-2.5 py-1 rounded bg-surface-container text-on-surface-variant/40 cursor-not-allowed font-label-sm text-label-sm" disabled="" type="button">
+            Prev
+          </button>
+<button class="w-7 h-7 rounded bg-primary-container text-on-primary font-bold text-xs flex items-center justify-center" type="button">
+            1
+          </button>
+<button class="w-7 h-7 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant transition text-xs flex items-center justify-center" type="button">
+            2
+          </button>
+<button class="w-7 h-7 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant transition text-xs flex items-center justify-center" type="button">
+            3
+          </button>
+<span class="px-1 text-on-surface-variant text-xs">...</span>
+<button class="w-7 h-7 rounded bg-surface-container text-on-surface-variant hover:bg-surface-variant transition text-xs flex items-center justify-center" type="button">
+            10
+          </button>
+<button class="px-2.5 py-1 rounded bg-surface-container-low text-on-surface hover:bg-surface-variant transition font-label-sm text-label-sm" type="button">
+            Next
+          </button>
 </div>
-<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#24332d] text-[#7ce0b8] hover:bg-[#2d4038] border border-[#354c41] transition-colors shadow-sm">
-          Next
-          <span class="material-symbols-outlined text-sm">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- 8. OVERLAYS & DIALOGS: MODAL COMPONENT SHOWCASE -->
+<section class="mb-margin-md">
+<div class="mb-space-md">
+<h2 class="font-headline-lg text-headline-sm md:text-headline-lg text-on-surface">Overlays &amp; Dialogs: Floating Modal</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Demonstrating Level 2 depth, ambient twilight shadow, and recessed field wells</p>
+</div>
+<!-- Outer Presentation Frame representing the twilight overlay canvas -->
+<div class="rounded-xl p-space-md md:p-space-xl bg-surface-bright/20 flex items-center justify-center shadow-inner">
+<!-- Floating Modal Card -->
+<div class="w-full max-w-xl bg-surface-container-high rounded-xl p-space-lg shadow-2xl relative">
+<!-- Header -->
+<div class="flex items-start justify-between pb-space-md mb-space-md border-b-0">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Log Recitation Session</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Fajr Session • Masjid An-Noor Tahfiz Academy</p>
+</div>
+</div>
+<button aria-label="Close modal preview" class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition" type="button">
+<span class="material-symbols-outlined text-lg">close</span>
 </button>
 </div>
-</div>
-</div>
-</section>
-<!-- 8. Modal Component (Showcase card) -->
-<section class="space-y-4">
+<!-- Form Body -->
+<form class="space-y-space-md" onsubmit="event.preventDefault();">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
 <div>
-<span class="text-xs uppercase tracking-wider text-[#e6b95d] font-semibold">Overlays &amp; Dialogs</span>
-<h2 class="text-xl md:text-2xl font-bold text-[#d8eee1]">Modal Component Showcase</h2>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Student Record</label>
+<select class="w-full px-3.5 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none">
+<option>Zayd Al-Ansari (#HF-2041)</option>
+<option>Yusuf Mansoor (#HF-2042)</option>
+<option>Ibrahim Bilal (#HF-2043)</option>
+</select>
 </div>
-<div class="bg-[#1e2a25] border border-[#2d4038] p-6 md:p-12 rounded-xl flex justify-center items-center shadow-inner">
-<!-- Showcase Modal Dialog Container -->
-<div class="w-full max-w-xl bg-[#24332d] border border-[#3b5349] rounded-xl shadow-2xl overflow-hidden"><div class="p-6 bg-[#2a3c34] border-b border-[#3b5349] flex items-center justify-between"><div class="flex items-center gap-3"><div class="p-2 rounded-lg bg-[#3d7a61] text-[#ffffff]"><span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">edit_calendar</span></div><div><h3 class="text-lg font-bold text-[#e4f3ea]">MODAL TITLE GOES HERE</h3><p class="text-xs text-[#9fb8ac]">Modal subtitle goes here</p></div></div><button class="text-[#809e91] hover:text-[#e4f3ea] p-1 rounded-lg transition-colors"><span class="material-symbols-outlined text-xl">close</span></button></div><div class="p-6 space-y-4"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Select Input Label 1</label><div class="relative w-full"><select class="w-full h-[42px] appearance-none pl-3.5 pr-10 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm cursor-pointer transition-colors"><option>Select Option 1</option><option>Select Option 2</option><option>Select Option 3</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#809e91] text-xl pointer-events-none">expand_more</span></div></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Select Input Label 2</label><div class="relative w-full"><select class="w-full h-[42px] appearance-none pl-3.5 pr-10 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm cursor-pointer transition-colors"><option>Select Option 1</option><option>Select Option 2</option><option>Select Option 3</option></select><span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#809e91] text-xl pointer-events-none">expand_more</span></div></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="space-y-1.5 md:col-span-1"><label class="block text-xs font-semibold text-[#d8eee1]">Input Label 1</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm transition-colors" type="text" value="Input example 1"></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Input Label 2</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm transition-colors" type="number" value="1"></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Input Label 3</label><input class="w-full h-[42px] px-3.5 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm transition-colors" type="number" value="30"></div></div><div class="space-y-1.5"><label class="block text-xs font-semibold text-[#d8eee1]">Textarea Label Goes Here</label><textarea class="w-full px-3.5 py-2.5 rounded-lg bg-[#1c2722] text-[#e4f3ea] placeholder-[#647f73] border border-[#354c41] focus:border-[#5cb390] focus:bg-[#18231e] focus:outline-none focus:ring-1 focus:ring-[#5cb390] shadow-sm text-sm resize-none transition-colors" placeholder="Placeholder text or description goes here..." rows="3">Placeholder text or description goes here...</textarea></div><div class="pt-1"><label class="flex items-center gap-2.5 cursor-pointer"><input checked="" class="w-4 h-4 rounded text-[#449171] focus:ring-0 accent-[#449171] bg-[#1c2722] border-[#354c41] cursor-pointer" type="checkbox"><span class="text-xs text-[#d8eee1]">Checkbox confirmation label</span></label></div></div><div class="px-6 py-4 bg-[#1e2a25] border-t border-[#334a41] flex items-center justify-end gap-3"><button class="px-4 py-2 rounded-lg text-xs font-semibold bg-[#24332d] text-[#d8eee1] hover:bg-[#2d4038] border border-[#354c41] transition-colors shadow-sm">Cancel</button><button class="px-5 py-2 rounded-lg text-xs font-semibold bg-[#3d7a61] text-[#ffffff] hover:bg-[#488e71] border border-[#4d9779] transition-colors shadow-sm flex items-center gap-2"><span class="material-symbols-outlined text-base">save</span> Action Button</button></div></div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Session Type</label>
+<select class="w-full px-3.5 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none">
+<option>Sabaq (New Lessons)</option>
+<option>Sabqi (Sub-recent Juz)</option>
+<option>Manzil (Total Retention)</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-space-sm">
+<div class="col-span-1">
+<label class="block font-label-md text-label-md text-on-surface mb-1">Surah</label>
+<input class="w-full px-3 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none" type="text" value="Al-Baqarah">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Ayah From</label>
+<input class="w-full px-3 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none" type="number" value="180">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Ayah To</label>
+<input class="w-full px-3 py-2 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none" type="number" value="195">
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Instructor Tajweed Observations</label>
+<textarea class="w-full p-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-sm text-body-sm outline-none resize-none" placeholder="Recitation pace, Qalqalah precision, or Makharij reminders..." rows="3"></textarea>
+</div>
+<label class="flex items-center gap-2 cursor-pointer pt-1">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-lowest accent-primary" type="checkbox">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Send SMS notification to guardian with teacher notes</span>
+</label>
+<!-- Footer Actions -->
+<div class="pt-space-md flex items-center justify-end gap-space-sm">
+<button class="px-space-md py-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-variant transition font-label-lg text-label-lg" type="button">
+              Cancel
+            </button>
+<button class="inline-flex items-center gap-2 px-space-lg py-space-sm rounded-lg bg-primary-container text-on-primary hover:bg-primary transition shadow-md font-label-lg text-label-lg" type="submit">
+<span class="material-symbols-outlined text-base">check</span>
+              Save Record
+            </button>
+</div>
+</form>
+</div>
 </div>
 </section>
-<!-- Bottom Footer Token Status -->
-<footer class="pt-8 pb-4 text-center text-xs text-[#809e91] flex flex-col items-center justify-center gap-2">
+<!-- 9. FOOTER -->
+<footer class="mt-margin-md pt-space-lg border-t-0 flex flex-col sm:flex-row items-center justify-between gap-space-sm text-on-surface-variant">
 <div class="flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-[#52a783] inline-block"></span>
-<span class="text-[#a8c7b8]">Serene Tahfiz Soft Dark Standards • Compliant with English RTL/LTR Specifications</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="font-label-lg text-label-lg text-on-surface">Serene Tahfiz • Fajr Mist Standards (Light-Dark Hybrid)</span>
 </div>
-<p class="text-[#6c877a]">Designed with Plus Jakarta Sans • Strict 10px spacing step • Ambient diffused shadows on #1b2621 muted canvas</p>
-</footer></div>
-</div>
-<script>
-  // Set indeterminate state on checkbox demo
-  const indeterminateEl = document.getElementById('indeterminateBox');
-  if (indeterminateEl) {
-    indeterminateEl.indeterminate = true;
-  }
-
-  // Demo export action
-  const exportBtn = document.getElementById('exportTokensBtn');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-      const tokens = {
-        primary: "#144637",
-        primaryContainer: "#2E5E4E",
-        surface: "#F0FCF3",
-        surfaceContainerLow: "#EBF7ED",
-        surfaceContainerHigh: "#DFEBE2",
-        surfaceDim: "#D1DDD4",
-        secondaryContainer: "#FFC55F",
-        errorContainer: "#FFDAD6",
-        surfaceContainerLowest: "#FFFFFF"
-      };
-      const blob = new Blob([JSON.stringify(tokens, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'serene-tahfiz-tokens.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-  }
-
-  // Smooth scroll to table demo on click
-  const liveDemoBtn = document.getElementById('liveDemoBtn');
-  if (liveDemoBtn) {
-    liveDemoBtn.addEventListener('click', () => {
-      const target = document.querySelector('table');
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    });
-  }
-</script></main>
+<p class="font-body-sm text-body-sm text-center sm:text-right">
+      Calibrated with <span class="font-mono text-primary">#333740</span> Slate Canvas, <span class="font-mono text-primary">#3F444E</span> Containers, and <span class="font-mono text-primary">#93C5FD</span> Morning Sky Blue
+    </p>
+</footer>
+</div></main>
 
 </body></html>
