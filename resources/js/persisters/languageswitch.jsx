@@ -54,6 +54,11 @@ export function LanguageProvider({ children }) {
     useEffect(() => {
         document.documentElement.setAttribute('lang', lang);
         document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+        const title = document.querySelector('title');
+        if (title?.dataset.titleFr && title.dataset.titleAr) {
+            title.textContent = isRTL ? title.dataset.titleAr : title.dataset.titleFr;
+            title.setAttribute('lang', lang);
+        }
     }, [lang, isRTL]);
 
     // Keep every open tab in sync with the stored language.

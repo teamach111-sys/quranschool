@@ -5,7 +5,22 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title lang="fr" data-title-fr="{{ config('app.name', 'Association Imam Muslim') }}" data-title-ar="جمعية الامام مسلم">{{ config('app.name', 'Association Imam Muslim') }}</title>
+
+        <script>
+            (function () {
+                try {
+                    var lang = localStorage.getItem('tahfiz-language') === 'ar' ? 'ar' : 'fr';
+                    document.documentElement.setAttribute('lang', lang);
+                    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+                    var title = document.querySelector('title');
+                    if (title) {
+                        title.textContent = lang === 'ar' ? title.dataset.titleAr : title.dataset.titleFr;
+                        title.setAttribute('lang', lang);
+                    }
+                } catch (e) {}
+            })();
+        </script>
 
         @fonts
 

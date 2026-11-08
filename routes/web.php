@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminUsersController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MemorizationSessionsController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleChangeHistoryController;
@@ -30,6 +31,11 @@ Route::get('/', function () {
 // Auth routes (login only, no registration)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/forgot-password', fn () => view('auth', ['page' => 'forgot-password']))
+        ->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'reset'])
+        ->middleware('throttle:6,1')
+        ->name('password.recovery.reset');
 });
 
 // Kept outside the "guest" middleware on purpose: when an old tab (or a double
@@ -275,6 +281,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])
         ->middleware('can:access-dashboard')
         ->name('profile.password.update');
+
+    Route::post('/profile/recovery-key', [ProfileController::class, 'generateRecoveryKey'])
+        ->middleware('can:access-dashboard')
+        ->name('profile.recovery-key.store');
 
     Route::get('/secretary/dashboard-summary', SecretaryDashboardController::class)
         ->middleware('can:access-secretary')

@@ -12,14 +12,13 @@
 --    with the documented convention for sessions that end at a surah boundary.
 --  * Unused unique keys (id, year_id) that only existed to be FK targets were
 --    removed; all FKs now target the school-scoped (id, school_id, year_id) keys.
-CREATE DATABASE IF NOT EXISTS quranschool
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE quranschool;
 
 -- Destructive reset: running this script drops all existing application data.
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS cache_locks;
 DROP TABLE IF EXISTS cache;
+DROP TABLE IF EXISTS password_recovery_keys;
 DROP TABLE IF EXISTS audit_events;
 DROP TABLE IF EXISTS role_change_history;
 DROP TABLE IF EXISTS payments;
@@ -50,14 +49,14 @@ CREATE TABLE schools (
   payment_methods JSON,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE roles (
   id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   role_key VARCHAR(24) NOT NULL UNIQUE,
   name_fr VARCHAR(50) NOT NULL,
   name_ar VARCHAR(50) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Academic years drive the persistent year selector. All year-scoped data
 -- references a row here, so switching the selector filters every dependent
@@ -82,7 +81,7 @@ CREATE TABLE academic_years (
   INDEX idx_ay_current (school_id,is_current),
   CHECK (end_date >= start_date),
   CHECK (is_current = FALSE OR is_active = TRUE)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Users are soft-deactivated (is_active) rather than deleted, so every table
 -- that stores who did what can reference them with ON DELETE RESTRICT.
@@ -107,7 +106,15 @@ CREATE TABLE users (
   INDEX idx_users_role (role_id),
   -- Referenced by the (…,school_id) FKs below; not redundant.
   UNIQUE KEY uq_users_id_school (id,school_id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- One hashed, single-use offline recovery key per user.
+CREATE TABLE password_recovery_keys (
+  user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  key_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_password_recovery_keys_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Rooms / groups (recreated per academic year)
@@ -131,7 +138,7 @@ CREATE TABLE rooms (
   INDEX idx_rooms_school_active (school_id,is_active),
   CHECK (age_min IS NULL OR age_max IS NULL OR age_min <= age_max),
   CHECK (capacity > 0)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Students (enrollment is per academic year)
@@ -163,7 +170,7 @@ CREATE TABLE students (
   INDEX idx_students_year_room_status (year_id,room_id,status),
   INDEX idx_students_year_name (year_id,full_name),
   INDEX idx_students_status (status)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Room <-> teacher assignments (history-aware, per year)
@@ -187,7 +194,7 @@ CREATE TABLE room_teachers (
   INDEX idx_rt_teacher (teacher_id,assigned_until),
   INDEX idx_rt_year_teacher (year_id,teacher_id),
   CHECK (assigned_until IS NULL OR assigned_until >= assigned_from)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Find every active teacher and the rooms they teach for the selected year:
 -- SELECT u.id, u.full_name, r.id AS room_id, r.name AS room_name
@@ -230,7 +237,7 @@ CREATE TABLE schedules (
   CHECK (day_of_week BETWEEN 1 AND 7),
   CHECK (ends_at > starts_at),
   CHECK (valid_until IS NULL OR valid_until >= valid_from)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Attendance (one record per student per day)
@@ -254,7 +261,7 @@ CREATE TABLE attendance (
   INDEX idx_attendance_year_date_room (year_id,attendance_date,room_id),
   INDEX idx_attendance_status (status),
   INDEX idx_attendance_student_date (student_id,attendance_date)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Memorization / Hifz sessions (per year)
@@ -296,7 +303,7 @@ CREATE TABLE memorization_sessions (
   CHECK (surah_start IS NULL OR surah_end IS NULL
          OR surah_start < surah_end
          OR (surah_start = surah_end AND ayah_start <= ayah_end))
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Billing / payments (per year)
@@ -328,7 +335,7 @@ CREATE TABLE payments (
   CHECK (period_end >= period_start),
   CHECK (amount >= 0),
   CHECK (status = 'paid' OR paid_at IS NULL)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Role change audit (admins reassign roles; every change is recorded)
@@ -350,7 +357,7 @@ CREATE TABLE role_change_history (
   INDEX idx_rch_user_date (user_id,created_at),
   INDEX idx_rch_changed_by (changed_by,created_at),
   INDEX idx_rch_school_date (school_id,created_at)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Unified append-only action events. Keep actor_name as a snapshot so history
 -- remains recognizable if the account is later renamed or deactivated.
@@ -375,20 +382,20 @@ CREATE TABLE audit_events (
   INDEX idx_audit_events_school_year_date (school_id,year_id,created_at,id),
   INDEX idx_audit_events_school_actor_date (school_id,actor_user_id,created_at),
   INDEX idx_audit_events_school_entity (school_id,entity_type,entity_id,created_at)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Laravel's configured database cache store.
 CREATE TABLE cache (
   `key` VARCHAR(255) NOT NULL PRIMARY KEY,
   value MEDIUMTEXT NOT NULL,
   expiration INT NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE cache_locks (
   `key` VARCHAR(255) NOT NULL PRIMARY KEY,
   owner VARCHAR(255) NOT NULL,
   expiration INT NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
 -- Seed data

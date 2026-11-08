@@ -23,10 +23,13 @@ export default function MonProfil() {
     const [loadError, setLoadError] = useState(false);
     const [profileSaving, setProfileSaving] = useState(false);
     const [passwordSaving, setPasswordSaving] = useState(false);
+    const [recoveryKeySaving, setRecoveryKeySaving] = useState(false);
     const [profileMessage, setProfileMessage] = useState(null);
     const [profileError, setProfileError] = useState(null);
     const [passwordMessage, setPasswordMessage] = useState(null);
     const [passwordError, setPasswordError] = useState(null);
+    const [recoveryKey, setRecoveryKey] = useState('');
+    const [recoveryKeyError, setRecoveryKeyError] = useState(null);
     const [password, setPassword] = useState({
         current_password: '',
         password: '',
@@ -71,6 +74,7 @@ export default function MonProfil() {
                 method: 'PUT',
                 body: JSON.stringify({
                     full_name: profile.full_name,
+                    email: profile.email,
                     phone: profile.phone,
                     language: profile.language,
                 }),
@@ -84,7 +88,7 @@ export default function MonProfil() {
             setProfile(data.profile);
             setLang(data.profile.language);
             window.dispatchEvent(new CustomEvent('tahfiz:profile-updated', {
-                detail: { full_name: data.profile.full_name },
+                detail: { full_name: data.profile.full_name, email: data.profile.email },
             }));
             setProfileMessage(t.profileForm.profileSaved);
         } catch (error) {
@@ -126,6 +130,45 @@ export default function MonProfil() {
         }
     };
 
+    const handleRecoveryKeyGenerate = async () => {
+        setRecoveryKeySaving(true);
+        setRecoveryKeyError(null);
+        setRecoveryKey('');
+
+        try {
+            const response = await apiFetch('/profile/recovery-key', { method: 'POST' });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(firstErrorMessage(data) ?? t.profileForm.recoveryKeyError);
+            }
+
+            setRecoveryKey(data.recovery_key);
+        } catch (error) {
+            setRecoveryKeyError(error.message || t.profileForm.recoveryKeyError);
+        } finally {
+            setRecoveryKeySaving(false);
+        }
+    };
+
+    const handleRecoveryKeyDownload = () => {
+        const content = [
+            t.profileForm.recoveryKeyFileTitle,
+            `${t.profileForm.email}: ${profile.email}`,
+            `${t.profileForm.recoveryKeyLabel}: ${recoveryKey}`,
+            '',
+            t.profileForm.recoveryKeyFileWarning,
+        ].join('\r\n');
+        const file = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'imam-muslim-recovery-key.txt';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    };
+
     if (loading) {
         return <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">{t.profileForm.loading}</p>;
     }
@@ -136,6 +179,34 @@ export default function MonProfil() {
 
     return (
         <div className="flex w-full max-w-3xl flex-col gap-5">
+            <section className={`${cardClass} flex flex-col gap-4`}>
+                <h2 className="text-[16px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
+                    {t.profileForm.recoveryKeySection}
+                </h2>
+                <p className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                    {t.profileForm.recoveryKeyDescription}
+                </p>
+                <div className="flex flex-wrap gap-3">
+                    <button className={buttonClass} disabled={recoveryKeySaving} onClick={handleRecoveryKeyGenerate} type="button">
+                        {recoveryKeySaving ? t.profileForm.recoveryKeyGenerating : t.profileForm.recoveryKeyGenerate}
+                    </button>
+                    {recoveryKey && (
+                        <button className={buttonClass} onClick={handleRecoveryKeyDownload} type="button">
+                            {t.profileForm.recoveryKeyDownload}
+                        </button>
+                    )}
+                </div>
+                {recoveryKey && (
+                    <div className="flex flex-col gap-2 rounded-md border border-outline-variant bg-surface-container-low p-3 dark:border-tertiary-container dark:bg-inverse-surface">
+                        <p className="text-[13px] leading-5 text-on-surface dark:text-inverse-on-surface">
+                            {t.profileForm.recoveryKeyOneTimeWarning}
+                        </p>
+                        <code dir="ltr" className="break-all font-mono text-[13px] text-on-surface dark:text-inverse-on-surface">{recoveryKey}</code>
+                    </div>
+                )}
+                {recoveryKeyError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{recoveryKeyError}</p>}
+            </section>
+
             <section className={`${cardClass} flex flex-col gap-4`}>
                 <h2 className="text-[16px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
                     {t.profileForm.personalInformation}
@@ -156,9 +227,11 @@ export default function MonProfil() {
                         {t.profileForm.email}
                         <input
                             autoComplete="email"
-                            className={`${inputClass} cursor-not-allowed bg-surface-container dark:bg-[#26372f]`}
+                            className={inputClass}
                             dir="ltr"
-                            readOnly
+                            maxLength={190}
+                            onChange={(event) => updateProfileField('email', event.target.value)}
+                            required
                             type="email"
                             value={profile.email}
                         />

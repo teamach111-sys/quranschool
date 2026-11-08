@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import Icon from '../components/Icon';
 import Logo from '../components/Logo';
+import { useLanguage } from '../hooks/useLanguage';
 
 export default function Login() {
+    const { t } = useLanguage();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [remember, setRemember] = useState(true);
@@ -111,7 +113,7 @@ export default function Login() {
                             <div className="flex flex-col gap-1.5">
                                 <div className="flex items-center justify-between">
                                     <label className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] tracking-[0.02em] font-medium text-on-surface dark:text-[#ecf3ef]" htmlFor="password">Mot de passe</label>
-                                    <a className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px] tracking-[0.03em] font-semibold text-primary dark:text-[#9fd1bd] hover:text-primary-container transition-colors py-1 inline-flex items-center min-h-[44px]" href="#">Mot de passe oublie ?</a>
+                                    <a className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px] tracking-[0.03em] font-semibold text-primary dark:text-[#9fd1bd] hover:text-primary-container transition-colors py-1 inline-flex items-center min-h-[44px]" href="/forgot-password">{t.passwordRecovery.forgotLink}</a>
                                 </div>
                                 <div className="relative flex items-center">
                                     <Icon name="lock" className="absolute left-3.5 text-outline dark:text-[#9bb2a8] text-[20px] pointer-events-none select-none" />

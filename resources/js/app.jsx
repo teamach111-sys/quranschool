@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { LanguageProvider } from './persisters/languageswitch';
 import { ToastProvider } from './components/ToastProvider';
 import Login from './pages/Login';
+import PasswordReset from './pages/PasswordReset';
 import Dashboard from './pages/Dashboard';
 
 const rootElement = document.getElementById('root');
@@ -21,7 +22,11 @@ if (rootElement) {
         <React.StrictMode>
             <LanguageProvider>
                 <ToastProvider>
-                    {page === 'dashboard' ? <Dashboard user={user} /> : <Login />}
+                    {page === 'dashboard'
+                        ? <Dashboard user={user} />
+                        : page === 'forgot-password'
+                            ? <PasswordReset />
+                            : <Login />}
                 </ToastProvider>
             </LanguageProvider>
         </React.StrictMode>

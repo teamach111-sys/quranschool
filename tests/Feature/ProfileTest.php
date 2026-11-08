@@ -30,6 +30,12 @@ class ProfileTest extends TestCase
             $table->timestamp('updated_at')->nullable();
         });
 
+        Schema::create('password_recovery_keys', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id')->primary();
+            $table->string('key_hash');
+            $table->timestamp('created_at');
+        });
+
         Schema::create('audit_events', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('school_id');
@@ -78,7 +84,7 @@ class ProfileTest extends TestCase
         );
     }
 
-    public function test_profile_update_changes_only_name_phone_and_language(): void
+    public function test_profile_update_changes_name_email_phone_and_language(): void
     {
         $this->createUser(10, 1, 'teacher');
         $this->actingAs($this->user(10, 1, 'teacher'));
@@ -95,16 +101,16 @@ class ProfileTest extends TestCase
         ])
             ->assertOk()
             ->assertJsonPath('profile.full_name', 'Updated Profile User')
+            ->assertJsonPath('profile.email', 'changed@example.test')
             ->assertJsonPath('profile.phone', '+212600000099')
-            ->assertJsonPath('profile.language', 'ar')
-            ->assertJsonPath('profile.email', 'profile-10@example.test');
+            ->assertJsonPath('profile.language', 'ar');
 
         $this->assertDatabaseHas('users', [
             'id' => 10,
             'school_id' => 1,
             'role_id' => 2,
             'full_name' => 'Updated Profile User',
-            'email' => 'profile-10@example.test',
+            'email' => 'changed@example.test',
             'phone' => '+212600000099',
             'language' => 'ar',
             'is_active' => true,
@@ -114,10 +120,49 @@ class ProfileTest extends TestCase
         $changes = json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR);
         $this->assertSame('Profile User', $changes['full_name']['before']);
         $this->assertSame('Updated Profile User', $changes['full_name']['after']);
+        $this->assertSame('profile-10@example.test', $changes['email']['before']);
+        $this->assertSame('changed@example.test', $changes['email']['after']);
         $this->assertTrue(Hash::check(
             'current-password-value',
             DB::table('users')->where('id', 10)->value('password_hash'),
         ));
+    }
+
+    public function test_profile_update_rejects_an_email_used_by_another_user(): void
+    {
+        $this->createUser(10, 1, 'teacher');
+        $this->createUser(20, 1, 'secretary');
+        $this->actingAs($this->user(10, 1, 'teacher'));
+
+        $this->putJson('/profile', [
+            'full_name' => 'Profile User',
+            'email' => 'profile-20@example.test',
+            'phone' => '+212600000001',
+            'language' => 'fr',
+        ])->assertUnprocessable()->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseHas('users', [
+            'id' => 10,
+            'email' => 'profile-10@example.test',
+        ]);
+    }
+
+    public function test_profile_update_rejects_invalid_email_addresses(): void
+    {
+        $this->createUser(10, 1, 'teacher');
+        $this->actingAs($this->user(10, 1, 'teacher'));
+
+        $this->putJson('/profile', [
+            'full_name' => 'Profile User',
+            'email' => 'not-an-email',
+            'phone' => '+212600000001',
+            'language' => 'fr',
+        ])->assertUnprocessable()->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseHas('users', [
+            'id' => 10,
+            'email' => 'profile-10@example.test',
+        ]);
     }
 
     public function test_profile_update_rejects_an_unsupported_language(): void
@@ -127,6 +172,7 @@ class ProfileTest extends TestCase
 
         $this->putJson('/profile', [
             'full_name' => 'Updated Profile User',
+            'email' => 'profile-10@example.test',
             'phone' => null,
             'language' => 'en',
         ])->assertUnprocessable()->assertJsonValidationErrors('language');
@@ -142,6 +188,11 @@ class ProfileTest extends TestCase
     {
         $this->createUser(10, 1, 'admin');
         $this->actingAs($this->user(10, 1, 'admin'));
+        DB::table('password_recovery_keys')->insert([
+            'user_id' => 10,
+            'key_hash' => Hash::make(str_repeat('A', 64)),
+            'created_at' => now(),
+        ]);
 
         $response = $this->putJson('/profile/password', [
             'current_password' => 'current-password-value',
@@ -157,6 +208,7 @@ class ProfileTest extends TestCase
         $event = DB::table('audit_events')->first();
         $this->assertSame('user.password_changed', $event->summary_key);
         $this->assertSame([], json_decode($event->changes, true, 512, JSON_THROW_ON_ERROR));
+        $this->assertDatabaseMissing('password_recovery_keys', ['user_id' => 10]);
         $response->assertJsonMissing(['password' => 'new-secure-password-value']);
     }
 
@@ -205,6 +257,28 @@ class ProfileTest extends TestCase
         $this->assertSame($originalHash, DB::table('users')->where('id', 10)->value('password_hash'));
     }
 
+    public function test_staff_can_generate_a_one_time_recovery_key_and_rotate_it(): void
+    {
+        $this->createUser(10, 1, 'teacher');
+        $this->actingAs($this->user(10, 1, 'teacher'));
+
+        $firstKey = $this->postJson('/profile/recovery-key')
+            ->assertOk()
+            ->json('recovery_key');
+        $this->assertMatchesRegularExpression('/^[A-F0-9]{64}$/', $firstKey);
+        $firstHash = DB::table('password_recovery_keys')->where('user_id', 10)->value('key_hash');
+        $this->assertNotSame($firstKey, $firstHash);
+        $this->assertTrue(Hash::check($firstKey, $firstHash));
+
+        $secondKey = $this->postJson('/profile/recovery-key')
+            ->assertOk()
+            ->json('recovery_key');
+        $secondHash = DB::table('password_recovery_keys')->where('user_id', 10)->value('key_hash');
+        $this->assertNotSame($firstKey, $secondKey);
+        $this->assertFalse(Hash::check($firstKey, $secondHash));
+        $this->assertTrue(Hash::check($secondKey, $secondHash));
+    }
+
     public function test_profile_read_requires_authentication(): void
     {
         $this->getJson('/profile')->assertUnauthorized();
@@ -218,6 +292,11 @@ class ProfileTest extends TestCase
     public function test_password_update_requires_authentication(): void
     {
         $this->putJson('/profile/password', [])->assertUnauthorized();
+    }
+
+    public function test_recovery_key_generation_requires_authentication(): void
+    {
+        $this->postJson('/profile/recovery-key')->assertUnauthorized();
     }
 
     private function createUser(int $id, int $schoolId, string $role): void

@@ -28,6 +28,13 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:120'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:190',
+                Rule::unique('users', 'email')->ignore((int) $user->id),
+            ],
             'phone' => ['nullable', 'string', 'max:30'],
             'language' => ['required', Rule::in(['fr', 'ar'])],
         ]);
@@ -37,11 +44,12 @@ class ProfileController extends Controller
                 ->where('id', (int) $user->id)
                 ->where('school_id', (int) $user->school_id)
                 ->lockForUpdate()
-                ->first(['full_name', 'phone', 'language']);
+                ->first(['full_name', 'email', 'phone', 'language']);
             abort_unless($before, 404);
 
             $after = [
                 'full_name' => $validated['full_name'],
+                'email' => $validated['email'],
                 'phone' => $validated['phone'] ?? null,
                 'language' => $validated['language'],
             ];
@@ -93,6 +101,9 @@ class ProfileController extends Controller
                 'updated_at' => now(),
             ]);
             abort_unless($updated > 0, 404);
+            DB::table('password_recovery_keys')
+                ->where('user_id', (int) $user->id)
+                ->delete();
 
             AuditEventLogger::record(
                 (int) $user->school_id,
@@ -105,6 +116,34 @@ class ProfileController extends Controller
         });
 
         return response()->json(['updated' => true]);
+    }
+
+    public function generateRecoveryKey(): JsonResponse
+    {
+        $user = Auth::user();
+        abort_unless($user && in_array(data_get($user, 'role'), ['admin', 'teacher', 'secretary'], true), 403);
+
+        $recoveryKey = strtoupper(bin2hex(random_bytes(32)));
+        DB::table('password_recovery_keys')->updateOrInsert(
+            ['user_id' => (int) $user->id],
+            [
+                'key_hash' => Hash::make($recoveryKey),
+                'created_at' => now(),
+            ],
+        );
+
+        AuditEventLogger::record(
+            (int) $user->school_id,
+            null,
+            'user',
+            (int) $user->id,
+            'updated',
+            'user.recovery_key_generated',
+        );
+
+        return response()->json([
+            'recovery_key' => $recoveryKey,
+        ]);
     }
 
     private function profileResponse(int $userId, int $schoolId): JsonResponse

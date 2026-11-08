@@ -6,6 +6,7 @@ export default function ProfileMenu({ user, onLogout, compact = false }) {
     const { isRTL, t } = useLanguage();
     const [open, setOpen] = useState(false);
     const [profileName, setProfileName] = useState(null);
+    const [profileEmail, setProfileEmail] = useState(null);
     const ref = useRef(null);
 
     useEffect(() => {
@@ -13,6 +14,7 @@ export default function ProfileMenu({ user, onLogout, compact = false }) {
         const onKey = (e) => e.key === 'Escape' && setOpen(false);
         const onProfileUpdated = (event) => {
             if (event.detail?.full_name) setProfileName(event.detail.full_name);
+            if (event.detail?.email) setProfileEmail(event.detail.email);
         };
         document.addEventListener('click', onClick);
         document.addEventListener('keydown', onKey);
@@ -25,7 +27,7 @@ export default function ProfileMenu({ user, onLogout, compact = false }) {
     }, []);
 
     const name = profileName ?? user?.name ?? t.userName;
-    const email = user?.email || 'user@institution.dz';
+    const email = profileEmail ?? user?.email ?? 'user@institution.dz';
     const role = (user?.role && t.roles?.[user.role]) || t.userRole;
 
     const dropdownSide = isRTL ? 'left-0 origin-top-left' : 'right-0 origin-top-right';

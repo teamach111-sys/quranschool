@@ -20,15 +20,12 @@ export default function TableauDeBordEnseignant() {
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
-    const [refreshCount, setRefreshCount] = useState(0);
-    const [refreshedAt, setRefreshedAt] = useState(null);
 
     useEffect(() => {
         const syncYear = (event) => {
             const nextId = Number(event?.detail?.id ?? getSelectedAcademicYearId());
             setYearId(Number.isInteger(nextId) && nextId > 0 ? nextId : null);
             setDashboard(null);
-            setRefreshedAt(null);
         };
 
         window.addEventListener(ACADEMIC_YEAR_CHANGED_EVENT, syncYear);
@@ -48,7 +45,6 @@ export default function TableauDeBordEnseignant() {
             .then((data) => {
                 if (!cancelled) {
                     setDashboard(data);
-                    setRefreshedAt(new Date());
                 }
             })
             .catch((error) => {
@@ -64,12 +60,11 @@ export default function TableauDeBordEnseignant() {
             cancelled = true;
             controller.abort();
         };
-    }, [refreshCount, yearId]);
+    }, [yearId]);
 
     const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
     const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
-    const timeFormat = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
     const dayNames = dayKeys.map((day) => t.schedules.days[day]);
     const pendingAttendanceSlotIds = new Set(
         dashboard?.attendance_tasks?.slots?.map((slot) => slot.id) ?? [],
@@ -88,15 +83,9 @@ export default function TableauDeBordEnseignant() {
     const visibleAttendanceStudents = dashboard?.attendance_tasks?.students
         ?.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT) ?? [];
     const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00Z`));
-    const refreshDashboard = () => setRefreshCount((current) => current + 1);
-
     if (loading && !dashboard) {
         return (
             <div role="status" aria-label={t.teacherDashboard.loading} className="flex w-full flex-col gap-5">
-                <div className="flex min-h-11 items-center justify-between gap-3">
-                    <div className="h-4 w-28 animate-pulse rounded bg-surface-container dark:bg-tertiary-container" />
-                    <div className="h-11 w-36 animate-pulse rounded-lg bg-surface-container dark:bg-tertiary-container" />
-                </div>
                 <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {dayKeys.slice(0, 4).map((day) => (
                         <div key={day} className={`${cardClass} h-24 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
@@ -126,46 +115,15 @@ export default function TableauDeBordEnseignant() {
 
     if (!dashboard) {
         return (
-            <div className="flex flex-col items-start gap-3">
-                <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>
-                <button
-                    type="button"
-                    onClick={refreshDashboard}
-                    className="min-h-11 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:text-on-primary-container"
-                >
-                    {t.teacherDashboard.retryDashboard}
-                </button>
-            </div>
+            <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>
         );
     }
 
     return (
         <div dir={isRTL ? 'rtl' : 'ltr'} className="flex w-full flex-col gap-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim" aria-live="polite">
-                    {refreshedAt && t.teacherDashboard.dashboardUpdatedAt(timeFormat.format(refreshedAt))}
-                </p>
-                <button
-                    type="button"
-                    onClick={refreshDashboard}
-                    disabled={loading}
-                    aria-label={loading ? t.teacherDashboard.refreshingDashboard : t.teacherDashboard.refreshDashboard}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-[12px] font-semibold text-primary transition-colors hover:bg-surface-container focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-60 dark:text-primary-fixed-dim dark:hover:bg-tertiary-container"
-                >
-                    <Icon name="refresh" className={`text-[18px] ${loading ? 'animate-spin' : ''}`} />
-                    {loading ? t.teacherDashboard.refreshingDashboard : t.teacherDashboard.refreshDashboard}
-                </button>
-            </div>
             {hasError && (
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-error/40 bg-error-container/40 p-3">
+                <div className="rounded-lg border border-error/40 bg-error-container/40 p-3">
                     <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>
-                    <button
-                        type="button"
-                        onClick={refreshDashboard}
-                        className="min-h-11 rounded-lg px-3 text-[12px] font-semibold text-primary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-primary dark:text-primary-fixed-dim"
-                    >
-                        {t.teacherDashboard.retryDashboard}
-                    </button>
                 </div>
             )}
             <section aria-label={t.teacherDashboard.overview} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

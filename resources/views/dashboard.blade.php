@@ -6,7 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <link rel="icon" type="image/png" href="/favicon.png" />
-        <title>Dashboard - {{ config('app.name', 'Laravel') }}</title>
+        <title lang="fr" data-title-fr="Tableau de bord - {{ config('app.name', 'Association Imam Muslim') }}" data-title-ar="لوحة التحكم - جمعية الامام مسلم">Tableau de bord - {{ config('app.name', 'Association Imam Muslim') }}</title>
 
         <script>
             (function () {
@@ -19,6 +19,11 @@
                     var lang = localStorage.getItem('tahfiz-language') === 'ar' ? 'ar' : 'fr';
                     document.documentElement.setAttribute('lang', lang);
                     document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+                    var title = document.querySelector('title');
+                    if (title) {
+                        title.textContent = lang === 'ar' ? title.dataset.titleAr : title.dataset.titleFr;
+                        title.setAttribute('lang', lang);
+                    }
                 } catch (e) {}
             })();
         </script>
