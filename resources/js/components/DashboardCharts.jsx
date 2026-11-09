@@ -60,18 +60,21 @@ const tooltipClass = 'rounded-md border border-outline-variant bg-surface-contai
 /**
  * Reusable card shell for a single chart.
  */
-export function ChartCard({ title, subtitle, children, className = '' }) {
+export function ChartCard({ title, subtitle, action, children, className = '' }) {
     return (
         <section className={`min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#3a3835] dark:bg-inverse-surface ${className}`}>
-            <div className="mb-3 flex flex-col gap-0.5">
-                <h3 className="text-[14px] leading-5 font-semibold text-on-surface dark:text-inverse-on-surface">
-                    {title}
-                </h3>
-                {subtitle && (
-                    <p className="text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
-                        {subtitle}
-                    </p>
-                )}
+            <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                    <h3 className="text-[14px] leading-5 font-semibold text-on-surface dark:text-inverse-on-surface">
+                        {title}
+                    </h3>
+                    {subtitle && (
+                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                            {subtitle}
+                        </p>
+                    )}
+                </div>
+                {action && <div className="shrink-0">{action}</div>}
             </div>
             {children}
         </section>
@@ -225,7 +228,7 @@ export function BarsChart({ data, colors, horizontal = false, valueFormatter, he
                 <RechartsBarChart
                     data={data}
                     layout={horizontal ? 'vertical' : 'horizontal'}
-                    margin={{ top: 4, right: 8, bottom: 0, left: horizontal ? 0 : -18 }}
+                    margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
                 >
                     <CartesianGrid
                         horizontal={!horizontal}
@@ -249,7 +252,7 @@ export function BarsChart({ data, colors, horizontal = false, valueFormatter, he
                     ) : (
                         <>
                             <XAxis dataKey="name" stroke={colors.axis} tick={axisTick} axisLine={false} tickLine={false} />
-                            <YAxis stroke={colors.axis} tick={axisTick} axisLine={false} tickLine={false} width={56} />
+                            <YAxis stroke={colors.axis} tick={axisTick} axisLine={false} tickLine={false} width={72} />
                         </>
                     )}
                     <Tooltip cursor={{ fill: colors.grid, opacity: 0.4 }} content={<BarTooltip valueFormatter={valueFormatter} />} />

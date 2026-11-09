@@ -1,33 +1,21 @@
-﻿import React from 'react';
+import React from 'react';
 import Icon from '../../../components/Icon';
+import { Panel } from '../../../components/DashboardPanels';
 import { useLanguage } from '../../../hooks/useLanguage';
 
 const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
 
 const alertCategories = [
-    { key: 'missed_attendance', title: 'missedAttendance', icon: 'fact_check', tone: 'text-error dark:text-[#e59a92]' },
     { key: 'late_payments', title: 'latePayments', icon: 'payments', tone: 'text-error dark:text-[#e59a92]' },
     { key: 'repeated_absences', title: 'repeatedAbsences', icon: 'event_busy', tone: 'text-error dark:text-[#e59a92]' },
     { key: 'rooms_without_active_teacher', title: 'roomsWithoutActiveTeacher', icon: 'door_front', tone: 'text-secondary dark:text-secondary-fixed-dim' },
-    { key: 'inactive_users_with_pending_items', title: 'inactiveUsersWithPendingItems', icon: 'person_off', tone: 'text-secondary dark:text-secondary-fixed-dim' },
 ];
 
 function alertRecordUrl(category, item) {
-    if (category === 'missed_attendance') {
-        if (!item.room_id || !item.attendance_date) return null;
-
-        const query = new URLSearchParams({
-            room_id: String(item.room_id),
-            attendance_date: item.attendance_date,
-        });
-        return `#/presences?${query.toString()}`;
-    }
-
     const target = {
         late_payments: { page: 'paiements-finances', parameter: 'payment_id', id: item.id },
         repeated_absences: { page: 'presences', parameter: 'student_id', id: item.student_id },
         rooms_without_active_teacher: { page: 'groupes-attribution', parameter: 'room_id', id: item.room_id },
-        inactive_users_with_pending_items: { page: 'utilisateurs-roles', parameter: 'user_id', id: item.user_id },
     }[category];
 
     if (!target?.id) return null;
@@ -38,17 +26,15 @@ function alertRecordUrl(category, item) {
 
 function alertCategoryUrl(category) {
     const pages = {
-        missed_attendance: 'presences',
         late_payments: 'paiements-finances',
         repeated_absences: 'presences',
         rooms_without_active_teacher: 'groupes-attribution',
-        inactive_users_with_pending_items: 'utilisateurs-roles',
     };
 
     return pages[category] ? `#/${pages[category]}` : null;
 }
 
-export default function AdminDashboardAlerts({ alerts, latePaymentRollover = null }) {
+export default function AdminDashboardAlerts({ alerts }) {
     const { isRTL, lang, t } = useLanguage();
     const locale = lang === 'ar' ? 'ar-MA' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
@@ -86,31 +72,7 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
             );
         }
 
-        if (category === 'missed_attendance') {
-            return (
-                <>
-                    <p className="font-medium text-on-surface dark:text-inverse-on-surface">
-                        {item.room_name} · {dateFormat.format(new Date(`${item.attendance_date}T00:00:00Z`))}
-                    </p>
-                    <p className="text-on-surface-variant dark:text-tertiary-fixed-dim">
-                        {item.starts_at}–{item.ends_at}
-                    </p>
-                </>
-            );
-        }
-
-        if (category === 'rooms_without_active_teacher') {
-            return <p className="font-medium text-on-surface dark:text-inverse-on-surface">{item.room_name}</p>;
-        }
-
-        return (
-            <>
-                <p className="font-medium text-on-surface dark:text-inverse-on-surface">{item.user_name}</p>
-                <p className="text-on-surface-variant dark:text-tertiary-fixed-dim">
-                    {t.dashboardStats.alerts.pendingItems(item.active_assignments, item.future_schedules)}
-                </p>
-            </>
-        );
+        return <p className="font-medium text-on-surface dark:text-inverse-on-surface">{item.room_name}</p>;
     };
 
     return (
@@ -118,28 +80,16 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
             <h2 id="dashboard-alerts-heading" className="text-[16px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
                 {t.dashboardStats.alerts.title}
             </h2>
-            {latePaymentRollover && (
-                <p
-                    role="status"
-                    className="flex items-start gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[12px] leading-5 text-on-surface-variant dark:border-[#3a3835] dark:bg-inverse-surface dark:text-tertiary-fixed-dim"
-                >
-                    <Icon name="autorenew" className="mt-0.5 shrink-0 text-[16px] text-primary dark:text-primary-fixed-dim" />
-                    {t.dashboardStats.alerts.lateRolloverReport(
-                        numberFormat.format(latePaymentRollover.count),
-                        dateFormat.format(new Date(latePaymentRollover.ran_at)),
-                    )}
-                </p>
-            )}
-            <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-3">
                 {alertCategories.map((category) => {
                     const items = alerts[category.key];
                     const visibleItems = items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT);
                     const categoryUrl = alertCategoryUrl(category.key);
 
                     return (
-                        <article
+                        <Panel
                             key={category.key}
-                            className="min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#3a3835] dark:bg-inverse-surface"
+                            className="p-4"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <h3 className="text-[13px] leading-5 font-semibold text-on-surface dark:text-inverse-on-surface">
@@ -152,17 +102,15 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
                             </div>
                             {items.length > 0 ? (
                                 <>
-                                    <ul className="mt-3 flex flex-col gap-2">
+                                    <ul className="mt-3 divide-y divide-outline-variant dark:divide-[#3a3835]">
                                         {visibleItems.map((item) => {
                                             const href = alertRecordUrl(category.key, item);
-                                            const itemKey = category.key === 'missed_attendance'
-                                                ? `${item.room_id}-${item.attendance_date}`
-                                                : item.id ?? item.student_id ?? item.room_id ?? item.user_id;
+                                            const itemKey = item.id ?? item.student_id ?? item.room_id;
 
                                             return (
                                                 <li
                                                     key={itemKey}
-                                                    className="border-t border-outline-variant pt-2 text-[12px] leading-5 dark:border-[#3a3835]"
+                                                    className="py-2 text-[12px] leading-5"
                                                 >
                                                     {href ? (
                                                         <a
@@ -201,7 +149,7 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
                                     {t.dashboardStats.alerts.empty}
                                 </p>
                             )}
-                        </article>
+                        </Panel>
                     );
                 })}
             </div>

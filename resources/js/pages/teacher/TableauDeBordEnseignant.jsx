@@ -1,7 +1,8 @@
 ﻿import React, { useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
-import StatCard from '../../components/StatCard';
-import { BarsChart, useChartColors } from '../../components/DashboardCharts';
+import { StatStrip } from '../../components/StatCard';
+import { BarsChart, ChartCard, useChartColors } from '../../components/DashboardCharts';
+import { Panel, SectionHeader } from '../../components/DashboardPanels';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
 import {
@@ -12,6 +13,7 @@ import {
 const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#3a3835] dark:bg-inverse-surface';
 const textClass = 'text-on-surface dark:text-inverse-on-surface';
 const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim';
+const linkClass = 'shrink-0 text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim';
 const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
 const DASHBOARD_CHART_GROUP_LIMIT = 8;
 const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -67,8 +69,6 @@ export default function TableauDeBordEnseignant() {
 
     const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
-    const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
-    const dayNames = dayKeys.map((day) => t.schedules.days[day]);
     const pendingAttendanceSlotIds = new Set(
         dashboard?.attendance_tasks?.slots?.map((slot) => slot.id) ?? [],
     );
@@ -85,30 +85,17 @@ export default function TableauDeBordEnseignant() {
     }
     const visibleAttendanceStudents = dashboard?.attendance_tasks?.students
         ?.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT) ?? [];
-    const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00Z`));
     if (loading && !dashboard) {
         return (
             <div role="status" aria-label={t.teacherDashboard.loading} className="flex w-full flex-col gap-5">
-                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    {dayKeys.slice(0, 4).map((day) => (
+                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+                    {dayKeys.slice(0, 3).map((day) => (
                         <div key={day} className={`${cardClass} h-24 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
                     ))}
                 </div>
-                <div className="flex flex-col gap-3">
-                    <div className="h-6 w-32 animate-pulse rounded bg-surface-container dark:bg-[#2a2928]" />
-                    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        {dayKeys.slice(0, 3).map((day) => (
-                            <div key={day} className={`${cardClass} h-16 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
-                        ))}
-                    </div>
-                </div>
+                <div className={`${cardClass} h-64 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
                 <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                     {dayKeys.slice(0, 2).map((day) => (
-                        <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
-                    ))}
-                </div>
-                <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
-                    {dayKeys.slice(2, 4).map((day) => (
                         <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
                     ))}
                 </div>
@@ -129,169 +116,111 @@ export default function TableauDeBordEnseignant() {
                     <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.teacherDashboard.loadError}</p>
                 </div>
             )}
-            <section aria-label={t.teacherDashboard.overview} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard label={t.teacherDashboard.groups} value={numberFormat.format(dashboard.groups.length)} icon="groups" />
-                <StatCard label={t.teacherDashboard.todayLessons} value={numberFormat.format(dashboard.today_lessons.length)} icon="event" />
-                <StatCard label={t.teacherDashboard.pendingAttendance} value={numberFormat.format(dashboard.attendance_tasks.count)} icon="fact_check" trendTone={dashboard.attendance_tasks.count > 0 ? 'warning' : 'positive'} />
-                <StatCard label={t.teacherDashboard.recentSessions} value={numberFormat.format(dashboard.recent_sessions.length)} icon="menu_book" />
-            </section>
+            <StatStrip
+                ariaLabel={t.teacherDashboard.overview}
+                className="sm:grid-cols-3"
+                items={[
+                    { label: t.teacherDashboard.groups, value: numberFormat.format(dashboard.groups.length), icon: 'groups' },
+                    { label: t.teacherDashboard.todayLessons, value: numberFormat.format(dashboard.today_lessons.length), icon: 'event' },
+                    { label: t.teacherDashboard.pendingAttendance, value: numberFormat.format(dashboard.attendance_tasks.count), icon: 'fact_check' },
+                ]}
+            />
 
-            <section className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{t.teacherDashboard.groups}</h2>
-                    <a href="#/mes-groupes-eleves" className="text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim">
-                        {t.teacherDashboard.viewGroups}
-                    </a>
-                </div>
-                {dashboard.groups.length > 0 ? (
-                    <div className={cardClass}>
-                        <BarsChart
-                            horizontal
-                            colors={colors}
-                            data={dashboard.groups.slice(0, DASHBOARD_CHART_GROUP_LIMIT).map((group) => ({
-                                key: group.id,
-                                name: group.name,
-                                value: group.active_student_count,
-                                color: colors.blue,
-                            }))}
-                            height={Math.max(160, Math.min(dashboard.groups.length, DASHBOARD_CHART_GROUP_LIMIT) * 44)}
-                            valueFormatter={(value) => numberFormat.format(value)}
-                        />
-                    </div>
-                ) : (
-                    <p className={`rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-[13px] leading-5 dark:border-[#3a3835] dark:bg-inverse-surface ${secondaryTextClass}`}>
-                        {t.teacherDashboard.noGroups}
-                    </p>
-                )}
-            </section>
+            {dashboard.groups.length > 0 ? (
+                <ChartCard
+                    title={t.teacherDashboard.groups}
+                    action={<a href="#/mes-groupes-eleves" className={linkClass}>{t.teacherDashboard.viewGroups}</a>}
+                >
+                    <BarsChart
+                        horizontal
+                        colors={colors}
+                        data={dashboard.groups.slice(0, DASHBOARD_CHART_GROUP_LIMIT).map((group) => ({
+                            key: group.id,
+                            name: group.name,
+                            value: group.active_student_count,
+                            color: colors.blue,
+                        }))}
+                        height={Math.max(160, Math.min(dashboard.groups.length, DASHBOARD_CHART_GROUP_LIMIT) * 44)}
+                        valueFormatter={(value) => numberFormat.format(value)}
+                    />
+                </ChartCard>
+            ) : (
+                <section className="flex flex-col gap-3">
+                    <SectionHeader title={t.teacherDashboard.groups} />
+                    <Panel className="p-4">
+                        <p className={`text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noGroups}</p>
+                    </Panel>
+                </section>
+            )}
 
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                 <section className="flex min-w-0 flex-col gap-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{t.teacherDashboard.todayLessons}</h2>
-                        <a href="#/mon-emploi-du-temps" className="shrink-0 text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim">
-                            {t.teacherDashboard.viewSchedule}
-                        </a>
-                    </div>
+                    <SectionHeader
+                        title={t.teacherDashboard.todayLessons}
+                        action={<a href="#/mon-emploi-du-temps" className={linkClass}>{t.teacherDashboard.viewSchedule}</a>}
+                    />
                     {dashboard.today_lessons.length > 0 ? (
-                        <ul className="flex flex-col gap-2">
-                            {visibleTodayLessons.map((lesson) => (
-                                <li key={lesson.id} className={`${cardClass} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
-                                    <div className="flex min-w-0 items-center justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{lesson.label}</p>
-                                            <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>{lesson.room_name}</p>
+                        <Panel>
+                            <ul className="divide-y divide-outline-variant dark:divide-[#3a3835]">
+                                {visibleTodayLessons.map((lesson) => (
+                                    <li key={lesson.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="flex min-w-0 items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{lesson.label}</p>
+                                                <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>{lesson.room_name}</p>
+                                            </div>
+                                            <span className="shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88] sm:hidden">
+                                                {lesson.starts_at} – {lesson.ends_at}
+                                            </span>
                                         </div>
-                                        <span className="shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88] sm:hidden">
+                                        <span className="hidden shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88] sm:inline-flex">
                                             {lesson.starts_at} – {lesson.ends_at}
                                         </span>
-                                    </div>
-                                    <span className="hidden shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88] sm:inline-flex">
-                                        {lesson.starts_at} – {lesson.ends_at}
-                                    </span>
-                                    {(lesson.id === dashboard.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id)) && (
-                                        <a
-                                            href={`#/presences?room_id=${lesson.room_id}&attendance_date=${dashboard.today}`}
-                                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-[#2f7d4f] dark:text-white"
-                                        >
-                                            <Icon name="fact_check" className="text-[18px]" />
-                                            {t.teacherDashboard.startTodayAttendance}
-                                        </a>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
+                                        {(lesson.id === dashboard.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id)) && (
+                                            <a
+                                                href={`#/presences?room_id=${lesson.room_id}&attendance_date=${dashboard.today}`}
+                                                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-[#2f7d4f] dark:text-white"
+                                            >
+                                                <Icon name="fact_check" className="text-[18px]" />
+                                                {t.teacherDashboard.startTodayAttendance}
+                                            </a>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </Panel>
                     ) : (
-                        <p className={`${cardClass} text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noTodayLessons}</p>
+                        <Panel className="p-4">
+                            <p className={`text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noTodayLessons}</p>
+                        </Panel>
                     )}
                 </section>
 
                 <section className="flex min-w-0 flex-col gap-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{t.teacherDashboard.upcomingLessons}</h2>
-                        <a href="#/mon-emploi-du-temps" className="text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim">
-                            {t.teacherDashboard.viewSchedule}
-                        </a>
-                    </div>
-                    {dashboard.upcoming_lessons.length > 0 ? (
-                        <ul className="flex flex-col gap-2">
-                            {dashboard.upcoming_lessons.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((lesson) => (
-                                <li key={`${lesson.id}-${lesson.lesson_date}`} className={`${cardClass} flex items-center justify-between gap-3`}>
-                                    <div className="min-w-0">
-                                        <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{lesson.label}</p>
-                                        <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>{dayNames[lesson.day_of_week - 1]} · {lesson.room_name}</p>
-                                    </div>
-                                    <span className={`shrink-0 text-[12px] leading-5 ${secondaryTextClass}`}>
-                                        {formatDate(lesson.lesson_date)} · {lesson.starts_at}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className={`${cardClass} text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noUpcomingLessons}</p>
-                    )}
-                </section>
-            </div>
-
-            <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
-                <section className="flex min-w-0 flex-col gap-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{t.teacherDashboard.pendingAttendance}</h2>
-                        <a href="#/presences" className="text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim">
-                            {t.teacherDashboard.takeAttendance}
-                        </a>
-                    </div>
+                    <SectionHeader
+                        title={t.teacherDashboard.pendingAttendance}
+                        action={<a href="#/presences" className={linkClass}>{t.teacherDashboard.takeAttendance}</a>}
+                    />
                     {dashboard.attendance_tasks.students.length > 0 ? (
-                        <>
-                            <ul className="flex flex-col gap-2">
+                        <Panel>
+                            <ul className="divide-y divide-outline-variant dark:divide-[#3a3835]">
                                 {visibleAttendanceStudents.map((student) => (
-                                    <li key={student.student_id} className={`${cardClass} flex items-center justify-between gap-3`}>
+                                    <li key={student.student_id} className="flex items-center justify-between gap-3 px-4 py-3">
                                         <p className={`min-w-0 truncate text-[13px] leading-5 font-medium ${textClass}`}>{student.student_name}</p>
                                         <span className={`shrink-0 text-[12px] leading-5 ${secondaryTextClass}`}>{student.room_name}</span>
                                     </li>
                                 ))}
                             </ul>
                             {dashboard.attendance_tasks.count > visibleAttendanceStudents.length && (
-                                <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>
+                                <p className={`border-t border-outline-variant px-4 py-3 text-[12px] leading-5 dark:border-[#3a3835] ${secondaryTextClass}`}>
                                     {t.teacherDashboard.moreAttendanceTasks(numberFormat.format(dashboard.attendance_tasks.count - visibleAttendanceStudents.length))}
                                 </p>
                             )}
-                        </>
+                        </Panel>
                     ) : (
-                        <p className={`${cardClass} text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noPendingAttendance}</p>
-                    )}
-                </section>
-
-                <section className="flex min-w-0 flex-col gap-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <h2 className={`text-[16px] leading-6 font-semibold ${textClass}`}>{t.teacherDashboard.recentSessions}</h2>
-                        <a href="#/seances-memorisation" className="text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim">
-                            {t.teacherDashboard.viewSessions}
-                        </a>
-                    </div>
-                    {dashboard.recent_sessions.length > 0 ? (
-                        <ul className="flex flex-col gap-2">
-                            {dashboard.recent_sessions.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((session) => (
-                                <li key={session.id} className={cardClass}>
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <p className={`truncate text-[13px] leading-5 font-semibold ${textClass}`}>{session.student_name}</p>
-                                            <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>
-                                                {session.room_name ?? t.teacherDashboard.noGroup}
-                                                {' · '}
-                                                {formatDate(session.session_date)}
-                                            </p>
-                                        </div>
-                                        <span className="shrink-0 rounded-md bg-surface-container px-2 py-1 text-[11px] leading-4 font-medium text-on-surface-variant dark:bg-[#2a2928] dark:text-[#c6c2bd]">
-                                            {t.memorization.evaluations[session.evaluation]}
-                                        </span>
-                                    </div>
-                                    <p className={`mt-2 text-[12px] leading-5 ${secondaryTextClass}`}>{session.portion_label}</p>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className={`${cardClass} text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noRecentSessions}</p>
+                        <Panel className="p-4">
+                            <p className={`text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noPendingAttendance}</p>
+                        </Panel>
                     )}
                 </section>
             </div>

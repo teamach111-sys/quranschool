@@ -8,6 +8,10 @@ const trendToneClasses = {
     warning: 'bg-secondary-container text-on-secondary-container dark:bg-secondary dark:text-on-secondary',
 };
 
+/**
+ * A single metric cell. It carries no border or container of its own — the
+ * surrounding `StatStrip` supplies the segmented chrome.
+ */
 export default function StatCard({
     label,
     value,
@@ -20,7 +24,7 @@ export default function StatCard({
     const toneClasses = trendToneClasses[trendTone] ?? trendToneClasses.neutral;
 
     return (
-        <article className={`min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 transition-colors duration-200 dark:border-[#3a3835] dark:bg-inverse-surface ${className}`}>
+        <article className={`min-w-0 bg-surface-container-lowest p-4 dark:bg-inverse-surface ${className}`}>
             <div className="flex items-start justify-between gap-3">
                 <p className="min-w-0 text-[12px] leading-4 font-medium text-on-surface-variant dark:text-inverse-on-surface">
                     {label}
@@ -30,7 +34,7 @@ export default function StatCard({
                 )}
             </div>
             <div className="mt-3 flex items-end justify-between gap-3">
-                <p className="min-w-0 wrap-break-word text-[24px] leading-7 font-semibold tabular-nums text-on-surface dark:text-inverse-on-surface">
+                <p className="min-w-0 wrap-break-word text-[26px] leading-8 font-semibold tabular-nums text-on-surface dark:text-inverse-on-surface">
                     {value}
                 </p>
                 {trend !== undefined && trend !== null && trend !== '' && (
@@ -41,5 +45,27 @@ export default function StatCard({
                 )}
             </div>
         </article>
+    );
+}
+
+/**
+ * Segmented KPI row: a single bordered panel whose cells are split by 1px
+ * divider lines (drawn by the grid gap over the divider colour).
+ *
+ * @param {Object} props
+ * @param {Array<Object>} props.items StatCard props; pass `key` to override the React key.
+ * @param {string} [props.ariaLabel]
+ * @param {string} [props.className] Grid column classes, e.g. "sm:grid-cols-2 xl:grid-cols-4".
+ */
+export function StatStrip({ items, ariaLabel, className = '' }) {
+    return (
+        <section
+            aria-label={ariaLabel}
+            className={`grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-outline-variant bg-outline-variant dark:border-[#3a3835] dark:bg-[#3a3835] ${className}`}
+        >
+            {items.map((item) => (
+                <StatCard key={item.key ?? item.label} {...item} />
+            ))}
+        </section>
     );
 }

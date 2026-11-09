@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import StatCard from '../../components/StatCard';
+import { StatStrip } from '../../components/StatCard';
 import { BarsChart, ChartCard, DonutChart, useChartColors } from '../../components/DashboardCharts';
 import { apiFetch } from '../../lib/api';
 import { getSelectedAcademicYearId } from '../../persisters/yearselector';
@@ -120,11 +120,15 @@ export default function TableauDeBordAdmin() {
                 <h2 className="text-[16px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
                     {t.dashboardStats.keyIndicators}
                 </h2>
-                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    <StatCard label={t.dashboardStats.activeStudents} value={numberFormat.format(summary.stats.active_students)} icon="group" />
-                    <StatCard label={t.dashboardStats.activeStaff} value={numberFormat.format(summary.stats.active_staff)} icon="badge" />
-                    <StatCard label={t.dashboardStats.activeRooms} value={numberFormat.format(summary.stats.active_rooms)} icon="door_front" />
-                </div>
+                <StatStrip
+                    ariaLabel={t.dashboardStats.keyIndicators}
+                    className="sm:grid-cols-3"
+                    items={[
+                        { label: t.dashboardStats.activeStudents, value: numberFormat.format(summary.stats.active_students), icon: 'group' },
+                        { label: t.dashboardStats.activeStaff, value: numberFormat.format(summary.stats.active_staff), icon: 'badge' },
+                        { label: t.dashboardStats.activeRooms, value: numberFormat.format(summary.stats.active_rooms), icon: 'door_front' },
+                    ]}
+                />
             </section>
 
             <div className="grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
@@ -153,10 +157,7 @@ export default function TableauDeBordAdmin() {
                 </ChartCard>
             </div>
 
-            <AdminDashboardAlerts
-                alerts={summary.alerts}
-                latePaymentRollover={summary.late_payment_rollover}
-            />
+            <AdminDashboardAlerts alerts={summary.alerts} />
         </div>
     );
 }

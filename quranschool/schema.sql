@@ -495,3 +495,176 @@ CROSS JOIN (
   UNION ALL SELECT 'S-036', 'Élève Test 36', '2012-10-20'
 ) AS sample
 WHERE ay.school_id=@seed_school_id AND ay.year_label='2026-2027';
+
+-- ---------------------------------------------------------------------------
+-- Demo data
+-- Fills groups, teacher assignments, schedules, attendance, memorization
+-- sessions and payments so every dashboard and its charts render with data.
+-- Delete this block if you only want the bare setup rows above.
+-- ---------------------------------------------------------------------------
+SET @seed_year_id = (
+  SELECT id FROM academic_years
+  WHERE school_id=@seed_school_id AND year_label='2026-2027'
+  ORDER BY id
+  LIMIT 1
+);
+SET @seed_secretary_id = (
+  SELECT id FROM users WHERE school_id=@seed_school_id AND email='secretary@example.com' LIMIT 1
+);
+
+-- Default monthly fee used by the demo payments.
+UPDATE schools SET monthly_fee=300.00 WHERE id=@seed_school_id;
+
+-- Place the 36 demo students into G1–G5 (8 per group; the last group takes the rest).
+UPDATE students AS s
+JOIN rooms AS r
+  ON r.school_id=s.school_id
+ AND r.year_id=s.year_id
+ AND r.name=CONCAT('G', LEAST(5, CEIL(CAST(SUBSTRING(s.student_number, 3) AS UNSIGNED) / 8)))
+SET s.room_id=r.id
+WHERE s.school_id=@seed_school_id AND s.year_id=@seed_year_id;
+
+-- Backfill guardian details; a few students are left blank so the secretary
+-- "records to complete" list has entries to show.
+UPDATE students
+SET guardian_name=CONCAT('Tuteur ', full_name),
+    guardian_phone=CONCAT('+2126', LPAD(CAST(SUBSTRING(student_number, 3) AS UNSIGNED), 8, '0')),
+    guardian_email=CONCAT('tuteur', SUBSTRING(student_number, 3), '@example.com')
+WHERE school_id=@seed_school_id AND year_id=@seed_year_id
+  AND student_number NOT IN ('S-004','S-011','S-023');
+
+-- Teacher assignments for the year: G1/G2 → teacher, G3 → ostad1, G4 → ostad2, G5 → ostad3.
+INSERT INTO room_teachers (room_id, teacher_id, school_id, year_id, assigned_from)
+SELECT r.id, u.id, r.school_id, r.year_id, '2026-09-01'
+FROM rooms AS r
+JOIN users AS u
+  ON u.school_id=r.school_id
+ AND u.email=CASE r.name
+                WHEN 'G1' THEN 'teacher@example.com'
+                WHEN 'G2' THEN 'teacher@example.com'
+                WHEN 'G3' THEN 'ostad1@example.com'
+                WHEN 'G4' THEN 'ostad2@example.com'
+                WHEN 'G5' THEN 'ostad3@example.com'
+              END
+WHERE r.school_id=@seed_school_id AND r.year_id=@seed_year_id;
+
+-- One weekly slot per room, Monday–Friday, in non-overlapping hourly bands.
+INSERT INTO schedules (
+  room_id, teacher_id, school_id, year_id, day_of_week, starts_at, ends_at, valid_from, valid_until, label
+)
+SELECT
+  r.id,
+  u.id,
+  r.school_id,
+  r.year_id,
+  dow.n,
+  SEC_TO_TIME((15 + CAST(SUBSTRING(r.name, 2) AS UNSIGNED) - 1) * 3600),
+  SEC_TO_TIME((16 + CAST(SUBSTRING(r.name, 2) AS UNSIGNED) - 1) * 3600),
+  '2026-09-07',
+  NULL,
+  CASE WHEN dow.n IN (1, 3, 5) THEN 'Hifz' ELSE 'Révision' END
+FROM rooms AS r
+JOIN users AS u
+  ON u.school_id=r.school_id
+ AND u.email=CASE r.name
+                WHEN 'G1' THEN 'teacher@example.com'
+                WHEN 'G2' THEN 'teacher@example.com'
+                WHEN 'G3' THEN 'ostad1@example.com'
+                WHEN 'G4' THEN 'ostad2@example.com'
+                WHEN 'G5' THEN 'ostad3@example.com'
+              END
+CROSS JOIN (
+  SELECT 1 AS n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
+) AS dow
+WHERE r.school_id=@seed_school_id AND r.year_id=@seed_year_id;
+
+-- Attendance for every weekday from 2026-09-07 to 2026-11-06 (today is left
+-- unrecorded so the teacher "pending attendance" counter has something to show).
+INSERT INTO attendance (student_id, school_id, room_id, year_id, recorded_by, attendance_date, status)
+WITH RECURSIVE date_series (d) AS (
+  SELECT DATE('2026-09-07')
+  UNION ALL
+  SELECT d + INTERVAL 1 DAY FROM date_series WHERE d < DATE('2026-11-06')
+)
+SELECT
+  s.id,
+  s.school_id,
+  s.room_id,
+  s.year_id,
+  (SELECT rt.teacher_id FROM room_teachers AS rt
+    WHERE rt.room_id=s.room_id AND rt.school_id=s.school_id AND rt.year_id=s.year_id
+    ORDER BY rt.assigned_from
+    LIMIT 1),
+  ds.d,
+  CASE
+    WHEN MOD(s.id * 7 + TO_DAYS(ds.d) * 13, 100) < 78 THEN 'present'
+    WHEN MOD(s.id * 7 + TO_DAYS(ds.d) * 13, 100) < 86 THEN 'late'
+    WHEN MOD(s.id * 7 + TO_DAYS(ds.d) * 13, 100) < 91 THEN 'excused'
+    ELSE 'absent'
+  END
+FROM date_series AS ds
+JOIN students AS s
+  ON s.school_id=@seed_school_id
+ AND s.year_id=@seed_year_id
+ AND s.room_id IS NOT NULL
+WHERE DAYOFWEEK(ds.d) BETWEEN 2 AND 6;
+
+-- Three recorded hifz sessions per student.
+INSERT INTO memorization_sessions (
+  student_id, school_id, room_id, teacher_id, year_id, session_date,
+  surah_start, ayah_start, surah_end, ayah_end, portion_label, evaluation
+)
+SELECT
+  s.id,
+  s.school_id,
+  s.room_id,
+  (SELECT rt.teacher_id FROM room_teachers AS rt
+    WHERE rt.room_id=s.room_id AND rt.school_id=s.school_id AND rt.year_id=s.year_id
+    ORDER BY rt.assigned_from
+    LIMIT 1),
+  s.year_id,
+  m.session_date,
+  m.surah, 1, m.surah, 20,
+  CONCAT('Sourate ', m.surah, ' : versets 1-20'),
+  ELT(1 + MOD(s.id + m.k, 3), 'excellent', 'good', 'needs_review')
+FROM students AS s
+CROSS JOIN (
+  SELECT DATE('2026-10-05') AS session_date, 78 AS surah, 1 AS k
+  UNION ALL SELECT DATE('2026-10-19'), 79, 2
+  UNION ALL SELECT DATE('2026-11-02'), 80, 3
+) AS m
+WHERE s.school_id=@seed_school_id AND s.year_id=@seed_year_id AND s.room_id IS NOT NULL;
+
+-- Monthly billing for September, October and November 2026, mixing paid /
+-- late / due / waived so the payment charts have all four buckets.
+INSERT INTO payments (
+  student_id, school_id, year_id, recorded_by, period_start, period_end,
+  amount, currency, status, paid_at, payment_method
+)
+SELECT
+  s.id,
+  s.school_id,
+  s.year_id,
+  @seed_secretary_id,
+  p.period_start,
+  p.period_end,
+  300.00,
+  'MAD',
+  CASE
+    WHEN MOD(s.id + p.n * 3, 10) < 7 THEN 'paid'
+    WHEN MOD(s.id + p.n * 3, 10) = 7 THEN 'late'
+    WHEN MOD(s.id + p.n * 3, 10) = 8 THEN 'due'
+    ELSE 'waived'
+  END,
+  CASE
+    WHEN MOD(s.id + p.n * 3, 10) < 7 THEN TIMESTAMP(p.period_end, '09:00:00')
+    ELSE NULL
+  END,
+  CASE WHEN MOD(s.id + p.n * 3, 10) < 7 THEN 'cash' ELSE NULL END
+FROM students AS s
+CROSS JOIN (
+  SELECT 1 AS n, DATE('2026-09-01') AS period_start, DATE('2026-09-30') AS period_end
+  UNION ALL SELECT 2, DATE('2026-10-01'), DATE('2026-10-31')
+  UNION ALL SELECT 3, DATE('2026-11-01'), DATE('2026-11-30')
+) AS p
+WHERE s.school_id=@seed_school_id AND s.year_id=@seed_year_id;
