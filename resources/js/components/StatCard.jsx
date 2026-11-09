@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Icon from './Icon';
 
 const trendToneClasses = {
@@ -26,9 +26,7 @@ export default function StatCard({
                     {label}
                 </p>
                 {icon && (
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary-fixed text-primary dark:bg-[#32302e] dark:text-[#918d88]">
-                        <Icon name={icon} className="text-[18px]" />
-                    </span>
+                    <Icon name={icon} className="mt-0.5 shrink-0 text-[20px] text-primary" />
                 )}
             </div>
             <div className="mt-3 flex items-end justify-between gap-3">

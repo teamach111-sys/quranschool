@@ -52,9 +52,7 @@ export default function ConfirmDeleteModal({
                 className="w-full max-w-md rounded-xl border border-[#D2DDD4] bg-white p-5 shadow-[0_8px_30px_-4px_rgba(20,70,55,0.12),0_2px_6px_-1px_rgba(20,70,55,0.06)] outline-none sm:p-6"
             >
                 <div className="flex items-start gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#E26458]/20 bg-[#FDEBE8] text-[#C94F45]">
-                        <Icon name="delete" className="text-[20px]" />
-                    </span>
+                    <Icon name="delete" className="mt-0.5 shrink-0 text-[22px] text-error" />
                     <div className="min-w-0 flex-1">
                         <h2 id={`${dialogId}-title`} className="text-[16px] leading-6 font-semibold text-[#144637]">
                             {title}

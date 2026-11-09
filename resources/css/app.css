@@ -123,25 +123,25 @@
     /* -- Outline -------------------------------------------------------- */
     --color-outline: #6f6b66;
     --color-outline-variant: #3a3835;
-    --color-surface-tint: #4f8ad9;
+    --color-surface-tint: #37955a;
 
-    /* -- Accent (desaturated blue) -------------------------------------- */
-    --color-primary: #4f8ad9;
-    --color-primary-container: #3f6cb0;
+    /* -- Accent (brand green — the single accent across the app) -------- */
+    --color-primary: #37955a;
+    --color-primary-container: #2f7d4f;
     --color-on-primary: #ffffff;
     --color-on-primary-container: #ffffff;
     --color-primary-fixed: #32302e;
-    --color-primary-fixed-dim: #4f8ad9;
+    --color-primary-fixed-dim: #37955a;
     --color-on-primary-fixed: #1c1b1a;
     --color-on-primary-fixed-variant: #c6c2bd;
-    --color-inverse-primary: #4f8ad9;
+    --color-inverse-primary: #37955a;
 
     --color-secondary: #32302e;
     --color-secondary-container: #32302e;
     --color-on-secondary: #e7e3de;
     --color-on-secondary-container: #c6c2bd;
     --color-secondary-fixed: #32302e;
-    --color-secondary-fixed-dim: #4f8ad9;
+    --color-secondary-fixed-dim: #37955a;
     --color-on-secondary-fixed: #1c1b1a;
     --color-on-secondary-fixed-variant: #c6c2bd;
 
@@ -167,6 +167,17 @@
 
     body {
         overscroll-behavior: none;
+    }
+
+    /* Unified, smoother interaction effects for every button */
+    button {
+        transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+        transition-duration: 200ms;
+        transition-timing-function: ease;
+    }
+
+    button:not(:disabled):active {
+        transform: translateY(1px);
     }
 
     main > :first-child {

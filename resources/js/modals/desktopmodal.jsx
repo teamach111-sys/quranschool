@@ -63,9 +63,7 @@ export default function Modal({
                 <div className="flex flex-col gap-5">
                     <header className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-start gap-3">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary dark:bg-[#32302e] dark:text-[#918d88]">
-                                <Icon name={icon} className="text-[20px]" />
-                            </span>
+                            <Icon name={icon} className="mt-1 shrink-0 text-[22px] text-primary" />
                             <h2 id={`${dialogId}-title`} className="pt-1 text-[18px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
                                 {title}
                             </h2>

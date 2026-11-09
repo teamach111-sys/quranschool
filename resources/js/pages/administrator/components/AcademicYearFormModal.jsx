@@ -121,9 +121,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                 <form className="relative flex flex-col gap-5" onSubmit={handleSubmit} aria-busy={saving}>
                     <header className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-start gap-3">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary dark:bg-[#32302e] dark:text-[#918d88]">
-                                <Icon name="calendar_month" className="text-[20px]" />
-                            </span>
+                            <Icon name="calendar_month" className="mt-1 shrink-0 text-[22px] text-primary" />
                             <h2 id={`${dialogId}-title`} className="pt-1 text-[18px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
                                 {title}
                             </h2>
