@@ -156,6 +156,35 @@ class MemorizationSessionsTableTest extends TestCase
             ->assertJsonCount(1, 'form_options.rooms');
     }
 
+    public function test_co_teacher_can_find_students_and_sessions_in_their_assigned_room(): void
+    {
+        $this->seedMemorizationSessions();
+        DB::table('room_teachers')->insert([
+            'room_id' => 2,
+            'teacher_id' => 20,
+            'school_id' => 1,
+            'year_id' => 1,
+            'assigned_from' => '2026-09-01',
+            'assigned_until' => null,
+        ]);
+        $this->actingAs($this->user(20, 1, 'teacher'));
+
+        $this->getJson('/memorization-sessions/table?year_id=1')
+            ->assertOk()
+            ->assertJsonCount(2, 'sessions')
+            ->assertJsonFragment([
+                'student_id' => 2,
+                'student_name' => 'Mariam Ali',
+                'room_name' => 'Beta',
+            ])
+            ->assertJsonFragment([
+                'id' => 2,
+                'name' => 'Mariam Ali',
+                'student_number' => 'S-002',
+                'room_id' => 2,
+            ]);
+    }
+
     public function test_session_table_returns_404_when_non_admin_selects_closed_year(): void
     {
         $this->seedMemorizationSessions();

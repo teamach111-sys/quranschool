@@ -71,6 +71,17 @@ class AdminDashboardAlertsTest extends TestCase
             $table->string('status');
         });
 
+        Schema::create('memorization_sessions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('school_id');
+            $table->unsignedBigInteger('year_id');
+            $table->unsignedTinyInteger('surah_start')->nullable();
+            $table->unsignedSmallInteger('ayah_start')->nullable();
+            $table->unsignedTinyInteger('surah_end')->nullable();
+            $table->unsignedSmallInteger('ayah_end')->nullable();
+        });
+
         Schema::create('attendance', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('student_id');
@@ -138,11 +149,32 @@ class AdminDashboardAlertsTest extends TestCase
             ->assertJsonPath('alerts.inactive_users_with_pending_items.0.future_schedules', 2);
     }
 
-    public function test_admin_sees_recent_absent_and_late_attendance_at_the_shared_threshold(): void
+    public function test_admin_dashboard_counts_unique_quran_coverage_for_school_students(): void
+    {
+        $this->seedDashboardData();
+        DB::table('memorization_sessions')->insert([
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'surah_start' => 2, 'ayah_start' => 1, 'surah_end' => 2, 'ayah_end' => 5],
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'surah_start' => 2, 'ayah_start' => 4, 'surah_end' => 2, 'ayah_end' => 8],
+            ['student_id' => 2, 'school_id' => 1, 'year_id' => 1, 'surah_start' => 2, 'ayah_start' => 1, 'surah_end' => 2, 'ayah_end' => 20],
+            ['student_id' => 4, 'school_id' => 2, 'year_id' => 2, 'surah_start' => 2, 'ayah_start' => 1, 'surah_end' => 2, 'ayah_end' => 100],
+        ]);
+        $this->travelTo('2026-10-10 12:00:00');
+        $this->actingAs($this->user(10, 1, 'admin'));
+
+        $this->getJson('/admin/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('student_progress.distribution.started', 2)
+            ->assertJsonPath('student_progress.distribution.none', 1)
+            ->assertJsonCount(2, 'student_progress.top_students')
+            ->assertJsonPath('student_progress.top_students.0.student_name', 'Zayd Ali')
+            ->assertJsonPath('student_progress.top_students.0.percentage', 0.32);
+    }
+
+    public function test_admin_sees_only_students_with_more_than_three_current_month_absences(): void
     {
         $this->seedDashboardData();
         DB::table('attendance')->where('id', 1)->update([
-            'attendance_date' => '2026-09-11',
+            'attendance_date' => '2026-09-30',
             'status' => 'absent',
         ]);
         DB::table('attendance')->where('id', 2)->update([
@@ -154,19 +186,24 @@ class AdminDashboardAlertsTest extends TestCase
             'status' => 'absent',
         ]);
         DB::table('attendance')->where('id', 4)->update([
-            'attendance_date' => '2026-09-10',
+            'attendance_date' => '2026-10-06',
             'status' => 'late',
         ]);
         DB::table('attendance')->where('id', 5)->update([
-            'attendance_date' => '2026-10-01',
+            'attendance_date' => '2026-09-01',
             'status' => 'absent',
         ]);
         DB::table('attendance')->where('id', 6)->update([
             'attendance_date' => '2026-10-02',
             'status' => 'late',
         ]);
-        DB::table('attendance')->whereIn('id', [7, 8, 9, 10, 11, 12, 13, 14, 15])->update([
-            'attendance_date' => '2026-10-01',
+        DB::table('attendance')->insert([
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-01', 'status' => 'absent'],
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-07', 'status' => 'absent'],
+            ['student_id' => 1, 'school_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-08', 'status' => 'absent'],
+            ['student_id' => 2, 'school_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-03', 'status' => 'absent'],
+            ['student_id' => 2, 'school_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-04', 'status' => 'absent'],
+            ['student_id' => 2, 'school_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-10-05', 'status' => 'absent'],
         ]);
         $this->travelTo('2026-10-10 12:00:00');
         $this->actingAs($this->user(10, 1, 'admin'));
@@ -176,7 +213,7 @@ class AdminDashboardAlertsTest extends TestCase
             ->assertJsonCount(1, 'alerts.repeated_absences')
             ->assertJsonPath('alerts.repeated_absences.0.student_id', 1)
             ->assertJsonPath('alerts.repeated_absences.0.student_name', 'Mariam Ali')
-            ->assertJsonPath('alerts.repeated_absences.0.absence_count', 3)
+            ->assertJsonPath('alerts.repeated_absences.0.absence_count', 4)
             ->assertJsonPath('alerts.repeated_absences.0.latest_attendance_date', '2026-10-09')
             ->assertJsonPath('alerts.repeated_absences.0.room_name', 'Alpha');
     }

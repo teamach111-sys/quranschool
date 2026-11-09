@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StatStrip } from '../../components/StatCard';
 import { BarsChart, ChartCard, DonutChart, useChartColors } from '../../components/DashboardCharts';
+import StudentProgressCharts from '../../components/StudentProgressCharts';
 import { apiFetch } from '../../lib/api';
 import { getSelectedAcademicYearId } from '../../persisters/yearselector';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -156,6 +157,8 @@ export default function TableauDeBordAdmin() {
                     />
                 </ChartCard>
             </div>
+
+            <StudentProgressCharts progress={summary.student_progress} />
 
             <AdminDashboardAlerts alerts={summary.alerts} />
         </div>

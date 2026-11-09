@@ -493,6 +493,7 @@ CROSS JOIN (
   UNION ALL SELECT 'S-034', 'Élève Test 34', '2012-04-30'
   UNION ALL SELECT 'S-035', 'Élève Test 35', '2012-07-03'
   UNION ALL SELECT 'S-036', 'Élève Test 36', '2012-10-20'
+  UNION ALL SELECT 'S-037', 'Élève Test 37 - Quran complet', '2011-12-11'
 ) AS sample
 WHERE ay.school_id=@seed_school_id AND ay.year_label='2026-2027';
 
@@ -515,7 +516,7 @@ SET @seed_secretary_id = (
 -- Default monthly fee used by the demo payments.
 UPDATE schools SET monthly_fee=300.00 WHERE id=@seed_school_id;
 
--- Place the 36 demo students into G1–G5 (8 per group; the last group takes the rest).
+-- Place the 37 demo students into G1–G5 (8 per group; the last group takes the rest).
 UPDATE students AS s
 JOIN rooms AS r
   ON r.school_id=s.school_id
@@ -547,6 +548,26 @@ JOIN users AS u
                 WHEN 'G5' THEN 'ostad3@example.com'
               END
 WHERE r.school_id=@seed_school_id AND r.year_id=@seed_year_id;
+
+-- The default teacher also co-teaches G5 so the full-Quran demo student is
+-- visible in that account's memorization-session page.
+INSERT INTO room_teachers (room_id, teacher_id, school_id, year_id, assigned_from)
+SELECT r.id, u.id, r.school_id, r.year_id, '2026-09-01'
+FROM rooms AS r
+JOIN users AS u
+  ON u.school_id=r.school_id
+ AND u.email='teacher@example.com'
+WHERE r.school_id=@seed_school_id
+  AND r.year_id=@seed_year_id
+  AND r.name='G5'
+  AND NOT EXISTS (
+    SELECT 1 FROM room_teachers AS existing_assignment
+    WHERE existing_assignment.room_id=r.id
+      AND existing_assignment.teacher_id=u.id
+      AND existing_assignment.school_id=r.school_id
+      AND existing_assignment.year_id=r.year_id
+      AND existing_assignment.assigned_from='2026-09-01'
+  );
 
 -- One weekly slot per room, Monday–Friday, in non-overlapping hourly bands.
 INSERT INTO schedules (
@@ -634,6 +655,30 @@ CROSS JOIN (
   UNION ALL SELECT DATE('2026-11-02'), 80, 3
 ) AS m
 WHERE s.school_id=@seed_school_id AND s.year_id=@seed_year_id AND s.room_id IS NOT NULL;
+
+-- One demo learner has a full-Quran range so the progress chart can display 100%.
+INSERT INTO memorization_sessions (
+  student_id, school_id, room_id, teacher_id, year_id, session_date,
+  surah_start, ayah_start, surah_end, ayah_end, portion_label, evaluation
+)
+SELECT
+  s.id,
+  s.school_id,
+  s.room_id,
+  (SELECT rt.teacher_id FROM room_teachers AS rt
+    WHERE rt.room_id=s.room_id AND rt.school_id=s.school_id AND rt.year_id=s.year_id
+    ORDER BY rt.assigned_from DESC
+    LIMIT 1),
+  s.year_id,
+  '2026-11-06',
+  1, 1, 114, 6,
+  'Coran entier mémorisé',
+  'excellent'
+FROM students AS s
+WHERE s.school_id=@seed_school_id
+  AND s.year_id=@seed_year_id
+  AND s.student_number='S-037'
+  AND s.room_id IS NOT NULL;
 
 -- Monthly billing for September, October and November 2026, mixing paid /
 -- late / due / waived so the payment charts have all four buckets.

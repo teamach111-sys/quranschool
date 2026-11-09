@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
 import { StatStrip } from '../../components/StatCard';
-import { BarsChart, ChartCard, useChartColors } from '../../components/DashboardCharts';
+import StudentProgressCharts from '../../components/StudentProgressCharts';
 import { Panel, SectionHeader } from '../../components/DashboardPanels';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
@@ -15,12 +15,10 @@ const textClass = 'text-on-surface dark:text-inverse-on-surface';
 const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim';
 const linkClass = 'shrink-0 text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim';
 const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
-const DASHBOARD_CHART_GROUP_LIMIT = 8;
 const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export default function TableauDeBordEnseignant() {
     const { isRTL, lang, t } = useLanguage();
-    const colors = useChartColors();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -126,32 +124,7 @@ export default function TableauDeBordEnseignant() {
                 ]}
             />
 
-            {dashboard.groups.length > 0 ? (
-                <ChartCard
-                    title={t.teacherDashboard.groups}
-                    action={<a href="#/mes-groupes-eleves" className={linkClass}>{t.teacherDashboard.viewGroups}</a>}
-                >
-                    <BarsChart
-                        horizontal
-                        colors={colors}
-                        data={dashboard.groups.slice(0, DASHBOARD_CHART_GROUP_LIMIT).map((group) => ({
-                            key: group.id,
-                            name: group.name,
-                            value: group.active_student_count,
-                            color: colors.blue,
-                        }))}
-                        height={Math.max(160, Math.min(dashboard.groups.length, DASHBOARD_CHART_GROUP_LIMIT) * 44)}
-                        valueFormatter={(value) => numberFormat.format(value)}
-                    />
-                </ChartCard>
-            ) : (
-                <section className="flex flex-col gap-3">
-                    <SectionHeader title={t.teacherDashboard.groups} />
-                    <Panel className="p-4">
-                        <p className={`text-[13px] leading-5 ${secondaryTextClass}`}>{t.teacherDashboard.noGroups}</p>
-                    </Panel>
-                </section>
-            )}
+            <StudentProgressCharts progress={dashboard.student_progress} />
 
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                 <section className="flex min-w-0 flex-col gap-3">

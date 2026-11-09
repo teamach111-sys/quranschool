@@ -76,7 +76,17 @@ class SecretaryDashboardTest extends TestCase
     public function test_secretary_sees_school_and_year_scoped_operational_data(): void
     {
         $this->seedDashboardData();
-        $this->travelTo('2026-11-02 12:00:00');
+        DB::table('attendance')->where('id', 1)->update(['attendance_date' => '2026-10-31']);
+        DB::table('attendance')->where('id', 2)->update(['attendance_date' => '2026-11-01']);
+        DB::table('attendance')->where('id', 3)->update(['attendance_date' => '2026-11-05']);
+        DB::table('attendance')->where('id', 5)->update(['attendance_date' => '2026-11-09']);
+        DB::table('attendance')->insert([
+            ['student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-11-07', 'status' => 'absent'],
+            ['student_id' => 2, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-11-02', 'status' => 'absent'],
+            ['student_id' => 2, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-11-03', 'status' => 'absent'],
+            ['student_id' => 2, 'school_id' => 1, 'room_id' => 1, 'year_id' => 1, 'attendance_date' => '2026-11-04', 'status' => 'absent'],
+        ]);
+        $this->travelTo('2026-11-10 12:00:00');
         $this->actingAs($this->user('secretary'));
 
         $this->getJson('/secretary/dashboard-summary?year_id=1')
@@ -87,7 +97,7 @@ class SecretaryDashboardTest extends TestCase
             ->assertJsonPath('stats.active_students', 2)
             ->assertJsonPath('stats.new_students', 1)
             ->assertJsonPath('stats.incomplete_students', 3)
-            ->assertJsonPath('stats.attendance_follow_up', 4)
+            ->assertJsonPath('stats.attendance_follow_up', 1)
             ->assertJsonPath('stats.payment_balances.due.count', 1)
             ->assertJsonPath('stats.payment_balances.due.amount', 100)
             ->assertJsonPath('stats.payment_balances.late.count', 1)
@@ -99,8 +109,6 @@ class SecretaryDashboardTest extends TestCase
             ->assertJsonPath('new_or_incomplete_students.0.is_new', true)
             ->assertJsonPath('new_or_incomplete_students.1.missing_fields.0', 'student_number')
             ->assertJsonPath('new_or_incomplete_students.2.missing_fields.0', 'guardian_email')
-            ->assertJsonCount(4, 'attendance_follow_up_items')
-            ->assertJsonPath('attendance_follow_up_items.0.status', 'late')
             ->assertJsonCount(5, 'recent_payments')
             ->assertJsonPath('recent_payments.0.id', 3)
             ->assertJsonPath('recent_payments.0.status', 'paid')
@@ -110,7 +118,7 @@ class SecretaryDashboardTest extends TestCase
             ->assertJsonCount(1, 'repeated_absence_items')
             ->assertJsonPath('repeated_absence_items.0.student_id', 1)
             ->assertJsonPath('repeated_absence_items.0.absence_count', 4)
-            ->assertJsonPath('repeated_absence_items.0.latest_attendance_date', '2026-10-31')
+            ->assertJsonPath('repeated_absence_items.0.latest_attendance_date', '2026-11-09')
             ->assertJsonPath('alerts.incomplete_student_records', 3);
     }
 
@@ -123,6 +131,21 @@ class SecretaryDashboardTest extends TestCase
             ->assertOk()
             ->assertJsonPath('year_id', 1)
             ->assertJsonPath('year_label', '2026-2027');
+    }
+
+    public function test_secretary_operational_charts_only_include_students_in_the_selected_school_year(): void
+    {
+        $this->seedDashboardData();
+        $this->actingAs($this->user('secretary'));
+
+        $this->getJson('/secretary/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('student_record_gaps.student_number', 1)
+            ->assertJsonPath('student_record_gaps.guardian_phone', 1)
+            ->assertJsonPath('student_record_gaps.guardian_email', 1)
+            ->assertJsonPath('student_status_distribution.active', 2)
+            ->assertJsonPath('student_status_distribution.paused', 2)
+            ->assertJsonPath('student_status_distribution.withdrawn', 1);
     }
 
     public function test_secretary_cannot_select_another_school_or_non_current_year(): void

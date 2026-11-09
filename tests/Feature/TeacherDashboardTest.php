@@ -87,6 +87,10 @@ class TeacherDashboardTest extends TestCase
             $table->string('portion_label');
             $table->string('evaluation');
             $table->timestamp('created_at')->nullable();
+            $table->unsignedTinyInteger('surah_start')->nullable();
+            $table->unsignedSmallInteger('ayah_start')->nullable();
+            $table->unsignedTinyInteger('surah_end')->nullable();
+            $table->unsignedSmallInteger('ayah_end')->nullable();
         });
     }
 
@@ -158,6 +162,28 @@ class TeacherDashboardTest extends TestCase
             ->assertJsonPath('attendance_tasks.slots.0.room_id', 2)
             ->assertJsonPath('attendance_tasks.slots.0.room_name', 'Beta')
             ->assertJsonPath('attendance_tasks.slots.0.label', 'Revision');
+    }
+
+    public function test_teacher_progress_charts_only_include_students_in_currently_assigned_rooms(): void
+    {
+        $this->seedDashboardData();
+        $this->travelTo('2026-11-02 12:00:00');
+        DB::table('memorization_sessions')->insert([
+            ['id' => 10, 'student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'teacher_id' => 20, 'year_id' => 1, 'session_date' => '2026-11-01', 'portion_label' => 'First range', 'evaluation' => 'good', 'surah_start' => 2, 'ayah_start' => 1, 'surah_end' => 2, 'ayah_end' => 5],
+            ['id' => 11, 'student_id' => 1, 'school_id' => 1, 'room_id' => 1, 'teacher_id' => 20, 'year_id' => 1, 'session_date' => '2026-11-01', 'portion_label' => 'Overlapping range', 'evaluation' => 'good', 'surah_start' => 2, 'ayah_start' => 4, 'surah_end' => 2, 'ayah_end' => 8],
+            ['id' => 12, 'student_id' => 2, 'school_id' => 1, 'room_id' => 1, 'teacher_id' => 21, 'year_id' => 1, 'session_date' => '2026-11-01', 'portion_label' => 'More verses', 'evaluation' => 'excellent', 'surah_start' => 2, 'ayah_start' => 1, 'surah_end' => 2, 'ayah_end' => 20],
+            ['id' => 13, 'student_id' => 4, 'school_id' => 1, 'room_id' => 2, 'teacher_id' => 20, 'year_id' => 1, 'session_date' => '2026-11-01', 'portion_label' => 'Beta range', 'evaluation' => 'good', 'surah_start' => 3, 'ayah_start' => 1, 'surah_end' => 3, 'ayah_end' => 30],
+            ['id' => 14, 'student_id' => 5, 'school_id' => 1, 'room_id' => 3, 'teacher_id' => 20, 'year_id' => 1, 'session_date' => '2026-11-01', 'portion_label' => 'Former room range', 'evaluation' => 'excellent', 'surah_start' => 4, 'ayah_start' => 1, 'surah_end' => 4, 'ayah_end' => 40],
+        ]);
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('student_progress.distribution.started', 3)
+            ->assertJsonPath('student_progress.distribution.none', 1)
+            ->assertJsonCount(3, 'student_progress.top_students')
+            ->assertJsonPath('student_progress.top_students.0.student_name', 'Zayd Ali')
+            ->assertJsonPath('student_progress.top_students.0.percentage', 0.48);
     }
 
     public function test_new_wednesday_schedule_appears_with_its_students_in_attendance_on_that_wednesday(): void

@@ -10,15 +10,13 @@ class GetRepeatedAbsenceAlerts
 {
     public const ABSENCE_ALERT_THRESHOLD = 3;
 
-    private const ABSENCE_ALERT_WINDOW_DAYS = 30;
-
     /**
      * @return Collection<int, array{student_id: int, student_name: string, student_number: ?string, room_name: ?string, absence_count: int, latest_attendance_date: string}>
      */
     public function __invoke(int $schoolId, int $yearId): Collection
     {
         $today = now();
-        $startDate = $today->copy()->subDays(self::ABSENCE_ALERT_WINDOW_DAYS - 1)->toDateString();
+        $startDate = $today->copy()->startOfMonth()->toDateString();
         $endDate = $today->toDateString();
 
         return DB::table('attendance')
@@ -35,10 +33,10 @@ class GetRepeatedAbsenceAlerts
             ->where('attendance.school_id', $schoolId)
             ->where('attendance.year_id', $yearId)
             ->whereBetween('attendance.attendance_date', [$startDate, $endDate])
-            ->whereIn('attendance.status', ['absent', 'late'])
+            ->where('attendance.status', 'absent')
             ->where('students.status', 'active')
             ->groupBy('students.id', 'students.full_name', 'students.student_number', 'rooms.name')
-            ->havingRaw('COUNT(*) >= ?', [self::ABSENCE_ALERT_THRESHOLD])
+            ->havingRaw('COUNT(*) > ?', [self::ABSENCE_ALERT_THRESHOLD])
             ->orderByDesc('absence_count')
             ->orderBy('students.full_name')
             ->get([

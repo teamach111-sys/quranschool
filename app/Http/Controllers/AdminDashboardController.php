@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\GetRepeatedAbsenceAlerts;
+use App\Actions\GetStudentProgressCharts;
 use App\Console\Commands\RolloverLatePayments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -12,8 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
-    public function __invoke(Request $request, GetRepeatedAbsenceAlerts $getRepeatedAbsenceAlerts)
-    {
+    public function __invoke(
+        Request $request,
+        GetRepeatedAbsenceAlerts $getRepeatedAbsenceAlerts,
+        GetStudentProgressCharts $getStudentProgressCharts,
+    ) {
         $validated = $request->validate([
             'year_id' => ['required', 'integer', 'min:1'],
         ]);
@@ -31,6 +35,7 @@ class AdminDashboardController extends Controller
 
         abort_unless($year, 404);
 
+        $studentProgress = $getStudentProgressCharts((int) $schoolId, $yearId);
         $latePaymentRollover = $year->is_current && $year->is_active
             ? Cache::get(RolloverLatePayments::reportCacheKey((int) $schoolId, $yearId))
             : null;
@@ -207,6 +212,7 @@ class AdminDashboardController extends Controller
             'year_label' => $year->year_label,
             'currency' => DB::table('schools')->where('id', $schoolId)->value('currency') ?? 'MAD',
             'late_payment_rollover' => $latePaymentRollover,
+            'student_progress' => $studentProgress,
             'alerts' => [
                 'late_payments' => $latePayments,
                 'repeated_absences' => $repeatedAbsences,

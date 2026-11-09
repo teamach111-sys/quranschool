@@ -191,6 +191,11 @@ function BarTooltip({ active, payload, valueFormatter }) {
     return (
         <div className={tooltipClass}>
             <p className="mb-0.5 font-semibold">{item.payload?.name}</p>
+            {item.payload?.detail && (
+                <p className="mb-0.5 text-on-surface-variant dark:text-tertiary-fixed-dim">
+                    {item.payload.detail}
+                </p>
+            )}
             <span className="flex items-center gap-2">
                 <span className="inline-block size-2 rounded-full" style={{ backgroundColor: item.payload?.color }} />
                 <span className="font-semibold tabular-nums">
@@ -211,9 +216,10 @@ function BarTooltip({ active, payload, valueFormatter }) {
  * @param {boolean} [props.horizontal]
  * @param {boolean} [props.currency] Format tooltips with the currency formatter from the caller.
  * @param {(value: number, item: object) => string} [props.valueFormatter]
+ * @param {(value: number) => string} [props.axisFormatter]
  * @param {number} [props.height]
  */
-export function BarsChart({ data, colors, horizontal = false, valueFormatter, height = 240, categoryWidth = 110 }) {
+export function BarsChart({ data, colors, horizontal = false, valueFormatter, axisFormatter, height = 240, categoryWidth = 110 }) {
     const total = data.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
 
     if (total <= 0) {
@@ -238,7 +244,7 @@ export function BarsChart({ data, colors, horizontal = false, valueFormatter, he
                     />
                     {horizontal ? (
                         <>
-                            <XAxis type="number" stroke={colors.axis} tick={axisTick} axisLine={false} tickLine={false} />
+                            <XAxis type="number" stroke={colors.axis} tick={axisTick} tickFormatter={axisFormatter} axisLine={false} tickLine={false} />
                             <YAxis
                                 type="category"
                                 dataKey="name"
@@ -252,7 +258,7 @@ export function BarsChart({ data, colors, horizontal = false, valueFormatter, he
                     ) : (
                         <>
                             <XAxis dataKey="name" stroke={colors.axis} tick={axisTick} axisLine={false} tickLine={false} />
-                            <YAxis stroke={colors.axis} tick={axisTick} axisLine={false} tickLine={false} width={72} />
+                            <YAxis stroke={colors.axis} tick={axisTick} tickFormatter={axisFormatter} axisLine={false} tickLine={false} width={72} />
                         </>
                     )}
                     <Tooltip cursor={{ fill: colors.grid, opacity: 0.4 }} content={<BarTooltip valueFormatter={valueFormatter} />} />

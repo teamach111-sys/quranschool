@@ -12,8 +12,10 @@ use Illuminate\Support\Facades\DB;
 
 class SecretaryDashboardController extends Controller
 {
-    public function __invoke(Request $request, GetRepeatedAbsenceAlerts $getRepeatedAbsenceAlerts): JsonResponse
-    {
+    public function __invoke(
+        Request $request,
+        GetRepeatedAbsenceAlerts $getRepeatedAbsenceAlerts,
+    ): JsonResponse {
         $user = Auth::user();
         $schoolId = data_get($user, 'school_id');
         abort_unless(data_get($user, 'role') === 'secretary' && $schoolId, 403);
@@ -36,11 +38,28 @@ class SecretaryDashboardController extends Controller
         abort_unless($year, 404);
 
         $yearId = (int) $year->id;
-        $today = now()->toDateString();
         $recentStudentCutoff = now()->subDays(29)->startOfDay()->toDateTimeString();
-        $attendanceCutoff = now()->subDays(6)->toDateString();
 
         $incompleteStudentCount = $this->incompleteStudentsQuery($schoolId, $yearId)->count();
+        $studentRecordGaps = $this->studentRecordsQuery($schoolId, $yearId)
+            ->selectRaw("
+                SUM(CASE WHEN student_number IS NULL OR TRIM(student_number) = '' THEN 1 ELSE 0 END) AS student_number,
+                SUM(CASE WHEN guardian_phone IS NULL OR TRIM(guardian_phone) = '' THEN 1 ELSE 0 END) AS guardian_phone,
+                SUM(CASE WHEN guardian_email IS NULL OR TRIM(guardian_email) = '' THEN 1 ELSE 0 END) AS guardian_email
+            ")
+            ->first();
+        $studentStatusRows = DB::table('students')
+            ->where('school_id', $schoolId)
+            ->where('year_id', $yearId)
+            ->select('status')
+            ->selectRaw('COUNT(*) AS student_count')
+            ->groupBy('status')
+            ->pluck('student_count', 'status');
+        $studentStatusDistribution = [
+            'active' => (int) ($studentStatusRows['active'] ?? 0),
+            'paused' => (int) ($studentStatusRows['paused'] ?? 0),
+            'withdrawn' => (int) ($studentStatusRows['withdrawn'] ?? 0),
+        ];
         $newStudentCount = $this->studentRecordsQuery($schoolId, $yearId)
             ->where('created_at', '>=', $recentStudentCutoff)
             ->count();
@@ -83,46 +102,6 @@ class SecretaryDashboardController extends Controller
                     'missing_fields' => $missingFields,
                 ];
             })
-            ->values();
-
-        $attendanceQuery = DB::table('attendance')
-            ->join('students', function (JoinClause $join) {
-                $join->on('students.id', '=', 'attendance.student_id')
-                    ->on('students.school_id', '=', 'attendance.school_id')
-                    ->on('students.year_id', '=', 'attendance.year_id');
-            })
-            ->leftJoin('rooms', function (JoinClause $join) {
-                $join->on('rooms.id', '=', 'attendance.room_id')
-                    ->on('rooms.school_id', '=', 'attendance.school_id')
-                    ->on('rooms.year_id', '=', 'attendance.year_id');
-            })
-            ->where('attendance.school_id', $schoolId)
-            ->where('attendance.year_id', $yearId)
-            ->whereBetween('attendance.attendance_date', [$attendanceCutoff, $today])
-            ->whereIn('attendance.status', ['absent', 'late'])
-            ->whereIn('students.status', ['active', 'paused']);
-
-        $attendanceFollowUpCount = (clone $attendanceQuery)->count('attendance.id');
-        $attendanceFollowUpItems = $attendanceQuery
-            ->orderByDesc('attendance.attendance_date')
-            ->orderByDesc('attendance.id')
-            ->limit(8)
-            ->get([
-                'attendance.id',
-                'students.full_name as student_name',
-                'students.student_number',
-                'rooms.name as room_name',
-                'attendance.attendance_date',
-                'attendance.status',
-            ])
-            ->map(fn ($attendance) => [
-                'id' => (int) $attendance->id,
-                'student_name' => $attendance->student_name,
-                'student_number' => $attendance->student_number,
-                'room_name' => $attendance->room_name,
-                'attendance_date' => $attendance->attendance_date,
-                'status' => $attendance->status,
-            ])
             ->values();
 
         $recentPayments = DB::table('payments')
@@ -186,11 +165,16 @@ class SecretaryDashboardController extends Controller
                     ->count(),
                 'new_students' => $newStudentCount,
                 'incomplete_students' => $incompleteStudentCount,
-                'attendance_follow_up' => $attendanceFollowUpCount,
+                'attendance_follow_up' => $repeatedAbsenceItems->count(),
                 'payment_balances' => $paymentBalances,
             ],
+            'student_record_gaps' => [
+                'student_number' => (int) ($studentRecordGaps->student_number ?? 0),
+                'guardian_phone' => (int) ($studentRecordGaps->guardian_phone ?? 0),
+                'guardian_email' => (int) ($studentRecordGaps->guardian_email ?? 0),
+            ],
+            'student_status_distribution' => $studentStatusDistribution,
             'new_or_incomplete_students' => $studentsToReview,
-            'attendance_follow_up_items' => $attendanceFollowUpItems,
             'recent_payments' => $recentPayments,
             'repeated_absence_items' => $repeatedAbsenceItems,
             'alerts' => [
@@ -221,7 +205,8 @@ class SecretaryDashboardController extends Controller
     {
         foreach (['student_number', 'guardian_phone', 'guardian_email'] as $field) {
             $query->orWhere(function (Builder $missingField) use ($field) {
-                $missingField->whereNull($field)->orWhere($field, '');
+                $missingField->whereNull($field)
+                    ->orWhereRaw("TRIM({$field}) = ''");
             });
         }
     }

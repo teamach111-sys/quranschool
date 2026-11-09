@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\GetStudentProgressCharts;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class TeacherDashboardController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, GetStudentProgressCharts $getStudentProgressCharts): JsonResponse
     {
         $user = Auth::user();
         $schoolId = data_get($user, 'school_id');
@@ -74,6 +75,7 @@ class TeacherDashboardController extends Controller
             ])
             ->values();
         $roomIds = $rooms->pluck('id')->all();
+        $studentProgress = $getStudentProgressCharts($schoolId, $yearId, $roomIds);
 
         $todayLessons = $roomIds === []
             ? collect()
@@ -345,6 +347,7 @@ class TeacherDashboardController extends Controller
             'year_label' => $year->year_label,
             'today' => $today,
             'groups' => $rooms,
+            'student_progress' => $studentProgress,
             'today_lessons' => $todayLessons,
             'today_focus_lesson_id' => $attendanceFocusLesson['id'] ?? null,
             'upcoming_lessons' => $upcomingLessons,

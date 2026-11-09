@@ -61,7 +61,7 @@ export default function TableauDeBordSecretariat() {
         };
     }, [yearId]);
 
-    const locale = lang === 'ar' ? 'ar-MA' : 'fr-MA';
+    const locale = lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
     const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
     const currencyFormat = new Intl.NumberFormat(locale, {
@@ -87,10 +87,22 @@ export default function TableauDeBordSecretariat() {
         { label: t.secretaryDashboard.attendanceFollowUp, value: numberFormat.format(dashboard.stats.attendance_follow_up), icon: 'fact_check', trendTone: dashboard.stats.attendance_follow_up > 0 ? 'warning' : 'positive' },
     ];
     const paymentChartData = [
-        { key: 'due', name: t.secretaryDashboard.dueBalance, value: dashboard.stats.payment_balances.due.amount, color: colors.blue },
+        { key: 'due', name: t.secretaryDashboard.dueBalance, value: dashboard.stats.payment_balances.due.amount, color: colors.green },
         { key: 'late', name: t.secretaryDashboard.lateBalance, value: dashboard.stats.payment_balances.late.amount, color: colors.amber },
         { key: 'waived', name: t.secretaryDashboard.waivedBalance, value: dashboard.stats.payment_balances.waived.amount, color: colors.gray },
     ];
+    const studentRecordGapChartData = [
+        { key: 'student_number', name: t.secretaryDashboard.recordGapLabels.studentNumber, value: dashboard.student_record_gaps.student_number, color: colors.amber },
+        { key: 'guardian_phone', name: t.secretaryDashboard.recordGapLabels.guardianPhone, value: dashboard.student_record_gaps.guardian_phone, color: colors.amber },
+        { key: 'guardian_email', name: t.secretaryDashboard.recordGapLabels.guardianEmail, value: dashboard.student_record_gaps.guardian_email, color: colors.amber },
+    ];
+    const studentStatusChartData = [
+        { key: 'active', name: t.students.statuses.active, value: dashboard.student_status_distribution.active, color: colors.green },
+        { key: 'paused', name: t.students.statuses.paused, value: dashboard.student_status_distribution.paused, color: colors.amber },
+        { key: 'withdrawn', name: t.students.statuses.withdrawn, value: dashboard.student_status_distribution.withdrawn, color: colors.gray },
+    ];
+    const hasIncompleteRecords = studentRecordGapChartData.some((item) => item.value > 0);
+    const hasEnrolledStudents = studentStatusChartData.some((item) => item.value > 0);
 
     return (
         <div className="flex w-full flex-col gap-5">
@@ -103,14 +115,54 @@ export default function TableauDeBordSecretariat() {
             <ChartCard
                 title={t.secretaryDashboard.paymentSummary}
                 subtitle={t.secretaryDashboard.charts.paymentBalancesHint}
+                className="w-full xl:mx-auto xl:max-w-4xl"
             >
                 <BarsChart
                     data={paymentChartData}
                     colors={colors}
-                    height={200}
+                    height={150}
                     valueFormatter={(value) => currencyFormat.format(value)}
                 />
             </ChartCard>
+
+            <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
+                <ChartCard
+                    title={t.secretaryDashboard.incompleteFilesTitle}
+                    subtitle={t.secretaryDashboard.incompleteFilesHint}
+                >
+                    {hasIncompleteRecords ? (
+                        <BarsChart
+                            data={studentRecordGapChartData}
+                            colors={colors}
+                            height={180}
+                            axisFormatter={(value) => numberFormat.format(value)}
+                            valueFormatter={(value) => numberFormat.format(value)}
+                        />
+                    ) : (
+                        <p className={`flex items-center justify-center text-center text-[13px] leading-5 ${secondaryTextClass}`} style={{ height: 180 }}>
+                            {t.secretaryDashboard.incompleteFilesEmpty}
+                        </p>
+                    )}
+                </ChartCard>
+                <ChartCard
+                    title={t.secretaryDashboard.studentStatusTitle}
+                    subtitle={t.secretaryDashboard.studentStatusHint}
+                >
+                    {hasEnrolledStudents ? (
+                        <BarsChart
+                            data={studentStatusChartData}
+                            colors={colors}
+                            height={180}
+                            axisFormatter={(value) => numberFormat.format(value)}
+                            valueFormatter={(value) => numberFormat.format(value)}
+                        />
+                    ) : (
+                        <p className={`flex items-center justify-center text-center text-[13px] leading-5 ${secondaryTextClass}`} style={{ height: 180 }}>
+                            {t.secretaryDashboard.studentStatusEmpty}
+                        </p>
+                    )}
+                </ChartCard>
+            </div>
 
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                 <section className="flex min-w-0 flex-col gap-3">
@@ -168,21 +220,22 @@ export default function TableauDeBordSecretariat() {
                         title={t.secretaryDashboard.attendance}
                         action={<a href="#/presences" className={linkClass}>{t.secretaryDashboard.viewAttendance}</a>}
                     />
-                    {dashboard.attendance_follow_up_items.length > 0 ? (
+                    {dashboard.repeated_absence_items.length > 0 ? (
                         <Panel>
                             <ul className="divide-y divide-outline-variant dark:divide-[#3a3835]">
-                                {dashboard.attendance_follow_up_items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((item) => (
-                                    <li key={item.id} className="flex items-center justify-between gap-3 p-4">
+                                {dashboard.repeated_absence_items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((item) => (
+                                    <li key={item.student_id} className="flex items-center justify-between gap-3 p-4">
                                         <div className="min-w-0">
                                             <p className={`truncate text-[13px] leading-5 font-semibold ${textClass}`}>{item.student_name}</p>
                                             <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>
+                                                {item.student_number ? `${item.student_number} · ` : ''}
                                                 {item.room_name ?? t.secretaryDashboard.noGroup}
                                                 {' · '}
-                                                {formatDate(item.attendance_date)}
+                                                {formatDate(item.latest_attendance_date)}
                                             </p>
                                         </div>
-                                        <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] leading-4 font-medium ${item.status === 'absent' ? 'bg-error-container text-on-error-container dark:bg-error dark:text-on-error' : 'bg-secondary-container text-on-secondary-container dark:bg-secondary dark:text-on-secondary'}`}>
-                                            {t.secretaryDashboard.attendanceStatuses[item.status]}
+                                        <span className="shrink-0 rounded-md bg-error-container px-2 py-1 text-[11px] leading-4 font-medium text-on-error-container dark:bg-error dark:text-on-error">
+                                            {t.secretaryDashboard.absenceCount(numberFormat.format(item.absence_count))}
                                         </span>
                                     </li>
                                 ))}
