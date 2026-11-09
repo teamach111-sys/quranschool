@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
@@ -313,7 +313,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                             onClick={() => copyGuardianPhone(payment)}
                             aria-label={t.payments.copyGuardianPhone(payment.student_name)}
                             title={t.payments.copyGuardianPhone(payment.student_name)}
-                            className="inline-flex min-h-11 items-center gap-1 rounded-md bg-surface-container px-2 text-[11px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-inverse-on-surface dark:hover:bg-[#344a41]"
+                            className="inline-flex min-h-11 items-center gap-1 rounded-md bg-surface-container px-2 text-[11px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#32302e] dark:text-inverse-on-surface dark:hover:bg-[#32302e]"
                         >
                             <Icon name="content_copy" className="text-[16px]" />
                             {t.payments.copyPhone}
@@ -347,10 +347,10 @@ export default function PaymentsTable({ routeParams = {} }) {
             render: (status, payment) => (
                 <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                     payment.status === 'paid'
-                        ? 'bg-primary-fixed text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container'
+                        ? 'bg-primary-fixed text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88]'
                         : payment.status === 'waived'
-                            ? 'bg-secondary-container text-on-secondary-container dark:bg-secondary-container dark:text-on-secondary-container'
-                            : 'bg-tertiary-container text-on-tertiary-container dark:bg-tertiary-container dark:text-on-tertiary-container'
+                            ? 'bg-secondary-container text-on-secondary-container dark:bg-[#32302e] dark:text-[#c6c2bd]'
+                            : 'bg-tertiary-container text-on-tertiary-container dark:bg-[#2a2928] dark:text-[#c6c2bd]'
                 }`}>
                     {status}
                 </span>
@@ -422,7 +422,7 @@ export default function PaymentsTable({ routeParams = {} }) {
             onClick: exportPaymentReceipt,
         });
     }
-    const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
+    const controlClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="flex flex-col gap-3">
             {isSecretary && (
@@ -430,7 +430,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                     <h2 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.payments.collectionsTitle}
                     </h2>
-                    <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                    <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c6c2bd]">
                         {t.payments.collectionsDescription}
                     </p>
                 </div>
@@ -442,11 +442,11 @@ export default function PaymentsTable({ routeParams = {} }) {
                     </h3>
                     <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
                         {displayedUnpaidBalances.map((balance) => (
-                            <div key={balance.student_id} className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 dark:border-[#384d43] dark:bg-[#182620]">
+                            <div key={balance.student_id} className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 dark:border-[#3a3835] dark:bg-[#1c1b1a]">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                         <p className="truncate text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface">{balance.student_name}</p>
-                                        <p className="text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                        <p className="text-[11px] text-on-surface-variant dark:text-[#918d88]">
                                             {t.payments.unpaidBalanceSummary(balance.period_count, formatAmount({ amount: balance.total_amount, currency: balance.currency }))}
                                         </p>
                                     </div>
@@ -465,19 +465,19 @@ export default function PaymentsTable({ routeParams = {} }) {
                                                 guardian_phone: balance.guardian_phone,
                                             },
                                         })}
-                                        className="inline-flex min-h-9 items-center justify-center rounded-lg bg-primary-container px-2.5 py-1.5 text-[11px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                                        className="inline-flex min-h-9 items-center justify-center rounded-lg bg-primary-container px-2.5 py-1.5 text-[11px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                                     >
                                         {t.payments.record}
                                     </button>
                                 </div>
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant dark:text-[#918d88]">
                                     {balance.guardian_phone ? (
                                         <>
                                             <a href={`tel:${balance.guardian_phone.replace(/[^\d+]/g, '')}`} className="underline-offset-2 hover:underline">{balance.guardian_phone}</a>
                                             <button
                                                 type="button"
                                                 onClick={() => copyGuardianPhone(balance)}
-                                                className="inline-flex items-center rounded-md bg-surface-container px-2 py-1 font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-inverse-on-surface"
+                                                className="inline-flex items-center rounded-md bg-surface-container px-2 py-1 font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#32302e] dark:text-inverse-on-surface"
                                             >
                                                 {t.payments.copyPhone}
                                             </button>
@@ -494,9 +494,9 @@ export default function PaymentsTable({ routeParams = {} }) {
             {isSecretary && collectionTotals.length > 0 && (
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label={t.payments.collectionSummary}>
                     {collectionTotals.map((total) => (
-                        <div key={`${total.currency}:${total.status}`} className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 dark:border-[#384d43] dark:bg-[#182620]">
+                        <div key={`${total.currency}:${total.status}`} className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 dark:border-[#3a3835] dark:bg-[#1c1b1a]">
                             <div>
-                                <p className="text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                <p className="text-[11px] text-on-surface-variant dark:text-[#918d88]">
                                     {t.payments.collectionTotal(t.payments.statuses[total.status], total.count)}
                                 </p>
                                 <p className="text-[16px] font-semibold text-on-surface dark:text-inverse-on-surface">
@@ -514,7 +514,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                         <button
                             type="button"
                             onClick={() => setIsGeneratorOpen(true)}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                         >
                             <Icon name="autorenew" className="text-[17px]" />
                             {t.payments.generate}
@@ -524,7 +524,7 @@ export default function PaymentsTable({ routeParams = {} }) {
                         <button
                             type="button"
                             onClick={() => setEntry({ payment: null })}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                         >
                             <Icon name="add" className="text-[17px]" />
                             {t.payments.create}
@@ -611,7 +611,7 @@ export default function PaymentsTable({ routeParams = {} }) {
     );
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.payments.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.payments.loadError}</p>;
     }
 
     return (

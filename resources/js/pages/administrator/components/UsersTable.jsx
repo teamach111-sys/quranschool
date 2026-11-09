@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
@@ -216,8 +216,8 @@ export default function UsersTable({ routeParams = {} }) {
             render: (status, user) => (
                 <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                     user.is_active
-                        ? 'bg-primary-fixed text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container'
-                        : 'bg-surface-container-high text-on-surface-variant dark:bg-tertiary-container dark:text-on-tertiary-container'
+                        ? 'bg-primary-fixed text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88]'
+                        : 'bg-surface-container-high text-on-surface-variant dark:bg-[#2a2928] dark:text-[#c6c2bd]'
                 }`}>
                     {status}
                 </span>
@@ -250,7 +250,7 @@ export default function UsersTable({ routeParams = {} }) {
             label: t.users.deactivate,
             hidden: (user) => user.is_self || !user.is_active,
             onClick: setPendingStatus,
-            className: 'text-error dark:text-error-container',
+            className: 'text-error dark:text-[#e59a92]',
         },
         {
             key: 'reactivate',
@@ -271,7 +271,7 @@ export default function UsersTable({ routeParams = {} }) {
         sortBy: (label) => t.users.table.sortBy(label),
         range: (first, last, total) => t.users.table.range(first, last, total),
     };
-    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
+    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -307,7 +307,7 @@ export default function UsersTable({ routeParams = {} }) {
                 <button
                     type="button"
                     onClick={() => openUserForm()}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                 >
                     <Icon name="add" className="text-[17px]" />
                     {t.users.create}
@@ -317,7 +317,7 @@ export default function UsersTable({ routeParams = {} }) {
     );
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.users.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.users.loadError}</p>;
     }
 
     const emptyState = users.length > 0 ? t.users.noResults : t.users.empty;
@@ -434,8 +434,8 @@ export default function UsersTable({ routeParams = {} }) {
                             </p>
                         </>
                     )}
-                    {actionError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{actionError}</p>}
-                    <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-outline-variant sm:flex-row">
+                    {actionError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{actionError}</p>}
+                    <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#3a3835] sm:flex-row">
                         <button
                             type="button"
                             disabled={saving}
@@ -447,7 +447,7 @@ export default function UsersTable({ routeParams = {} }) {
                         <button
                             type="submit"
                             disabled={saving || (action?.type === 'role' && roleForm.role_id === String(action.user.role_id))}
-                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-container dark:text-on-primary"
+                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white"
                         >
                             <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                             {saving ? t.users.saving : t.users.save}

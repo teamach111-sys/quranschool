@@ -20,7 +20,8 @@
         "react-datepicker": "^9.1.0",
         "react-dom": "^19.0.0",
         "react-select": "^5.10.2",
-        "react-time-picker": "^8.1.0"
+        "react-time-picker": "^8.1.0",
+        "recharts": "^3.10.1"
     },
     "optionalDependencies": {
         "@laravel/multiplex": "^0.4.1"

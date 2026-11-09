@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import StatCard from '../../components/StatCard';
+import { BarsChart, ChartCard, DonutChart, useChartColors } from '../../components/DashboardCharts';
 import { apiFetch } from '../../lib/api';
 import { getSelectedAcademicYearId } from '../../persisters/yearselector';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -79,16 +80,32 @@ export default function TableauDeBordAdmin() {
 
     const locale = lang === 'ar' ? 'ar-MA' : 'fr-MA';
     const numberFormat = new Intl.NumberFormat(locale);
-    const percentFormat = new Intl.NumberFormat(locale, {
-        style: 'percent',
-        maximumFractionDigits: 0,
-    });
     const currencyFormat = new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: summary?.currency ?? 'MAD',
     });
+    const colors = useChartColors();
+    const toneColor = {
+        positive: colors.green,
+        negative: colors.red,
+        warning: colors.amber,
+        neutral: colors.gray,
+    };
+    const attendanceChartData = attendanceStatuses.map((status) => ({
+        key: status,
+        name: t.dashboardStats.attendanceStatuses[status],
+        value: summary?.stats.attendance[status].count ?? 0,
+        color: toneColor[attendanceTones[status]],
+    }));
+    const attendanceTotal = attendanceChartData.reduce((sum, item) => sum + item.value, 0);
+    const paymentChartData = paymentStatuses.map((status) => ({
+        key: status,
+        name: t.dashboardStats.paymentStatuses[status],
+        value: summary?.stats.payments[status].amount ?? 0,
+        color: toneColor[paymentTones[status]],
+    }));
     if (hasError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.dashboardStats.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.dashboardStats.loadError}</p>;
     }
 
     if (loading && !summary) {
@@ -110,40 +127,31 @@ export default function TableauDeBordAdmin() {
                 </div>
             </section>
 
-            <section className="flex flex-col gap-3">
-                <h2 className="text-[16px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
-                    {t.dashboardStats.attendanceSummary}
-                </h2>
-                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    {attendanceStatuses.map((status) => (
-                        <StatCard
-                            key={status}
-                            label={t.dashboardStats.attendanceStatuses[status]}
-                            value={numberFormat.format(summary.stats.attendance[status].count)}
-                            trend={percentFormat.format(summary.stats.attendance[status].share)}
-                            trendTone={attendanceTones[status]}
-                            icon="fact_check"
-                        />
-                    ))}
-                </div>
-            </section>
+            <div className="grid w-full grid-cols-1 gap-4 xl:grid-cols-2">
+                <ChartCard
+                    title={t.dashboardStats.attendanceSummary}
+                    subtitle={t.dashboardStats.charts.attendanceHint}
+                >
+                    <DonutChart
+                        data={attendanceChartData}
+                        centerValue={numberFormat.format(attendanceTotal)}
+                        centerLabel={t.dashboardStats.charts.total}
+                        valueFormatter={(value) => numberFormat.format(value)}
+                    />
+                </ChartCard>
 
-            <section className="flex flex-col gap-3">
-                <h2 className="text-[16px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
-                    {t.dashboardStats.paymentSummary}
-                </h2>
-                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    {paymentStatuses.map((status) => (
-                        <StatCard
-                            key={status}
-                            label={t.dashboardStats.paymentStatuses[status]}
-                            value={currencyFormat.format(summary.stats.payments[status].amount)}
-                            trendTone={paymentTones[status]}
-                            icon="payments"
-                        />
-                    ))}
-                </div>
-            </section>
+                <ChartCard
+                    title={t.dashboardStats.paymentSummary}
+                    subtitle={t.dashboardStats.charts.paymentsHint}
+                >
+                    <BarsChart
+                        data={paymentChartData}
+                        colors={colors}
+                        height={190}
+                        valueFormatter={(value) => currencyFormat.format(value)}
+                    />
+                </ChartCard>
+            </div>
 
             <AdminDashboardAlerts
                 alerts={summary.alerts}

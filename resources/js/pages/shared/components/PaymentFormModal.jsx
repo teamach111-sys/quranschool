@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useState } from 'react';
+﻿import React, { useCallback, useEffect, useId, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -124,7 +124,7 @@ export default function PaymentFormModal({
         }
     };
 
-    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface dark:focus:bg-inverse-surface';
+    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface dark:focus:bg-inverse-surface';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const showPaymentDetails = form.status === 'paid';
     const title = canManage
@@ -159,7 +159,7 @@ export default function PaymentFormModal({
                         type="submit"
                         form={`${formId}-form`}
                         disabled={saving}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-wait disabled:opacity-60 dark:bg-primary-container dark:text-on-primary"
+                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-wait disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         {saving && <Icon name="progress_activity" className="animate-spin text-[17px]" />}
                         {saving ? t.payments.saving : t.payments.save}
@@ -169,17 +169,17 @@ export default function PaymentFormModal({
         >
             <form id={`${formId}-form`} onSubmit={handleSubmit} className="flex flex-col gap-5">
                 {!canManage && (
-                    <div className="grid grid-cols-2 gap-3 rounded-lg bg-surface-container-low p-3 text-[12px] dark:bg-[#182620]">
+                    <div className="grid grid-cols-2 gap-3 rounded-lg bg-surface-container-low p-3 text-[12px] dark:bg-[#1c1b1a]">
                         <div>
-                            <p className="text-on-surface-variant dark:text-[#9bb2a8]">{t.payments.columns.student}</p>
+                            <p className="text-on-surface-variant dark:text-[#918d88]">{t.payments.columns.student}</p>
                             <p className="font-semibold text-on-surface dark:text-inverse-on-surface">{payment.student_name}</p>
                         </div>
                         <div>
-                            <p className="text-on-surface-variant dark:text-[#9bb2a8]">{t.payments.columns.period}</p>
+                            <p className="text-on-surface-variant dark:text-[#918d88]">{t.payments.columns.period}</p>
                             <p className="font-semibold text-on-surface dark:text-inverse-on-surface">{payment.period_start} – {payment.period_end}</p>
                         </div>
                         <div>
-                            <p className="text-on-surface-variant dark:text-[#9bb2a8]">{t.payments.columns.amount}</p>
+                            <p className="text-on-surface-variant dark:text-[#918d88]">{t.payments.columns.amount}</p>
                             <p className="font-semibold text-on-surface dark:text-inverse-on-surface">{payment.amount} {payment.currency}</p>
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export default function PaymentFormModal({
                         <label className={labelClass}>
                             {t.payments.paymentMethod}
                             {selectedStudent?.last_payment_method && (
-                                <span className="font-normal text-on-surface-variant dark:text-[#9bb2a8]">
+                                <span className="font-normal text-on-surface-variant dark:text-[#918d88]">
                                     {t.payments.lastUsedMethod}: {selectedStudent.last_payment_method}
                                 </span>
                             )}
@@ -311,7 +311,7 @@ export default function PaymentFormModal({
                         className={inputClass}
                     />
                 </label>
-                {error && <p role="alert" className="text-[12px] leading-5 text-error dark:text-error-container">{error}</p>}
+                {error && <p role="alert" className="text-[12px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
             </form>
         </Modal>
     );

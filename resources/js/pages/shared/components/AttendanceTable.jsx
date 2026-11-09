@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -270,7 +270,7 @@ export default function AttendanceTable({ routeParams = {} }) {
             mobile: 'badge',
             value: (record) => record.status,
             render: (status) => (
-                <span className="inline-flex rounded-full bg-primary-fixed px-2.5 py-1 text-[11px] font-semibold text-primary dark:bg-[#2e5e4e] dark:text-[#d4f5e4]">
+                <span className="inline-flex rounded-full bg-primary-fixed px-2.5 py-1 text-[11px] font-semibold text-primary dark:bg-[#32302e] dark:text-[#c6c2bd]">
                     {t.attendance.statuses[status] ?? status}
                 </span>
             ),
@@ -304,7 +304,7 @@ export default function AttendanceTable({ routeParams = {} }) {
         hidden: (record) => !record.can_edit,
         onClick: openEntry,
     }] : [];
-    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
+    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de]';
     const toolbar = (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap justify-end gap-2">
@@ -332,7 +332,7 @@ export default function AttendanceTable({ routeParams = {} }) {
                         onClick={() => {
                             setRosterOpen(true);
                         }}
-                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name="add" className="text-[17px]" />
                         {t.attendance.mark}
@@ -386,7 +386,7 @@ export default function AttendanceTable({ routeParams = {} }) {
     if (loadError) {
         return (
             <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
-                <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.attendance.loadError}</p>
+                <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.attendance.loadError}</p>
             </section>
         );
     }

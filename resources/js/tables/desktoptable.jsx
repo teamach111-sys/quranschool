@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
 import { useLanguage } from '../persisters/languageswitch';
 
@@ -110,9 +110,9 @@ export default function DesktopTable({
     const lastItem = Math.min(visiblePage * pageSize, sortedRows.length);
 
     return (
-        <div aria-busy={loading} className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-ambient dark:border-[#384c43] dark:bg-[#22302a]">
+        <div aria-busy={loading} className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-ambient dark:border-[#3a3835] dark:bg-[#232221]">
             {toolbar && (
-                <div className="border-b border-outline-variant bg-surface-container-lowest p-3 dark:border-[#384c43] dark:bg-[#22302a] sm:p-4">
+                <div className="border-b border-outline-variant bg-surface-container-lowest p-3 dark:border-[#3a3835] dark:bg-[#232221] sm:p-4">
                     {toolbar}
                 </div>
             )}
@@ -123,13 +123,13 @@ export default function DesktopTable({
                     <span className="text-[13px]">{t.modal.loading}</span>
                 </div>
             ) : pageRows.length === 0 ? (
-                <div className={`p-6 text-[13px] text-on-surface-variant dark:text-[#c2d1c8] ${textAlign}`}>
+                <div className={`p-6 text-[13px] text-on-surface-variant dark:text-[#c6c2bd] ${textAlign}`}>
                     {emptyState}
                 </div>
             ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[700px] border-collapse text-[13px]" aria-label={ariaLabel}>
-                        <thead className="bg-surface-container-low text-[11px] uppercase tracking-wide text-on-surface-variant dark:bg-[#1a2520] dark:text-[#9fd1bd]">
+                        <thead className="bg-surface-container-low text-[11px] uppercase tracking-wide text-on-surface-variant dark:bg-[#232221] dark:text-[#918d88]">
                             <tr>
                                 {selectable && (
                                     <th scope="col" className="w-12 px-4 py-3 text-center">
@@ -148,7 +148,7 @@ export default function DesktopTable({
                                             <button
                                                 type="button"
                                                 onClick={() => toggleSort(column)}
-                                                className="inline-flex items-center gap-1 hover:text-primary dark:hover:text-[#baeed9]"
+                                                className="inline-flex items-center gap-1 hover:text-primary dark:hover:text-[#918d88]"
                                                 aria-label={labels.sortBy(column.label)}
                                             >
                                                 {column.label}
@@ -169,9 +169,9 @@ export default function DesktopTable({
                                 )}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-outline-variant text-on-surface dark:divide-[#273831] dark:text-[#f0fcf3]">
+                        <tbody className="divide-y divide-outline-variant text-on-surface dark:divide-[#2a2928] dark:text-[#f0ece7]">
                             {pageRows.map((row) => (
-                                <tr key={row[rowKey]} className="transition-colors hover:bg-surface-container-low/60 dark:hover:bg-[#273831]/60">
+                                <tr key={row[rowKey]} className="transition-colors hover:bg-surface-container-low/60 dark:hover:bg-[#2a2928]/60">
                                     {selectable && (
                                         <td className="px-4 py-3 text-center">
                                             <input
@@ -201,7 +201,7 @@ export default function DesktopTable({
                                                         disabled={action.disabled?.(row)}
                                                         aria-label={action.label}
                                                         title={action.label}
-                                                        className={`flex h-11 w-11 items-center justify-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#9fd1bd]/70 dark:hover:bg-[#273831] dark:hover:text-[#baeed9] ${action.className ?? ''}`}
+                                                        className={`flex h-11 w-11 items-center justify-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:text-[#918d88]/70 dark:hover:bg-[#2a2928] dark:hover:text-[#918d88] ${action.className ?? ''}`}
                                                     >
                                                         <Icon name={action.icon} className="text-[18px]" />
                                                     </button>
@@ -216,7 +216,7 @@ export default function DesktopTable({
                 </div>
             )}
 
-            <footer className={`flex flex-col items-center justify-between gap-3 border-t border-outline-variant bg-surface-container-lowest px-4 py-3 text-[11px] text-on-surface-variant dark:border-[#384c43] dark:bg-[#22302a] dark:text-[#c2d1c8] sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            <footer className={`flex flex-col items-center justify-between gap-3 border-t border-outline-variant bg-surface-container-lowest px-4 py-3 text-[11px] text-on-surface-variant dark:border-[#3a3835] dark:bg-[#232221] dark:text-[#c6c2bd] sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
                 <span aria-live="polite">{labels.range(firstItem, lastItem, sortedRows.length)}</span>
                 {totalPages > 1 && (
                     <nav aria-label={labels.pagination} className="flex items-center gap-1">
@@ -225,7 +225,7 @@ export default function DesktopTable({
                             onClick={() => setPage((current) => Math.max(1, current - 1))}
                             disabled={visiblePage === 1}
                             aria-label={labels.previous}
-                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-container disabled:opacity-40 dark:hover:bg-[#273831]"
+                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-container disabled:opacity-40 dark:hover:bg-[#2a2928]"
                         >
                             <Icon name={isRTL ? 'chevron_right' : 'chevron_left'} className="text-[18px]" />
                         </button>
@@ -237,8 +237,8 @@ export default function DesktopTable({
                                 aria-current={pageNumber === visiblePage ? 'page' : undefined}
                                 aria-label={labels.page(pageNumber)}
                                 className={`h-8 min-w-8 rounded-md px-2 ${pageNumber === visiblePage
-                                    ? 'bg-primary-container font-semibold text-on-primary dark:bg-[#2e5e4e] dark:text-[#ecf3ef]'
-                                    : 'text-on-surface hover:bg-surface-container dark:text-[#f0fcf3] dark:hover:bg-[#273831]'}`}
+                                    ? 'bg-primary-container font-semibold text-on-primary dark:bg-[#2f7d4f] dark:text-white'
+                                    : 'text-on-surface hover:bg-surface-container dark:text-[#f0ece7] dark:hover:bg-[#2a2928]'}`}
                             >
                                 {pageNumber}
                             </button>
@@ -248,7 +248,7 @@ export default function DesktopTable({
                             onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                             disabled={visiblePage === totalPages}
                             aria-label={labels.next}
-                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-container disabled:opacity-40 dark:hover:bg-[#273831]"
+                            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-container disabled:opacity-40 dark:hover:bg-[#2a2928]"
                         >
                             <Icon name={isRTL ? 'chevron_left' : 'chevron_right'} className="text-[18px]" />
                         </button>

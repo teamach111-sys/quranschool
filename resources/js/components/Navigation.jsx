@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Icon from './Icon';
 import { useLanguage } from '../hooks/useLanguage';
 import { pageGroupsForRole } from '../pages/registry';
@@ -20,7 +20,7 @@ export function PageNav({ activeKey = null, onNavigate, role, compact = false })
         <nav className={`flex flex-col gap-3 overflow-y-auto min-h-0 ${compact ? 'p-[10px]' : 'p-2 flex-1'}`}>
             {groups.map((group) => (
                 <div key={group.key} className="flex flex-col gap-1">
-                    <div className={`px-3 pb-1 font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium uppercase text-outline dark:text-[#9bb2a8] tracking-wider ${align}`}>
+                    <div className={`px-3 pb-1 font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium uppercase text-outline dark:text-[#918d88] tracking-wider ${align}`}>
                         {group.label[lang]}
                     </div>
                     {group.pages.map((page) => {
@@ -34,8 +34,8 @@ export function PageNav({ activeKey = null, onNavigate, role, compact = false })
                                 aria-current={isActive ? 'page' : undefined}
                                 className={`flex items-center justify-between px-3 py-2 rounded transition-colors w-full ${
                                     isActive
-                                        ? 'bg-primary dark:bg-[#2e5e4e] text-on-primary dark:text-[#ecf3ef] font-semibold'
-                                        : 'text-on-surface-variant dark:text-[#cad7d0] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] hover:text-on-surface dark:hover:text-[#ecf3ef]'
+                                        ? 'bg-primary dark:bg-[#2f7d4f] text-on-primary dark:text-white font-semibold'
+                                        : 'text-on-surface-variant dark:text-[#c6c2bd] hover:bg-surface-container-high dark:hover:bg-[#32302e] hover:text-on-surface dark:hover:text-[#e7e3de]'
                                 }`}
                             >
                                 <div className={`flex items-center ${gap} min-w-0`}>

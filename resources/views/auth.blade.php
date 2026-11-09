@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -33,7 +33,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     </head>
-    <body class="bg-gray-50">
+    <body class="bg-gray-50 dark:bg-[#1c1b1a]">
         <div
             id="root"
             data-page="{{ $page ?? 'login' }}"

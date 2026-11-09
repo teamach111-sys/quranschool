@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import SearchInput from '../../../components/SearchInput';
 import DateInput from '../../../components/DateInput';
@@ -127,7 +127,7 @@ export default function RoleChangeHistoryTable() {
         sortBy: (label) => t.roleHistory.table.sortBy(label),
         range: (first, last, total) => t.roleHistory.table.range(first, last, total),
     };
-    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
+    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(24rem,2fr)_minmax(10rem,1fr)_minmax(9rem,1fr)]">
             <div className="min-w-0 sm:col-span-2 lg:col-span-1">
@@ -163,7 +163,7 @@ export default function RoleChangeHistoryTable() {
     );
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.roleHistory.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.roleHistory.loadError}</p>;
     }
 
     const emptyState = history.length > 0 ? t.roleHistory.noResults : t.roleHistory.empty;

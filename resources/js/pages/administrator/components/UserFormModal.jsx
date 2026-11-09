@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import Modal from '../../../modals/desktopmodal';
@@ -105,7 +105,7 @@ export default function UserFormModal({ open, user = null, roles = [], onClose, 
     };
 
     const locale = lang === 'ar' ? 'ar' : 'fr';
-    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:focus:border-primary-fixed-dim dark:focus:bg-[#202f29] dark:focus:ring-primary-fixed-dim';
+    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70 dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de] dark:focus:border-primary-fixed-dim dark:focus:bg-[#232221] dark:focus:ring-primary-fixed-dim';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] leading-4 font-semibold text-on-surface dark:text-inverse-on-surface';
     const title = isEditing ? t.users.editTitle : t.users.createTitle;
 
@@ -248,8 +248,8 @@ export default function UserFormModal({ open, user = null, roles = [], onClose, 
                 <p className="text-[11px] leading-4 text-on-surface-variant dark:text-inverse-on-surface">
                     {t.users.passwordHint}
                 </p>
-                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
-                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-outline-variant sm:flex-row">
+                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
+                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#3a3835] sm:flex-row">
                     <button
                         type="button"
                         disabled={saving}
@@ -261,7 +261,7 @@ export default function UserFormModal({ open, user = null, roles = [], onClose, 
                     <button
                         type="submit"
                         disabled={saving || !form.role_id || (form.password !== '' && !form.password_confirmation)}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-container dark:text-on-primary"
+                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                         {saving ? t.users.saving : t.users.save}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../components/SelectInput';
 import Icon from '../../components/Icon';
 import SearchInput from '../../components/SearchInput';
@@ -280,10 +280,10 @@ export default function Eleves({ routeParams = {} }) {
             mobile: 'badge',
             render: (value) => {
                 const badgeClass = value === 'active'
-                    ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#1e4f40]/50 dark:text-[#baeed9]'
+                    ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#32302e]/50 dark:text-[#918d88]'
                     : value === 'paused'
-                        ? 'bg-secondary-fixed/60 text-on-secondary-fixed-variant dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]'
-                        : 'bg-error-container text-on-error-container dark:bg-[#4a2626]/50 dark:text-[#ffdad6]';
+                        ? 'bg-secondary-fixed/60 text-on-secondary-fixed-variant dark:bg-[#3a3835]/40 dark:text-[#c6c2bd]'
+                        : 'bg-error-container text-on-error-container dark:bg-[#3a2624]/50 dark:text-[#e59a92]';
 
                 return (
                     <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold ${badgeClass}`}>
@@ -347,7 +347,7 @@ export default function Eleves({ routeParams = {} }) {
                     <button
                         type="button"
                         onClick={() => openForm()}
-                        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name="add" className="text-[17px]" />
                         {t.students.form.createTitle}
@@ -392,7 +392,7 @@ export default function Eleves({ routeParams = {} }) {
     );
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.students.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.students.loadError}</p>;
     }
 
     return (

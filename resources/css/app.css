@@ -28,7 +28,7 @@
     --color-on-primary: #ffffff;
     --color-on-primary-container: #a3d5c1;
     --color-primary-fixed: #baeed9;
-    --color-primary-fixed-dim: #9fd1bd;
+    --color-primary-fixed-dim: #e0b04c;
     --color-on-primary-fixed: #002117;
     --color-on-primary-fixed-variant: #1e4f40;
     --color-inverse-primary: #9fd1bd;
@@ -38,7 +38,7 @@
     --color-on-secondary: #ffffff;
     --color-on-secondary-container: #755100;
     --color-secondary-fixed: #ffdeaa;
-    --color-secondary-fixed-dim: #f5bd58;
+    --color-secondary-fixed-dim: #e0b04c;
     --color-on-secondary-fixed: #271900;
     --color-on-secondary-fixed-variant: #5f4100;
 
@@ -47,7 +47,7 @@
     --color-on-tertiary: #ffffff;
     --color-on-tertiary-container: #c3cdc7;
     --color-tertiary-fixed: #dbe5de;
-    --color-tertiary-fixed-dim: #bfc9c2;
+    --color-tertiary-fixed-dim: #a2a2ab;
     --color-on-tertiary-fixed: #151d19;
     --color-on-tertiary-fixed-variant: #3f4944;
 
@@ -72,8 +72,8 @@
     --color-surface-tint: #376757;
 
     /* -- Inverse --------------------------------------------------------- */
-    --color-inverse-surface: #28332d;
-    --color-inverse-on-surface: #e8f4ea;
+    --color-inverse-surface: #17171a;
+    --color-inverse-on-surface: #f2f2f4;
 
     /* -- Error ----------------------------------------------------------- */
     --color-error: #ba1a1a;
@@ -89,10 +89,76 @@
 }
 
 /* ==========================================================================
-   Dark mode — "Soft Dusk" twilight theme
+   Dark mode — "Soft Charcoal"
+   Lifted warm-graphite canvas, muted text, desaturated accents. Comfortable
+   and product-like rather than a near-black developer theme.
    ========================================================================== */
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Token remap: every `dark:*` utility that references a design token
+   resolves to the softened charcoal scale. Light mode is untouched. */
+.dark {
+    /* -- Surfaces (canvas → elevated) ---------------------------------- */
+    --color-background: #1c1b1a;
+    --color-on-background: #e7e3de;
+    --color-surface: #1c1b1a;
+    --color-surface-bright: #232221;
+    --color-surface-dim: #141312;
+    --color-surface-variant: #232221;
+    --color-surface-container-lowest: #1c1b1a;
+    --color-surface-container-low: #1c1b1a;
+    --color-surface-container: #232221;
+    --color-surface-container-high: #2a2928;
+    --color-surface-container-highest: #32302e;
+
+    --color-inverse-surface: #232221;
+    --color-inverse-on-surface: #e7e3de;
+
+    /* -- Text ----------------------------------------------------------- */
+    --color-on-surface: #e7e3de;
+    --color-on-surface-variant: #c6c2bd;
+    --color-tertiary-fixed-dim: #918d88;
+
+    /* -- Outline -------------------------------------------------------- */
+    --color-outline: #6f6b66;
+    --color-outline-variant: #3a3835;
+    --color-surface-tint: #4f8ad9;
+
+    /* -- Accent (desaturated blue) -------------------------------------- */
+    --color-primary: #4f8ad9;
+    --color-primary-container: #3f6cb0;
+    --color-on-primary: #ffffff;
+    --color-on-primary-container: #ffffff;
+    --color-primary-fixed: #32302e;
+    --color-primary-fixed-dim: #4f8ad9;
+    --color-on-primary-fixed: #1c1b1a;
+    --color-on-primary-fixed-variant: #c6c2bd;
+    --color-inverse-primary: #4f8ad9;
+
+    --color-secondary: #32302e;
+    --color-secondary-container: #32302e;
+    --color-on-secondary: #e7e3de;
+    --color-on-secondary-container: #c6c2bd;
+    --color-secondary-fixed: #32302e;
+    --color-secondary-fixed-dim: #4f8ad9;
+    --color-on-secondary-fixed: #1c1b1a;
+    --color-on-secondary-fixed-variant: #c6c2bd;
+
+    --color-tertiary: #32302e;
+    --color-tertiary-container: #32302e;
+    --color-on-tertiary: #e7e3de;
+    --color-on-tertiary-container: #c6c2bd;
+    --color-tertiary-fixed: #32302e;
+    --color-on-tertiary-fixed: #1c1b1a;
+    --color-on-tertiary-fixed-variant: #918d88;
+
+    /* -- Error ---------------------------------------------------------- */
+    --color-error: #d96055;
+    --color-error-container: #3a2624;
+    --color-on-error: #1c1b1a;
+    --color-on-error-container: #e59a92;
+}
 
 @layer base {
     html {
@@ -141,8 +207,8 @@
     /* Diffuse ambient elevation */
     .shadow-ambient {
         box-shadow:
-            0 8px 30px -4px rgba(46, 94, 78, 0.05),
-            0 2px 6px -1px rgba(46, 94, 78, 0.03);
+            0 8px 30px -4px rgba(0, 0, 0, 0.16),
+            0 2px 6px -1px rgba(0, 0, 0, 0.1);
     }
 }
 
@@ -342,49 +408,167 @@
 }
 
 .dark .react-datepicker {
-    border-color: var(--color-outline-variant);
-    background-color: var(--color-surface-container);
-    color: var(--color-on-surface);
+    border-color: #3a3835;
+    background-color: #232221;
+    color: #e7e3de;
 }
 
 .dark .react-datepicker__header {
-    background-color: var(--color-surface-container-high);
+    border-bottom-color: #3a3835;
+    background-color: #2a2928;
+}
+
+.dark .react-datepicker__current-month,
+.dark .react-datepicker__day-name,
+.dark .react-datepicker__day,
+.dark .react-datepicker__time-name {
+    color: #e7e3de;
+}
+
+.dark .react-datepicker__day:hover,
+.dark .react-datepicker__month-text:hover {
+    background-color: #32302e;
+}
+
+.dark .react-datepicker__navigation-icon::before {
+    border-color: #918d88;
+}
+
+.dark .react-datepicker__day--selected,
+.dark .react-datepicker__day--keyboard-selected,
+.dark .react-datepicker__month-text--selected,
+.dark .react-datepicker__month-text--keyboard-selected {
+    background-color: #4f8ad9;
+    color: #ffffff;
+}
+
+.dark .react-datepicker__day--selected:hover,
+.dark .react-datepicker__day--keyboard-selected:hover,
+.dark .react-datepicker__month-text--selected:hover,
+.dark .react-datepicker__month-text--keyboard-selected:hover {
+    background-color: #3f6cb0;
+    color: #ffffff;
 }
 
 .dark .react-datepicker__day--outside-month {
-    color: var(--color-on-surface-variant);
+    color: #6f6b66;
 }
 
 .dark .react-datepicker__day--disabled {
-    color: var(--color-outline);
+    color: #5f5b56;
 }
 
 .dark .react-datepicker__month-text--disabled {
-    color: var(--color-outline);
+    color: #5f5b56;
 }
 
 .dark .time-input {
-    background-color: var(--color-inverse-surface);
-    color: var(--color-inverse-on-surface);
+    border-color: #3a3835;
+    background-color: #1c1b1a;
+    color: #e7e3de;
 }
 
 .dark .time-input .react-time-picker__wrapper {
-    border-color: var(--color-outline-variant);
+    border-color: #3a3835;
 }
 
 .dark .time-input .react-time-picker__clock {
-    background-color: var(--color-surface-container);
-    color: var(--color-on-surface);
+    border-color: #3a3835;
+    background-color: #232221;
+    color: #e7e3de;
 }
 
 .dark .date-input__field,
 .dark .time-input {
-    border-color: var(--color-outline-variant);
-    background-color: var(--color-inverse-surface);
-    color: var(--color-inverse-on-surface);
+    border-color: #3a3835;
+    background-color: #1c1b1a;
+    color: #e7e3de;
 }
 
 .dark .date-input__field:focus {
-    border-color: var(--color-primary);
-    background-color: var(--color-surface-container);
+    border-color: #4f8ad9;
+    background-color: #1c1b1a;
+}
+
+/* The react-time-picker inputs sit inside the styled .time-input shell,
+   so they must stay transparent to avoid a nested field look. */
+.dark .time-input .react-time-picker__inputGroup__input {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+/* ==========================================================================
+   Dark mode — single source of truth for form controls
+   Every native text/date/time input, select and textarea shares one surface
+   so they all match the theme. react-select (.app-select) is a div-based
+   control, so it is styled separately below.
+   ========================================================================== */
+
+.dark input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not([type='submit']):not([type='button']):not([type='reset']):not(.app-select__input):not(.react-time-picker__inputGroup__input),
+.dark select,
+.dark textarea {
+    border-color: #3a3835;
+    background-color: #1c1b1a;
+    color: #e7e3de;
+}
+
+.dark input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not([type='submit']):not([type='button']):not([type='reset']):not(.app-select__input):not(.react-time-picker__inputGroup__input):focus,
+.dark select:focus,
+.dark textarea:focus {
+    border-color: #4f8ad9;
+    background-color: #1c1b1a;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #6f6b66;
+}
+
+/* react-select uses inline styles, so dark overrides need !important. */
+.dark .app-select__control {
+    border-color: #3a3835 !important;
+    background-color: #1c1b1a !important;
+}
+
+.dark .app-select__control--is-focused {
+    border-color: #4f8ad9 !important;
+    background-color: #1c1b1a !important;
+    box-shadow: 0 0 0 1px #4f8ad9 !important;
+}
+
+.dark .app-select__single-value,
+.dark .app-select__input-container {
+    color: #e7e3de !important;
+}
+
+.dark .app-select__input {
+    color: #e7e3de !important;
+    background-color: transparent !important;
+}
+
+.dark .app-select__placeholder,
+.dark .app-select__indicator {
+    color: #6f6b66 !important;
+}
+
+.dark .app-select__indicator:hover {
+    color: #4f8ad9 !important;
+}
+
+.dark .app-select__menu {
+    border-color: #3a3835 !important;
+    background-color: #232221 !important;
+}
+
+.dark .app-select__option {
+    color: #e7e3de !important;
+}
+
+.dark .app-select__option--is-focused {
+    background-color: #32302e !important;
+}
+
+.dark .app-select__option--is-selected {
+    background-color: #3f6cb0 !important;
+    color: #ffffff !important;
 }

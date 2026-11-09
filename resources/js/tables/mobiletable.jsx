@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Icon from '../components/Icon';
 import { useLanguage } from '../persisters/languageswitch';
 
@@ -71,18 +71,18 @@ export default function MobileTable({
     return (
         <div aria-busy={loading} className="flex flex-col gap-2.5">
             {toolbar && (
-                <div className="rounded-xl bg-surface-container-low p-3 dark:bg-[#22302a]">
+                <div className="rounded-xl bg-surface-container-low p-3 dark:bg-[#232221]">
                     {toolbar}
                 </div>
             )}
 
             {loading ? (
-                <div role="status" aria-label={t.modal.loading} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface-variant dark:border-[#384c43] dark:bg-[#22302a] dark:text-tertiary-fixed-dim">
+                <div role="status" aria-label={t.modal.loading} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface-variant dark:border-[#3a3835] dark:bg-[#232221] dark:text-tertiary-fixed-dim">
                     <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
                     <span className="text-[13px]">{t.modal.loading}</span>
                 </div>
             ) : pageRows.length === 0 ? (
-                <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-[#384c43] dark:bg-[#22302a] dark:text-[#c2d1c8]">
+                <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-[#3a3835] dark:bg-[#232221] dark:text-[#c6c2bd]">
                     {emptyState}
                 </div>
             ) : (
@@ -94,7 +94,7 @@ export default function MobileTable({
                             : null;
 
                         return (
-                            <li key={row[rowKey]} className="flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-3 shadow-ambient dark:border-[#384c43] dark:bg-[#22302a]">
+                            <li key={row[rowKey]} className="flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-3 shadow-ambient dark:border-[#3a3835] dark:bg-[#232221]">
                                 <div className={`flex items-center justify-between gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                                     <div className={`flex min-w-0 flex-wrap items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
                                         {selectable && (
@@ -106,7 +106,7 @@ export default function MobileTable({
                                                 className="h-4 w-4 cursor-pointer accent-primary"
                                             />
                                         )}
-                                        <span className="truncate text-[11px] font-semibold text-on-surface-variant dark:text-[#9fd1bd]/70">
+                                        <span className="truncate text-[11px] font-semibold text-on-surface-variant dark:text-[#918d88]/70">
                                             #{identifier}
                                         </span>
                                         {badge && <span className="max-w-full">{badge}</span>}
@@ -121,7 +121,7 @@ export default function MobileTable({
                                                     disabled={action.disabled?.(row)}
                                                     aria-label={action.label}
                                                     title={action.label}
-                                                    className={`flex h-11 w-11 items-center justify-center rounded-lg bg-surface-container-low text-primary transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#273831] dark:text-[#9fd1bd] dark:hover:bg-[#34483f] ${action.className ?? ''}`}
+                                                    className={`flex h-11 w-11 items-center justify-center rounded-lg bg-surface-container-low text-primary transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#2a2928] dark:text-[#918d88] dark:hover:bg-[#32302e] ${action.className ?? ''}`}
                                                 >
                                                     <Icon name={action.icon} className="text-[17px]" />
                                                 </button>
@@ -132,14 +132,14 @@ export default function MobileTable({
 
                                 <div className="flex flex-col gap-1">
                                     {titleColumn && (
-                                        <h2 className={`text-[14px] font-semibold leading-5 text-on-surface dark:text-[#f0fcf3] ${isRTL ? 'text-right' : 'text-left'}`}>
+                                        <h2 className={`text-[14px] font-semibold leading-5 text-on-surface dark:text-[#f0ece7] ${isRTL ? 'text-right' : 'text-left'}`}>
                                             {titleColumn.render
                                                 ? titleColumn.render(getValue(row, titleColumn), row)
                                                 : getValue(row, titleColumn) ?? '—'}
                                         </h2>
                                     )}
                                     {subtitleColumn && (
-                                        <p className={`text-[12px] leading-4 text-on-surface-variant dark:text-[#c2d1c8] ${isRTL ? 'text-right' : 'text-left'}`}>
+                                        <p className={`text-[12px] leading-4 text-on-surface-variant dark:text-[#c6c2bd] ${isRTL ? 'text-right' : 'text-left'}`}>
                                             {subtitleColumn.render
                                                 ? subtitleColumn.render(getValue(row, subtitleColumn), row)
                                                 : getValue(row, subtitleColumn) ?? '—'}
@@ -148,11 +148,11 @@ export default function MobileTable({
                                 </div>
 
                                 {detailColumns.length > 0 && (
-                                    <dl className={`grid ${detailsGrid} gap-3 border-t border-outline-variant pt-2 dark:border-[#384c43]`}>
+                                    <dl className={`grid ${detailsGrid} gap-3 border-t border-outline-variant pt-2 dark:border-[#3a3835]`}>
                                         {detailColumns.map((column) => (
                                             <div key={column.key} className={`min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
-                                                <dt className="text-[10px] uppercase tracking-wide text-outline dark:text-[#9fd1bd]/60">{column.label}</dt>
-                                                <dd className={`${column.wrap ? 'break-words' : 'truncate'} text-[12px] font-medium text-on-surface-variant dark:text-[#c2d1c8]`}>
+                                                <dt className="text-[10px] uppercase tracking-wide text-outline dark:text-[#918d88]/60">{column.label}</dt>
+                                                <dd className={`${column.wrap ? 'break-words' : 'truncate'} text-[12px] font-medium text-on-surface-variant dark:text-[#c6c2bd]`}>
                                                     {column.render
                                                         ? column.render(getValue(row, column), row)
                                                         : getValue(row, column) ?? '—'}
@@ -167,7 +167,7 @@ export default function MobileTable({
                 </ul>
             )}
 
-            <footer className={`flex flex-col items-center justify-between gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[11px] text-on-surface-variant dark:border-[#384c43] dark:bg-[#1b2621] dark:text-inverse-on-surface sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            <footer className={`flex flex-col items-center justify-between gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[11px] text-on-surface-variant dark:border-[#3a3835] dark:bg-[#232221] dark:text-inverse-on-surface sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
                 <div className={`flex w-full items-center justify-between gap-2 sm:w-auto ${isRTL ? 'flex-row-reverse' : ''}`}>
                     {selectable && pageRows.length > 0 && (
                         <label className="flex items-center gap-2">
@@ -202,7 +202,7 @@ export default function MobileTable({
                                 aria-current={pageNumber === visiblePage ? 'page' : undefined}
                                 aria-label={labels.page(pageNumber)}
                                 className={`h-8 min-w-8 rounded-md px-2 ${pageNumber === visiblePage
-                                    ? 'bg-primary-container font-semibold text-on-primary dark:bg-[#2e5e4e] dark:text-[#ecf3ef]'
+                                    ? 'bg-primary-container font-semibold text-on-primary dark:bg-[#2f7d4f] dark:text-white'
                                     : 'text-on-surface hover:bg-surface-container dark:text-inverse-on-surface dark:hover:bg-white/10'}`}
                             >
                                 {pageNumber}

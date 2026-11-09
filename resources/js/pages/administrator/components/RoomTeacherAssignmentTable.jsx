@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import ConfirmDeleteModal from '../../../modals/confirmdelete';
 import { apiFetch } from '../../../lib/api';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -98,7 +98,7 @@ export default function RoomTeacherAssignmentTable({
             setEndingAssignment(assignment);
             setError(null);
         },
-        className: 'text-error dark:text-error-container',
+        className: 'text-error dark:text-[#e59a92]',
     }] : [];
     const labels = {
         actions: t.rooms.table.actions,
@@ -120,7 +120,7 @@ export default function RoomTeacherAssignmentTable({
                 {t.rooms.assignmentHistory}
             </h2>
             {error && !endingAssignment && (
-                <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>
+                <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>
             )}
             <div className="hidden md:block">
                 <DesktopTable

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -373,7 +373,7 @@ export default function MemorizationSessionFormModal({
         session?.id,
     ]);
     const selectedStudent = roomStudents.find((student) => String(student.id) === form.student_id);
-    const inputClass = 'min-h-11 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface dark:focus:bg-inverse-surface';
+    const inputClass = 'min-h-11 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface dark:focus:bg-inverse-surface';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
 
     return (
@@ -459,7 +459,7 @@ export default function MemorizationSessionFormModal({
                                 )}
                             </div>
                             {progressError ? (
-                                <p role="alert" className="text-[12px] text-error dark:text-error-container">
+                                <p role="alert" className="text-[12px] text-error dark:text-[#e59a92]">
                                     {t.memorization.progressError}
                                 </p>
                             ) : progressLoading ? (
@@ -553,7 +553,7 @@ export default function MemorizationSessionFormModal({
                     <div className={`${labelClass} sm:col-span-2`}>
                         <span>{t.memorization.rangeLabel}</span>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div className="flex flex-col gap-3 rounded-lg border border-outline-variant p-3 dark:border-outline-variant">
+                            <div className="flex flex-col gap-3 rounded-lg border border-outline-variant p-3 dark:border-[#3a3835]">
                                 <SurahPicker
                                     label={t.memorization.surahStart}
                                     name="surah_start"
@@ -580,7 +580,7 @@ export default function MemorizationSessionFormModal({
                                 />
                                 </label>
                             </div>
-                            <div className="flex flex-col gap-3 rounded-lg border border-outline-variant p-3 dark:border-outline-variant">
+                            <div className="flex flex-col gap-3 rounded-lg border border-outline-variant p-3 dark:border-[#3a3835]">
                                 <SurahPicker
                                     label={t.memorization.surahEnd}
                                     name="surah_end"
@@ -635,8 +635,8 @@ export default function MemorizationSessionFormModal({
                         />
                     </label>
                 </div>
-                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
-                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-outline-variant sm:flex-row">
+                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
+                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#3a3835] sm:flex-row">
                     <button
                         type="button"
                         disabled={saving}
@@ -648,7 +648,7 @@ export default function MemorizationSessionFormModal({
                     <button
                         type="submit"
                         disabled={saving || !form.room_id || !form.student_id || (canManage && !form.teacher_id)}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-container dark:text-on-primary"
+                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                         {saving ? t.memorization.saving : t.memorization.save}

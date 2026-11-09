@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Icon from '../components/Icon';
 import { useLanguage } from '../hooks/useLanguage';
 import { apiFetch } from '../lib/api';
@@ -169,27 +169,27 @@ export default function YearSelector({ compact = false }) {
     return (
         <div ref={ref} className="relative shrink-0">
             <button type="button" aria-label={buttonLabel} aria-controls={listboxId} aria-expanded={open} aria-haspopup="listbox" title={buttonTitle} onClick={() => setOpen(o => !o)}
-                className={`flex items-center border border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#182620] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] rounded gap-1 h-6 sm:h-8 transition-colors cursor-pointer select-none ${compact ? 'px-1.5 py-0.5' : 'px-3'}`}
+                className={`flex items-center border border-outline-variant dark:border-[#3a3835] bg-surface-container-low dark:bg-[#1c1b1a] hover:bg-surface-container-high dark:hover:bg-[#32302e] rounded gap-1 h-6 sm:h-8 transition-colors cursor-pointer select-none ${compact ? 'px-1.5 py-0.5' : 'px-3'}`}
             >
-                <Icon name="date_range" className="text-[13px] sm:text-[16px] text-on-surface-variant dark:text-[#9bb2a8]" />
-                <span className="font-mono text-[10px] sm:text-[12px] leading-4 text-on-surface dark:text-[#ecf3ef] whitespace-nowrap">{label}</span>
+                <Icon name="date_range" className="text-[13px] sm:text-[16px] text-on-surface-variant dark:text-[#918d88]" />
+                <span className="font-mono text-[10px] sm:text-[12px] leading-4 text-on-surface dark:text-[#e7e3de] whitespace-nowrap">{label}</span>
                 {isReadOnly && <Icon name="lock" className="text-[11px] text-secondary dark:text-secondary-fixed-dim" />}
-                <Icon name="arrow_drop_down" className={`text-[12px] sm:text-[14px] text-outline dark:text-[#9bb2a8] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+                <Icon name="arrow_drop_down" className={`text-[12px] sm:text-[14px] text-outline dark:text-[#918d88] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
-            <div id={listboxId} role="listbox" aria-label={t.yearSelector.label} aria-hidden={!open} className={`absolute ${dropdownSide} top-full mt-1 w-64 bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#2f4239] rounded shadow-lg z-50 py-1 flex flex-col transition-all duration-200 ease-out ${open ? 'opacity-100 pointer-events-auto scale-100 translate-y-0' : 'opacity-0 pointer-events-none scale-95 -translate-y-1'}`}>
+            <div id={listboxId} role="listbox" aria-label={t.yearSelector.label} aria-hidden={!open} className={`absolute ${dropdownSide} top-full mt-1 w-64 bg-surface-container-lowest dark:bg-[#232221] border border-outline-variant dark:border-[#3a3835] rounded shadow-lg z-50 py-1 flex flex-col transition-all duration-200 ease-out ${open ? 'opacity-100 pointer-events-auto scale-100 translate-y-0' : 'opacity-0 pointer-events-none scale-95 -translate-y-1'}`}>
                 {years.length === 0 && (
-                    <div role={loadError ? 'alert' : 'status'} className={`px-3 py-2 ${textAlign} text-[11px] leading-4 text-on-surface-variant dark:text-[#9bb2a8]`}>
+                    <div role={loadError ? 'alert' : 'status'} className={`px-3 py-2 ${textAlign} text-[11px] leading-4 text-on-surface-variant dark:text-[#918d88]`}>
                         {loading ? t.yearSelector.loading : loadError ? t.yearSelector.unavailable : t.yearSelector.empty}
                     </div>
                 )}
                 {years.map((year) => (
                     <button key={year.id} type="button" role="option" tabIndex={open ? 0 : -1} aria-selected={year.id === selected?.id}
                         onClick={() => selectYear(year)}
-                        className={`flex items-center justify-between gap-2 px-3 py-1.5 ${textAlign} font-mono text-[11px] leading-4 text-on-surface dark:text-[#ecf3ef] hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors ${year.id === selected?.id ? 'font-medium bg-surface-container-low dark:bg-[#182620]' : ''}`}
+                        className={`flex items-center justify-between gap-2 px-3 py-1.5 ${textAlign} font-mono text-[11px] leading-4 text-on-surface dark:text-[#e7e3de] hover:bg-surface-container-high dark:hover:bg-[#32302e] transition-colors ${year.id === selected?.id ? 'font-medium bg-surface-container-low dark:bg-[#1c1b1a]' : ''}`}
                     >
                         <span className="truncate">{year.label}</span>
                         <span className="flex items-center gap-1 shrink-0">
-                            {year.is_current && <span className="text-[9px] text-primary dark:text-[#9fd1bd]">{t.yearSelector.current}</span>}
+                            {year.is_current && <span className="text-[9px] text-primary dark:text-[#918d88]">{t.yearSelector.current}</span>}
                             {year.is_read_only && <span className="text-[9px] text-secondary dark:text-secondary-fixed-dim">{t.yearSelector.readOnly}</span>}
                         </span>
                     </button>

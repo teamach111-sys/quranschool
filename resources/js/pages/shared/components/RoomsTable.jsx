@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import { useToast } from '../../../components/ToastProvider';
@@ -294,8 +294,8 @@ export default function RoomsTable({ routeParams = {} }) {
             value: (room) => room.is_active ? t.rooms.active : t.rooms.archived,
             render: (value, room) => (
                 <span className={`inline-flex rounded-md px-2 py-1 text-[11px] font-semibold ${room.is_active
-                    ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#1e4f40]/50 dark:text-[#baeed9]'
-                    : 'bg-surface-container-high text-on-surface-variant dark:bg-[#344a41] dark:text-[#c2d1c8]'}`}
+                    ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#32302e]/50 dark:text-[#918d88]'
+                    : 'bg-surface-container-high text-on-surface-variant dark:bg-[#32302e] dark:text-[#c6c2bd]'}`}
                 >
                     {value}
                 </span>
@@ -421,14 +421,14 @@ export default function RoomsTable({ routeParams = {} }) {
             </SelectInput>
         </div>
     );
-    const controlClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]';
+    const controlClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de]';
     const teacherRooms = (
         <ul aria-label={t.rooms.listLabel} className="grid w-full grid-cols-1 gap-3 xl:grid-cols-2">
             {rooms.map((room) => {
                 const roomStudents = students.filter((student) => student.room_id === room.id);
 
                 return (
-                    <li key={room.id} className="flex min-w-0 flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-tertiary-container dark:bg-inverse-surface">
+                    <li key={room.id} className="flex min-w-0 flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#3a3835] dark:bg-inverse-surface">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex min-w-0 items-center gap-2">
                                 <Icon name="groups" className="shrink-0 text-[20px] text-primary dark:text-primary-fixed-dim" />
@@ -439,7 +439,7 @@ export default function RoomsTable({ routeParams = {} }) {
                             </span>
                         </div>
                         {roomStudents.length > 0 ? (
-                            <ul className="flex flex-col gap-2 border-t border-outline-variant pt-3 dark:border-tertiary-container">
+                            <ul className="flex flex-col gap-2 border-t border-outline-variant pt-3 dark:border-[#3a3835]">
                                 {roomStudents.map((student) => (
                                     <li key={student.id} className="flex min-w-0 items-center justify-between gap-3">
                                         <div className="min-w-0">
@@ -449,8 +449,8 @@ export default function RoomsTable({ routeParams = {} }) {
                                             )}
                                         </div>
                                         <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] leading-4 font-semibold ${student.status === 'active'
-                                            ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container'
-                                            : 'bg-surface-container text-on-surface-variant dark:bg-tertiary-container dark:text-on-tertiary-container'}`}
+                                            ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88]'
+                                            : 'bg-surface-container text-on-surface-variant dark:bg-[#2a2928] dark:text-[#c6c2bd]'}`}
                                         >
                                             {t.students.statuses[student.status]}
                                         </span>
@@ -458,16 +458,16 @@ export default function RoomsTable({ routeParams = {} }) {
                                 ))}
                             </ul>
                         ) : (
-                            <p className="border-t border-outline-variant pt-3 text-[12px] leading-5 text-on-surface-variant dark:border-tertiary-container dark:text-tertiary-fixed-dim">
+                            <p className="border-t border-outline-variant pt-3 text-[12px] leading-5 text-on-surface-variant dark:border-[#3a3835] dark:text-tertiary-fixed-dim">
                                 {t.rooms.noAssignedStudents}
                             </p>
                         )}
-                        <div className="flex flex-wrap gap-2 border-t border-outline-variant pt-3 dark:border-tertiary-container">
-                            <a href="#/presences" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary-container px-3 py-2 text-[12px] leading-4 font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary">
+                        <div className="flex flex-wrap gap-2 border-t border-outline-variant pt-3 dark:border-[#3a3835]">
+                            <a href="#/presences" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary-container px-3 py-2 text-[12px] leading-4 font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white">
                                 <Icon name="fact_check" className="text-[16px]" />
                                 {t.rooms.takeAttendance}
                             </a>
-                            <a href="#/seances-memorisation" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] leading-4 font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface">
+                            <a href="#/seances-memorisation" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] leading-4 font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface">
                                 <Icon name="menu_book" className="text-[16px]" />
                                 {t.rooms.enterMemorizationSession}
                             </a>
@@ -479,7 +479,7 @@ export default function RoomsTable({ routeParams = {} }) {
     );
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.rooms.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.rooms.loadError}</p>;
     }
 
     const toolbar = (
@@ -489,7 +489,7 @@ export default function RoomsTable({ routeParams = {} }) {
                 <button
                     type="button"
                     onClick={() => setAssignmentRoom(true)}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]"
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de]"
                 >
                     <Icon name="assignment_ind" className="text-[17px]" />
                     {t.rooms.assignTeacher}
@@ -504,7 +504,7 @@ export default function RoomsTable({ routeParams = {} }) {
                         setShowOtherAgeStudents(false);
                         setPlacementOpen(true);
                     }}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef]"
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de]"
                 >
                     <Icon name="person_add" className="text-[17px]" />
                     {t.rooms.placeStudent}
@@ -514,7 +514,7 @@ export default function RoomsTable({ routeParams = {} }) {
                 <button
                     type="button"
                     onClick={() => openRoomEditor()}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                 >
                     <Icon name="add" className="text-[17px]" />
                     {t.rooms.create}
@@ -525,7 +525,7 @@ export default function RoomsTable({ routeParams = {} }) {
 
     return (
         <section aria-busy={loading} className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
-            {error && !archiveRoom && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
+            {error && !archiveRoom && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
             {focusedAlertRoom && (
                 <p role="status" className="rounded-lg bg-surface-container px-3 py-2 text-[12px] text-on-surface-variant dark:bg-inverse-surface dark:text-inverse-on-surface">
                     {t.rooms.alertRecordFocus(focusedAlertRoom.name)}
@@ -540,7 +540,7 @@ export default function RoomsTable({ routeParams = {} }) {
                             <span className="text-[13px]">{t.modal.loading}</span>
                         </div>
                     ) : rooms.length > 0 ? teacherRooms : (
-                        <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
+                        <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 text-[13px] text-on-surface-variant dark:border-[#3a3835] dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
                             {t.rooms.empty}
                         </p>
                     )}
@@ -595,10 +595,10 @@ export default function RoomsTable({ routeParams = {} }) {
                 isRTL={isRTL}
                 footer={(
                     <>
-                        <button type="button" disabled={savingPlacement} onClick={() => setPlacementOpen(false)} className="min-h-10 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[12px] font-semibold text-on-surface disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef]">
+                        <button type="button" disabled={savingPlacement} onClick={() => setPlacementOpen(false)} className="min-h-10 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[12px] font-semibold text-on-surface disabled:opacity-60 dark:bg-[#32302e] dark:text-[#e7e3de]">
                             {t.rooms.cancel}
                         </button>
-                        <button type="submit" form="room-placement-form" disabled={savingPlacement || selectedPlacementStudentIds.length === 0 || isPlacementTargetFull} className="min-h-10 flex-1 rounded-lg bg-primary-container px-4 py-2 text-[12px] font-semibold text-on-primary disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]">
+                        <button type="submit" form="room-placement-form" disabled={savingPlacement || selectedPlacementStudentIds.length === 0 || isPlacementTargetFull} className="min-h-10 flex-1 rounded-lg bg-primary-container px-4 py-2 text-[12px] font-semibold text-on-primary disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white">
                             {savingPlacement ? t.rooms.saving : t.rooms.placeSelectedStudents(selectedPlacementStudentIds.length)}
                         </button>
                     </>
@@ -625,7 +625,7 @@ export default function RoomsTable({ routeParams = {} }) {
                         </SelectInput>
                     </label>
                     {placementTargetRoom && (
-                        <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-3 dark:bg-[#182620]">
+                        <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-3 dark:bg-[#1c1b1a]">
                             <p className="text-[11px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim">
                                 {t.rooms.placementAgeHint(t.rooms.ageRange(placementTargetRoom.age_min, placementTargetRoom.age_max))}
                             </p>
@@ -675,7 +675,7 @@ export default function RoomsTable({ routeParams = {} }) {
                         )}
                     </div>
                     {placementStudents.length > 0 ? (
-                        <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto rounded-lg border border-outline-variant p-2 dark:border-outline-variant">
+                        <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto rounded-lg border border-outline-variant p-2 dark:border-[#3a3835]">
                             {placementStudents.map((student) => {
                                 const id = String(student.id);
                                 const selected = selectedPlacementSet.has(id);
@@ -715,8 +715,8 @@ export default function RoomsTable({ routeParams = {} }) {
                             {t.rooms.availableRoomCapacity(availableRoomCapacity)}
                         </p>
                     )}
-                    {isPlacementTargetFull && <p role="status" className="text-[12px] text-error dark:text-error-container">{t.rooms.fullRoomError}</p>}
-                    {error && <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>}
+                    {isPlacementTargetFull && <p role="status" className="text-[12px] text-error dark:text-[#e59a92]">{t.rooms.fullRoomError}</p>}
+                    {error && <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{error}</p>}
                 </form>
             </Modal>
             {canManage && (

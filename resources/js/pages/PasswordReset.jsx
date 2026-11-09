@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import { apiFetch } from '../lib/api';
 import Logo from '../components/Logo';
@@ -51,29 +51,29 @@ export default function PasswordReset() {
     };
 
     return (
-        <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="bg-background dark:bg-[#182620] font-sans text-on-surface dark:text-[#ecf3ef] antialiased min-h-screen flex items-center justify-center p-4 sm:p-5 transition-colors duration-200">
+        <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="bg-background dark:bg-[#1c1b1a] font-sans text-on-surface dark:text-[#e7e3de] antialiased min-h-screen flex items-center justify-center p-4 sm:p-5 transition-colors duration-200">
             <main className="w-full max-w-[440px] flex flex-col items-center justify-center">
                 <div className="flex flex-col w-full items-center justify-center py-6 sm:py-10">
                     <div className="flex items-center justify-center mb-6 w-full">
                         <Logo className="h-12 sm:h-14" />
                     </div>
-                    <div className="w-full bg-surface-container-lowest dark:bg-[#202f29] rounded-xl shadow-md p-6 sm:p-10 flex flex-col transition-colors duration-200">
+                    <div className="w-full bg-surface-container-lowest dark:bg-[#232221] rounded-xl shadow-md p-6 sm:p-10 flex flex-col transition-colors duration-200">
                         <div className="mb-6 text-center">
-                            <h1 className="text-[22px] sm:text-[28px] leading-[30px] sm:leading-[36px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#ecf3ef]">
+                            <h1 className="text-[22px] sm:text-[28px] leading-[30px] sm:leading-[36px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#e7e3de]">
                                 {copy.title}
                             </h1>
-                            <p className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-on-surface-variant dark:text-[#9bb2a8] mt-2">
+                            <p className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-on-surface-variant dark:text-[#918d88] mt-2">
                                 {copy.description}
                             </p>
                         </div>
 
                         {error && (
-                            <p role="alert" className="mb-5 rounded-lg bg-error-container px-3.5 py-3 text-[13px] leading-5 text-on-error-container">
+                            <p role="alert" className="mb-5 rounded-lg bg-error-container px-3.5 py-3 text-[13px] leading-5 text-on-error-container dark:bg-[#3a2624] dark:text-[#e59a92]">
                                 {error}
                             </p>
                         )}
                         {message && (
-                            <p role="status" className="mb-5 rounded-lg bg-primary-fixed px-3.5 py-3 text-[13px] leading-5 text-on-primary-fixed-variant">
+                            <p role="status" className="mb-5 rounded-lg bg-primary-fixed px-3.5 py-3 text-[13px] leading-5 text-on-primary-fixed-variant dark:bg-[#2a2928] dark:text-[#c6c2bd]">
                                 {message}
                             </p>
                         )}
@@ -89,7 +89,7 @@ export default function PasswordReset() {
                                         required
                                         value={email}
                                         onChange={(event) => setEmail(event.target.value)}
-                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#182620] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-primary"
                                     />
                                 </label>
                                 <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="recovery-key">
@@ -103,7 +103,7 @@ export default function PasswordReset() {
                                         required
                                         value={recoveryKey}
                                         onChange={(event) => setRecoveryKey(event.target.value.trim())}
-                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#182620] rounded-lg px-3 py-2.5 font-mono text-[14px] outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] rounded-lg px-3 py-2.5 font-mono text-[14px] outline-none focus:ring-2 focus:ring-primary"
                                     />
                                 </label>
                                 <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="reset-password">
@@ -116,7 +116,7 @@ export default function PasswordReset() {
                                         required
                                         value={password}
                                         onChange={(event) => setPassword(event.target.value)}
-                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#182620] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-primary"
                                     />
                                 </label>
                                 <label className="flex flex-col gap-1.5 text-[13px] font-medium" htmlFor="reset-password-confirmation">
@@ -129,20 +129,20 @@ export default function PasswordReset() {
                                         required
                                         value={passwordConfirmation}
                                         onChange={(event) => setPasswordConfirmation(event.target.value)}
-                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#182620] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] rounded-lg px-3 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-primary"
                                     />
                                 </label>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full min-h-[48px] bg-primary-container dark:bg-[#2e5e4e] text-on-primary dark:text-[#ecf3ef] font-semibold rounded-lg disabled:opacity-60"
+                                    className="w-full min-h-[48px] bg-primary-container dark:bg-[#2f7d4f] text-on-primary dark:text-white font-semibold rounded-lg disabled:opacity-60"
                                 >
                                     {loading ? copy.resetting : copy.reset}
                                 </button>
                             </form>
                         )}
 
-                        <a className="mt-5 min-h-11 inline-flex items-center justify-center text-[13px] font-semibold text-primary dark:text-[#9fd1bd]" href="/login">
+                        <a className="mt-5 min-h-11 inline-flex items-center justify-center text-[13px] font-semibold text-primary dark:text-[#918d88]" href="/login">
                             {copy.backToLogin}
                         </a>
                     </div>

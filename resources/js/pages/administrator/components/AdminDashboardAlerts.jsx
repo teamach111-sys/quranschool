@@ -1,13 +1,13 @@
-import React from 'react';
+﻿import React from 'react';
 import Icon from '../../../components/Icon';
 import { useLanguage } from '../../../hooks/useLanguage';
 
 const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
 
 const alertCategories = [
-    { key: 'missed_attendance', title: 'missedAttendance', icon: 'fact_check', tone: 'text-error dark:text-error-container' },
-    { key: 'late_payments', title: 'latePayments', icon: 'payments', tone: 'text-error dark:text-error-container' },
-    { key: 'repeated_absences', title: 'repeatedAbsences', icon: 'event_busy', tone: 'text-error dark:text-error-container' },
+    { key: 'missed_attendance', title: 'missedAttendance', icon: 'fact_check', tone: 'text-error dark:text-[#e59a92]' },
+    { key: 'late_payments', title: 'latePayments', icon: 'payments', tone: 'text-error dark:text-[#e59a92]' },
+    { key: 'repeated_absences', title: 'repeatedAbsences', icon: 'event_busy', tone: 'text-error dark:text-[#e59a92]' },
     { key: 'rooms_without_active_teacher', title: 'roomsWithoutActiveTeacher', icon: 'door_front', tone: 'text-secondary dark:text-secondary-fixed-dim' },
     { key: 'inactive_users_with_pending_items', title: 'inactiveUsersWithPendingItems', icon: 'person_off', tone: 'text-secondary dark:text-secondary-fixed-dim' },
 ];
@@ -121,7 +121,7 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
             {latePaymentRollover && (
                 <p
                     role="status"
-                    className="flex items-start gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[12px] leading-5 text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim"
+                    className="flex items-start gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-[12px] leading-5 text-on-surface-variant dark:border-[#3a3835] dark:bg-inverse-surface dark:text-tertiary-fixed-dim"
                 >
                     <Icon name="autorenew" className="mt-0.5 shrink-0 text-[16px] text-primary dark:text-primary-fixed-dim" />
                     {t.dashboardStats.alerts.lateRolloverReport(
@@ -139,7 +139,7 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
                     return (
                         <article
                             key={category.key}
-                            className="min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-tertiary-container dark:bg-inverse-surface"
+                            className="min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#3a3835] dark:bg-inverse-surface"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <h3 className="text-[13px] leading-5 font-semibold text-on-surface dark:text-inverse-on-surface">
@@ -162,7 +162,7 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
                                             return (
                                                 <li
                                                     key={itemKey}
-                                                    className="border-t border-outline-variant pt-2 text-[12px] leading-5 dark:border-tertiary-container"
+                                                    className="border-t border-outline-variant pt-2 text-[12px] leading-5 dark:border-[#3a3835]"
                                                 >
                                                     {href ? (
                                                         <a
@@ -178,7 +178,7 @@ export default function AdminDashboardAlerts({ alerts, latePaymentRollover = nul
                                                     ) : (
                                                         <div className="flex flex-col gap-1 px-2 py-1">
                                                             {renderAlertDetails(category.key, item)}
-                                                            <span role="status" className="text-error dark:text-error-container">
+                                                            <span role="status" className="text-error dark:text-[#e59a92]">
                                                                 {t.dashboardStats.alerts.recordUnavailable}
                                                             </span>
                                                         </div>

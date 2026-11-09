@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useState } from 'react';
+﻿import React, { useCallback, useEffect, useId, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -172,7 +172,7 @@ export default function ScheduleFormModal({
         }
     };
 
-    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:focus:border-primary-fixed-dim dark:focus:bg-[#202f29] dark:focus:ring-primary-fixed-dim';
+    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de] dark:focus:border-primary-fixed-dim dark:focus:bg-[#232221] dark:focus:ring-primary-fixed-dim';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
 
     return (
@@ -278,13 +278,13 @@ export default function ScheduleFormModal({
                         />
                     </label>
                 </div>
-                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
+                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
                 {conflict && (
                     <p
                         id={`${formId}-schedule-conflict`}
                         role="alert"
                         aria-live="assertive"
-                        className="rounded-lg border border-error/30 bg-error-container px-3 py-2.5 text-[13px] leading-5 text-on-error-container dark:border-error/40 dark:bg-[#4a2626]/50 dark:text-[#ffdad6]"
+                        className="rounded-lg border border-error/30 bg-error-container px-3 py-2.5 text-[13px] leading-5 text-on-error-container dark:border-error/40 dark:bg-[#3a2624]/50 dark:text-[#e59a92]"
                     >
                         {t.schedules.overlapLive(
                             conflictResource,
@@ -293,12 +293,12 @@ export default function ScheduleFormModal({
                         )}
                     </p>
                 )}
-                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:flex-row">
+                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#3a3835] sm:flex-row">
                     <button
                         type="button"
                         disabled={saving || deleting}
                         onClick={handleClose}
-                        className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
+                        className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#32302e] dark:text-[#e7e3de] dark:hover:bg-[#32302e]"
                     >
                         {t.schedules.cancel}
                     </button>
@@ -310,7 +310,7 @@ export default function ScheduleFormModal({
                                 setDeleteError(null);
                                 setDeleteConfirmationOpen(true);
                             }}
-                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-error-container px-4 py-2 text-[13px] font-semibold text-on-error-container transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#4a2626] dark:text-[#ffdad6]"
+                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-error-container px-4 py-2 text-[13px] font-semibold text-on-error-container transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#3a2624] dark:text-[#e59a92]"
                         >
                             <Icon name="delete" className="text-[18px]" />
                             {t.schedules.delete}
@@ -320,7 +320,7 @@ export default function ScheduleFormModal({
                         type="submit"
                         aria-describedby={conflict ? `${formId}-schedule-conflict` : undefined}
                         disabled={saving || deleting || rooms.length === 0 || teachers.length === 0 || Boolean(conflict)}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                         {saving ? t.schedules.saving : t.schedules.save}

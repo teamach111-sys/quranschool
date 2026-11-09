@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import DateInput from '../../../components/DateInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
@@ -234,7 +234,7 @@ export default function ActionHistoryTable() {
         disabled: () => detailLoading,
         onClick: (event) => setSelectedEventId(event.id),
     }];
-    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
+    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
     const updateFilter = (key) => (event) => {
         setFilters((current) => ({ ...current, [key]: event.target.value }));
     };
@@ -316,12 +316,12 @@ export default function ActionHistoryTable() {
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {loadError && (
-                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-[13px] leading-5 text-error dark:text-error-container">
+                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-[13px] leading-5 text-error dark:text-[#e59a92]">
                     <span>{t.actionHistory.loadError}</span>
                     <button
                         type="button"
                         onClick={() => setRetryToken((current) => current + 1)}
-                        className="min-h-10 rounded-lg border border-outline-variant px-3 font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384c43] dark:text-inverse-on-surface dark:hover:bg-[#34483f]"
+                        className="min-h-10 rounded-lg border border-outline-variant px-3 font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:text-inverse-on-surface dark:hover:bg-[#32302e]"
                     >
                         {t.actionHistory.retry}
                     </button>
@@ -372,12 +372,12 @@ export default function ActionHistoryTable() {
                 maxWidth="max-w-[720px]"
             >
                 {detailError ? (
-                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-[13px] leading-5 text-error dark:text-error-container">
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 text-[13px] leading-5 text-error dark:text-[#e59a92]">
                         <span>{t.actionHistory.detailError}</span>
                         <button
                             type="button"
                             onClick={() => setDetailRetry((current) => current + 1)}
-                            className="min-h-10 rounded-lg border border-outline-variant px-3 font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#384c43] dark:text-inverse-on-surface dark:hover:bg-[#34483f]"
+                            className="min-h-10 rounded-lg border border-outline-variant px-3 font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:text-inverse-on-surface dark:hover:bg-[#32302e]"
                         >
                             {t.actionHistory.retry}
                         </button>
@@ -395,8 +395,8 @@ export default function ActionHistoryTable() {
                                     ?? t.actionHistory.allYears],
                                 [t.actionHistory.columns.date, formatDate(selectedEvent.created_at)],
                             ].map(([label, value]) => (
-                                <div key={label} className="min-w-0 rounded-lg bg-surface-container-low p-3 dark:bg-[#182620]">
-                                    <dt className="text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">{label}</dt>
+                                <div key={label} className="min-w-0 rounded-lg bg-surface-container-low p-3 dark:bg-[#1c1b1a]">
+                                    <dt className="text-[11px] text-on-surface-variant dark:text-[#918d88]">{label}</dt>
                                     <dd className="break-words text-[13px] font-medium text-on-surface dark:text-inverse-on-surface">{value}</dd>
                                 </div>
                             ))}
@@ -413,21 +413,21 @@ export default function ActionHistoryTable() {
                                             && ('before' in change || 'after' in change);
 
                                         return (
-                                            <div key={field} className="grid grid-cols-1 gap-2 rounded-lg border border-outline-variant p-3 dark:border-[#384c43] sm:grid-cols-3">
+                                            <div key={field} className="grid grid-cols-1 gap-2 rounded-lg border border-outline-variant p-3 dark:border-[#3a3835] sm:grid-cols-3">
                                                 <dt className="text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">
                                                     {t.actionHistory.fields[field] ?? field}
                                                 </dt>
                                                 {hasComparison ? (
                                                     <>
-                                                        <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                                                        <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c6c2bd]">
                                                             <span className="font-semibold">{t.actionHistory.before}:</span> {displayValue(change.before)}
                                                         </dd>
-                                                        <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                                                        <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c6c2bd]">
                                                             <span className="font-semibold">{t.actionHistory.after}:</span> {displayValue(change.after)}
                                                         </dd>
                                                     </>
                                                 ) : (
-                                                    <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c2d1c8] sm:col-span-2">
+                                                    <dd className="break-words text-[12px] text-on-surface-variant dark:text-[#c6c2bd] sm:col-span-2">
                                                         {displayValue(change)}
                                                     </dd>
                                                 )}
@@ -436,13 +436,13 @@ export default function ActionHistoryTable() {
                                     })}
                                 </dl>
                             ) : (
-                                <p className="text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                                <p className="text-[12px] text-on-surface-variant dark:text-[#c6c2bd]">
                                     {t.actionHistory.noChanges}
                                 </p>
                             )}
                         </section>
-                        <div className="rounded-lg bg-surface-container-low p-3 dark:bg-[#182620]">
-                            <h3 className="mb-1 text-[11px] text-on-surface-variant dark:text-[#9bb2a8]">{t.actionHistory.reason}</h3>
+                        <div className="rounded-lg bg-surface-container-low p-3 dark:bg-[#1c1b1a]">
+                            <h3 className="mb-1 text-[11px] text-on-surface-variant dark:text-[#918d88]">{t.actionHistory.reason}</h3>
                             <p className="break-words text-[13px] text-on-surface dark:text-inverse-on-surface">
                                 {selectedEvent.reason || t.actionHistory.emptyValue}
                             </p>

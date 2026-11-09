@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useCallback, useEffect, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -224,7 +224,7 @@ export default function MemorizationSessionsTable() {
             sortable: true,
             mobile: 'badge',
             render: (evaluation) => (
-                <span className="inline-flex rounded-full bg-primary-fixed px-2.5 py-1 text-[11px] font-semibold text-primary dark:bg-primary-container dark:text-on-primary">
+                <span className="inline-flex rounded-full bg-primary-fixed px-2.5 py-1 text-[11px] font-semibold text-primary dark:bg-[#32302e] dark:text-on-primary">
                     {t.memorization.evaluations[evaluation] ?? evaluation}
                 </span>
             ),
@@ -254,7 +254,7 @@ export default function MemorizationSessionsTable() {
         hidden: (session) => !session.can_edit,
         onClick: openEntry,
     }] : [];
-    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-outline-variant dark:bg-inverse-surface dark:text-inverse-on-surface';
+    const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
     const toolbar = (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap justify-end gap-2">
@@ -280,7 +280,7 @@ export default function MemorizationSessionsTable() {
                     <button
                         type="button"
                         onClick={() => openEntry()}
-                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name="add" className="text-[17px]" />
                         {t.memorization.create}
@@ -326,7 +326,7 @@ export default function MemorizationSessionsTable() {
     );
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.memorization.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.memorization.loadError}</p>;
     }
 
     return (

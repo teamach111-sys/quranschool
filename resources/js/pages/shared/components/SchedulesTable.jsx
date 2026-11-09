@@ -19,13 +19,16 @@ function formatHour(hour) {
     return `${String(hour).padStart(2, '0')}:00`;
 }
 
+// Group blocks are colour-coded by room. Light mode uses soft brand tints;
+// dark mode uses muted translucent GitHub-Dark label tones so the calendar
+// stays legible without clashing with the near-black shell.
 const scheduleColorClasses = [
-    'border-blue-300 bg-blue-100 text-blue-950 hover:bg-blue-200 dark:border-blue-700 dark:bg-blue-950/60 dark:text-blue-100',
-    'border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-100',
-    'border-rose-300 bg-rose-100 text-rose-950 hover:bg-rose-200 dark:border-rose-700 dark:bg-rose-950/60 dark:text-rose-100',
-    'border-violet-300 bg-violet-100 text-violet-950 hover:bg-violet-200 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-100',
-    'border-cyan-300 bg-cyan-100 text-cyan-950 hover:bg-cyan-200 dark:border-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-100',
-    'border-orange-300 bg-orange-100 text-orange-950 hover:bg-orange-200 dark:border-orange-700 dark:bg-orange-950/60 dark:text-orange-100',
+    'border-blue-200 bg-blue-50 text-blue-900 hover:bg-blue-100 dark:border-[#3f6cb0]/60 dark:bg-[#5b8fe0]/15 dark:text-[#cbdcef] dark:hover:bg-[#5b8fe0]/25',
+    'border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-[#c2922c]/60 dark:bg-[#c2922c]/15 dark:text-[#e3c775] dark:hover:bg-[#c2922c]/25',
+    'border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100 dark:border-[#d96055]/60 dark:bg-[#d96055]/15 dark:text-[#e8b4b0] dark:hover:bg-[#d96055]/25',
+    'border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-100 dark:border-[#7c6ac0]/60 dark:bg-[#9a86d6]/15 dark:text-[#d9cff0] dark:hover:bg-[#9a86d6]/25',
+    'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:border-[#4a9e63]/60 dark:bg-[#4a9e63]/15 dark:text-[#b6ddbe] dark:hover:bg-[#4a9e63]/25',
+    'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100 dark:border-[#6f6b66]/60 dark:bg-[#6f6b66]/20 dark:text-[#c3c8d0] dark:hover:bg-[#6f6b66]/30',
 ];
 
 function scheduleColorClass(roomId) {
@@ -247,7 +250,7 @@ export default function SchedulesTable() {
         visibleSchedules.filter((schedule) => schedule.day_of_week === dayIndex + 1),
     ));
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.schedules.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.schedules.loadError}</p>;
     }
 
     const toolbar = (
@@ -284,7 +287,7 @@ export default function SchedulesTable() {
                     <button
                         type="button"
                         onClick={openCreateForm}
-                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name="add" className="text-[17px]" />
                         {t.schedules.create}
@@ -315,20 +318,20 @@ export default function SchedulesTable() {
     return (
         <section className="flex w-full flex-col gap-3" dir={isRTL ? 'rtl' : 'ltr'}>
             {error && !formOpen && (
-                <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>
+                <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>
             )}
             {!loading && visibleSchedules.length === 0 && (
-                <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                <p role="status" className="text-[13px] leading-5 text-on-surface-variant dark:text-[#918d88]">
                     {selectedRoom ? t.schedules.emptyGroup(selectedRoom.name) : t.schedules.empty}
                 </p>
             )}
             <div className="flex flex-col gap-2">
-                <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-3 dark:border-[#384d43] dark:bg-[#22302a] sm:p-4">
+                <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-3 dark:border-[#3a3835] dark:bg-[#232221] sm:p-4">
                     {toolbar}
                 </div>
-                <div aria-busy={loading} className="relative overflow-x-auto rounded-lg border border-outline-variant bg-surface-container-lowest dark:border-[#384d43] dark:bg-[#182620]">
+                <div aria-busy={loading} className="relative overflow-x-auto rounded-lg border border-outline-variant bg-surface-container-lowest dark:border-[#3a3835] dark:bg-[#1c1b1a]">
                     {loading && (
-                        <div role="status" className="absolute inset-0 z-20 flex min-h-40 items-center justify-center gap-3 bg-surface-container-lowest/90 text-on-surface-variant dark:bg-[#182620]/90 dark:text-[#9bb2a8]">
+                        <div role="status" className="absolute inset-0 z-20 flex min-h-40 items-center justify-center gap-3 bg-surface-container-lowest/90 text-on-surface-variant dark:bg-[#1c1b1a]/90 dark:text-[#918d88]">
                             <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
                             <span className="text-[13px]">{t.modal.loading}</span>
                         </div>
@@ -339,22 +342,22 @@ export default function SchedulesTable() {
                         className="grid min-w-[980px]"
                         style={{ gridTemplateColumns: '4.25rem repeat(7, minmax(8rem, 1fr))' }}
                     >
-                        <div className="flex min-h-11 items-center justify-center border-b border-outline-variant px-1 text-[10px] font-semibold text-on-surface-variant dark:border-[#384d43] dark:text-[#9bb2a8]">
+                        <div className="flex min-h-11 items-center justify-center border-b border-outline-variant px-1 text-[10px] font-semibold text-on-surface-variant dark:border-[#3a3835] dark:text-[#918d88]">
                             {t.schedules.timeline}
                         </div>
                         {days.map((day) => (
                             <div
                                 key={day}
-                                className="flex min-h-11 items-center justify-center border-b border-s border-outline-variant px-2 text-[11px] font-semibold text-on-surface dark:border-[#384d43] dark:text-[#ecf3ef]"
+                                className="flex min-h-11 items-center justify-center border-b border-s border-outline-variant px-2 text-[11px] font-semibold text-on-surface dark:border-[#3a3835] dark:text-[#e7e3de]"
                             >
                                 {day}
                             </div>
                         ))}
-                        <div className="relative border-e border-outline-variant dark:border-[#384d43]" style={{ height: gridHeight }}>
+                        <div className="relative border-e border-outline-variant dark:border-[#3a3835]" style={{ height: gridHeight }}>
                             {gridHours.map((hour) => (
                                 <span
                                     key={hour}
-                                    className="absolute inset-x-1 -translate-y-1/2 text-center font-mono text-[9px] text-outline dark:text-[#9bb2a8]"
+                                    className="absolute inset-x-1 -translate-y-1/2 text-center font-mono text-[9px] text-outline dark:text-[#918d88]"
                                     style={{ top: `${((hour - startHour) * 60 + 22) / gridMinutes * 100}%` }}
                                 >
                                     {formatHour(hour)}
@@ -366,30 +369,38 @@ export default function SchedulesTable() {
                                 key={day}
                                 role="group"
                                 aria-label={day}
-                                className="relative border-s border-outline-variant dark:border-[#384d43]"
+                                className="relative border-s border-outline-variant dark:border-[#3a3835]"
                                 style={{ height: gridHeight }}
                             >
-                                {canManage && yearIsWritable && gridHours.filter((hour) => hour < 23).map((hour) => (
-                                    <button
-                                        key={hour}
-                                        type="button"
-                                        aria-label={t.schedules.addSlotAt(day, formatHour(hour))}
-                                        onClick={() => openCreateForm(
-                                            dayIndex + 1,
-                                            formatHour(hour),
-                                            hasScheduleAtHour ? '' : selectedRoomId,
-                                        )}
-                                        className="absolute inset-x-0 z-0 border-t border-outline-variant/70 bg-transparent text-start transition-colors hover:bg-primary-fixed/20 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary dark:border-[#384d43] dark:hover:bg-primary-container/30"
-                                        style={{
-                                            top: `${((hour - startHour) * 60 / gridMinutes) * 100}%`,
-                                            height: `${(60 / gridMinutes) * 100}%`,
-                                        }}
-                                    >
-                                        <span className="sr-only">
-                                            {t.schedules.addSlotAt(day, formatHour(hour))}
-                                        </span>
-                                    </button>
-                                ))}
+                                {canManage && yearIsWritable && gridHours.filter((hour) => hour < 23).map((hour) => {
+                                    const hasScheduleAtHour = visibleSchedules.some((schedule) => (
+                                        schedule.day_of_week === dayIndex + 1
+                                        && minutesSinceMidnight(schedule.starts_at) <= hour * 60
+                                        && minutesSinceMidnight(schedule.ends_at) > hour * 60
+                                    ));
+
+                                    return (
+                                        <button
+                                            key={hour}
+                                            type="button"
+                                            aria-label={t.schedules.addSlotAt(day, formatHour(hour))}
+                                            onClick={() => openCreateForm(
+                                                dayIndex + 1,
+                                                formatHour(hour),
+                                                hasScheduleAtHour ? '' : selectedRoomId,
+                                            )}
+                                            className="absolute inset-x-0 z-0 border-t border-outline-variant/70 bg-transparent text-start transition-colors hover:bg-primary-fixed/20 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-primary dark:border-[#3a3835] dark:hover:bg-primary-container/30"
+                                            style={{
+                                                top: `${((hour - startHour) * 60 / gridMinutes) * 100}%`,
+                                                height: `${(60 / gridMinutes) * 100}%`,
+                                            }}
+                                        >
+                                            <span className="sr-only">
+                                                {t.schedules.addSlotAt(day, formatHour(hour))}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                                 {canManage && yearIsWritable && gridHours.filter((hour) => hour < 23).map((hour) => {
                                     const hasScheduleAtHour = visibleSchedules.some((schedule) => (
                                         schedule.day_of_week === dayIndex + 1
@@ -408,7 +419,7 @@ export default function SchedulesTable() {
                                                 ? t.schedules.addGroupAt(day, formatHour(hour))
                                                 : t.schedules.addSlotAt(day, formatHour(hour))}
                                             onClick={() => openCreateForm(dayIndex + 1, formatHour(hour))}
-                                            className="absolute z-20 inline-flex size-[18px] items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant shadow-sm transition-colors hover:border-primary hover:bg-primary-fixed hover:text-on-primary-fixed-variant focus-visible:outline-2 focus-visible:outline-primary dark:border-[#52685e] dark:bg-[#22302a] dark:text-[#d3e2d9] dark:hover:bg-primary-container"
+                                            className="absolute z-20 inline-flex size-[18px] items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant shadow-sm transition-colors hover:border-primary hover:bg-primary-fixed hover:text-on-primary-fixed-variant focus-visible:outline-2 focus-visible:outline-primary dark:border-[#3a3835] dark:bg-[#232221] dark:text-[#c6c2bd] dark:hover:bg-primary-container"
                                             style={{
                                                 top: `${((hour - startHour) * 60 / gridMinutes) * 100}%`,
                                                 insetInlineEnd: '2px',
@@ -422,7 +433,7 @@ export default function SchedulesTable() {
                                     <div
                                         key={`line-${hour}`}
                                         aria-hidden="true"
-                                        className="pointer-events-none absolute inset-x-0 z-[1] border-t border-outline-variant/70 dark:border-[#384d43]"
+                                        className="pointer-events-none absolute inset-x-0 z-[1] border-t border-outline-variant/70 dark:border-[#3a3835]"
                                         style={{ top: `${((hour - startHour) * 60 / gridMinutes) * 100}%` }}
                                     />
                                 ))}

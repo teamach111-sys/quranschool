@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
 import { useToast } from '../../components/ToastProvider';
 import { apiFetch } from '../../lib/api';
@@ -129,7 +129,7 @@ export default function Ecole() {
     };
 
     if (loadError) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.schoolSettings.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.schoolSettings.loadError}</p>;
     }
 
     const fields = [
@@ -142,7 +142,7 @@ export default function Ecole() {
         { name: 'monthly_fee', label: t.schoolSettings.monthlyFee, type: 'number', min: 0, max: 99999999.99, step: '0.01' },
     ];
 
-    const inputClassName = 'w-full rounded-md border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
+    const inputClassName = 'w-full rounded-md border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
 
     return (
         <form className="flex w-full max-w-3xl flex-col gap-4" onSubmit={handleSubmit}>
@@ -205,7 +205,7 @@ export default function Ecole() {
                                 type="button"
                                 disabled={!newPaymentMethod.trim() || school.payment_methods.length >= 20}
                                 onClick={addPaymentMethod}
-                                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary dark:bg-[#2f7d4f] dark:text-white dark:hover:bg-[#37955a] px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <Icon name="add" className="text-[18px]" />
                                 {t.schoolSettings.addPaymentMethod}
@@ -220,7 +220,7 @@ export default function Ecole() {
                                         aria-label={t.schoolSettings.removePaymentMethod(method)}
                                         disabled={school.payment_methods.length <= 1}
                                         onClick={() => removePaymentMethod(method)}
-                                        className="inline-flex size-5 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="inline-flex size-5 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-[#32302e] disabled:cursor-not-allowed disabled:opacity-40"
                                     >
                                         <Icon name="close" className="text-[14px]" />
                                     </button>
@@ -236,7 +236,7 @@ export default function Ecole() {
                     type="button"
                     disabled={loading || downloadingTemplate}
                     onClick={downloadReceiptTemplate}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-outline-variant px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-tertiary-container dark:text-inverse-on-surface"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-outline-variant px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:hover:bg-[#32302e] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#3a3835] dark:text-inverse-on-surface"
                 >
                     <Icon name={downloadingTemplate ? 'progress_activity' : 'download'} className="text-[18px]" />
                     {downloadingTemplate ? t.schoolSettings.downloadingTemplate : t.schoolSettings.downloadTemplate}
@@ -244,13 +244,13 @@ export default function Ecole() {
                 <button
                     type="submit"
                     disabled={loading || saving}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary dark:bg-[#2f7d4f] dark:text-white dark:hover:bg-[#37955a] px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     <Icon name={saving ? 'progress_activity' : 'save'} className="text-[18px]" />
                     {saving ? t.schoolSettings.saving : t.schoolSettings.save}
                 </button>
                 {saved && <p role="status" className="text-[13px] text-primary dark:text-primary-fixed-dim">{t.schoolSettings.saved}</p>}
-                {saveError && <p role="alert" className="text-[13px] text-error dark:text-error-container">{t.schoolSettings.saveError}</p>}
+                {saveError && <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{t.schoolSettings.saveError}</p>}
             </div>
         </form>
     );

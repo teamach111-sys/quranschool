@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
 import { useToast } from '../../../components/ToastProvider';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -165,20 +165,20 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                 </div>
             </header>
 
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 dark:border-tertiary-container dark:bg-inverse-surface">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 dark:border-[#3a3835] dark:bg-inverse-surface">
                 <p className="text-[13px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
                     {t.teacherDashboard.attendanceProgress(
                         numberFormat.format(markedCount),
                         numberFormat.format(students.length),
                     )}
                 </p>
-                <span className="shrink-0 rounded-full bg-surface-container px-2.5 py-1 text-[12px] leading-5 font-semibold text-on-surface-variant dark:bg-tertiary-container dark:text-on-tertiary-container">
+                <span className="shrink-0 rounded-full bg-surface-container px-2.5 py-1 text-[12px] leading-5 font-semibold text-on-surface-variant dark:bg-[#2a2928] dark:text-[#c6c2bd]">
                     {numberFormat.format(students.length)}
                 </span>
             </div>
 
             {hasSuggestedLateStudents && (
-                <p role="note" className="rounded-lg border border-primary/30 bg-primary-fixed/40 p-3 text-[13px] leading-5 text-on-surface dark:border-primary-fixed-dim/30 dark:bg-primary-container/30 dark:text-inverse-on-surface">
+                <p role="note" className="rounded-lg border border-primary/30 bg-primary-fixed/40 p-3 text-[13px] leading-5 text-on-surface dark:border-primary-fixed-dim/30 dark:bg-[#32302e]/30 dark:text-inverse-on-surface">
                     {t.teacherDashboard.lateSuggestion(lesson.starts_at, lesson.ends_at)}
                 </p>
             )}
@@ -196,7 +196,7 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                             <li
                                 key={student.student_id}
                                 aria-busy={isSaving}
-                                className="flex min-w-0 flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 dark:border-tertiary-container dark:bg-inverse-surface"
+                                className="flex min-w-0 flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 dark:border-[#3a3835] dark:bg-inverse-surface"
                             >
                                 <div className="flex min-w-0 items-center justify-between gap-3">
                                     <div className="min-w-0">
@@ -215,7 +215,7 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                                         )}
                                     </div>
                                     {student.status && (
-                                        <span className="shrink-0 rounded-full bg-primary-fixed px-2.5 py-1 text-[12px] leading-5 font-semibold text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container">
+                                        <span className="shrink-0 rounded-full bg-primary-fixed px-2.5 py-1 text-[12px] leading-5 font-semibold text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88]">
                                             {t.attendance.statuses[student.status]}
                                         </span>
                                     )}
@@ -233,8 +233,8 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                                                 onClick={() => saveStatus(student.student_id, status)}
                                                 className={`inline-flex min-h-11 items-center justify-center gap-1 rounded-lg border px-2 text-[12px] leading-4 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-60 ${
                                                     student.status === status
-                                                        ? 'border-primary bg-primary-container text-on-primary dark:border-primary-fixed-dim dark:bg-primary-container dark:text-on-primary-container'
-                                                        : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface dark:hover:bg-tertiary-container'
+                                                        ? 'border-primary bg-primary-container text-on-primary dark:border-primary-fixed-dim dark:bg-[#32302e] dark:text-[#918d88]'
+                                                        : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface dark:hover:bg-tertiary-container'
                                                 }`}
                                             >
                                                 {isSaving && student.status === status
@@ -253,7 +253,7 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                                 {(rowErrors[student.student_id] || retryStatus) && (
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         {rowErrors[student.student_id] && (
-                                            <p role="alert" className="text-[12px] leading-5 text-error dark:text-error-container">
+                                            <p role="alert" className="text-[12px] leading-5 text-error dark:text-[#e59a92]">
                                                 {rowErrors[student.student_id]}
                                             </p>
                                         )}
@@ -274,12 +274,12 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                     })}
                 </ul>
             ) : (
-                <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-[13px] leading-5 text-on-surface-variant dark:border-tertiary-container dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
+                <p className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-[13px] leading-5 text-on-surface-variant dark:border-[#3a3835] dark:bg-inverse-surface dark:text-tertiary-fixed-dim">
                     {t.teacherDashboard.noStudentsInLesson}
                 </p>
             )}
 
-            <div className="sticky bottom-0 z-10 -mx-4 mt-2 border-t border-outline-variant bg-surface-container-lowest/95 p-4 backdrop-blur dark:border-tertiary-container dark:bg-inverse-surface/95">
+            <div className="sticky bottom-0 z-10 -mx-4 mt-2 border-t border-outline-variant bg-surface-container-lowest/95 p-4 backdrop-blur dark:border-[#3a3835] dark:bg-inverse-surface/95">
                 <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
                     {allMarked && (
                         <p className="text-center text-[12px] leading-5 text-on-surface-variant dark:text-tertiary-fixed-dim">
@@ -292,7 +292,7 @@ export default function TodayAttendance({ lesson, todayDate, yearId, onBack }) {
                         onClick={() => {
                             window.location.hash = '/seances-memorisation';
                         }}
-                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-3 text-[14px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-on-surface-variant disabled:opacity-60 dark:bg-primary-container dark:text-on-primary-container dark:disabled:bg-tertiary-container dark:disabled:text-tertiary-fixed-dim"
+                        className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-3 text-[14px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-surface-container disabled:text-on-surface-variant disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white dark:disabled:bg-tertiary-container dark:disabled:text-tertiary-fixed-dim"
                     >
                         <Icon name="menu_book" className="text-[20px]" />
                         {t.teacherDashboard.continueToMemorization}

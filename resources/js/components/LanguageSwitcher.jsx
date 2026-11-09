@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLanguage } from '../persisters/languageswitch';
 
 export default function LanguageSwitcher({ compact = false }) {
@@ -108,18 +108,18 @@ export default function LanguageSwitcher({ compact = false }) {
     return (
         <div
             ref={containerRef}
-            className={`relative flex items-center border border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#182620] rounded p-0.5 ${containerHeight} transition-colors duration-200`}
+            className={`relative flex items-center border border-outline-variant dark:border-[#3a3835] bg-surface-container-low dark:bg-[#1c1b1a] rounded p-0.5 ${containerHeight} transition-colors duration-200`}
             role="group" aria-label="Language"
         >
             <div
-                className={`absolute top-0.5 bottom-0.5 rounded bg-primary dark:bg-[#baeed9] ${animate ? 'transition-all duration-200' : ''} shadow-xs ${ready ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute top-0.5 bottom-0.5 rounded bg-primary dark:bg-[#918d88] ${animate ? 'transition-all duration-200' : ''} shadow-xs ${ready ? 'opacity-100' : 'opacity-0'}`}
                 style={indicatorStyle}
             />
             <button ref={frRef} type="button" onClick={() => setLang('fr')}
-                className={`relative z-10 h-full ${btnText} font-mono leading-[14px] tracking-[0.02em] rounded font-medium flex items-center justify-center transition-colors duration-200 ${lang === 'fr' ? 'text-on-primary dark:text-[#002117]' : 'text-on-surface-variant dark:text-[#9bb2a8] hover:text-on-surface dark:hover:text-[#ecf3ef]'}`}
+                className={`relative z-10 h-full ${btnText} font-mono leading-[14px] tracking-[0.02em] rounded font-medium flex items-center justify-center transition-colors duration-200 ${lang === 'fr' ? 'text-on-primary dark:text-[#1c1b1a]' : 'text-on-surface-variant dark:text-[#918d88] hover:text-on-surface dark:hover:text-[#e7e3de]'}`}
             >FR</button>
             <button ref={arRef} type="button" onClick={() => setLang('ar')}
-                className={`relative z-10 h-full ${btnText} font-mono leading-[14px] tracking-[0.02em] rounded font-medium flex items-center justify-center transition-colors duration-200 ${lang === 'ar' ? 'text-on-primary dark:text-[#002117]' : 'text-on-surface-variant dark:text-[#9bb2a8] hover:text-on-surface dark:hover:text-[#ecf3ef]'}`}
+                className={`relative z-10 h-full ${btnText} font-mono leading-[14px] tracking-[0.02em] rounded font-medium flex items-center justify-center transition-colors duration-200 ${lang === 'ar' ? 'text-on-primary dark:text-[#1c1b1a]' : 'text-on-surface-variant dark:text-[#918d88] hover:text-on-surface dark:hover:text-[#e7e3de]'}`}
             >العربية</button>
         </div>
     );

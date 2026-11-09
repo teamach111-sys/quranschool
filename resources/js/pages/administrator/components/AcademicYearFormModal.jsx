@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+﻿import React, { useEffect, useId, useRef, useState } from 'react';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
 import { apiFetch } from '../../../lib/api';
@@ -98,12 +98,12 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
 
     if (!open) return null;
 
-    const inputClassName = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:focus:border-primary-fixed-dim dark:focus:bg-[#202f29] dark:focus:ring-primary-fixed-dim';
+    const inputClassName = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de] dark:focus:border-primary-fixed-dim dark:focus:bg-[#232221] dark:focus:ring-primary-fixed-dim';
     const title = isEditing ? t.academicYears.formEditTitle : t.academicYears.formCreateTitle;
 
     return (
         <div
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-on-background/40 p-3 sm:p-5"
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-[#131e18]/50 p-3 sm:p-5 dark:bg-[#0f0e0d]/70"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget && !saving) onClose();
             }}
@@ -116,12 +116,12 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                 aria-labelledby={`${dialogId}-title`}
                 tabIndex={-1}
                 dir={isRTL ? 'rtl' : 'ltr'}
-                className="max-h-[calc(100vh-1.5rem)] w-full max-w-[500px] overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-ambient outline-none dark:border-[#384d43] dark:bg-[#202f29] dark:shadow-2xl sm:p-7"
+                className="max-h-[calc(100vh-1.5rem)] w-full max-w-[500px] overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-ambient outline-none dark:border-[#3a3835] dark:bg-[#232221] dark:shadow-2xl sm:p-7"
             >
                 <form className="relative flex flex-col gap-5" onSubmit={handleSubmit} aria-busy={saving}>
                     <header className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-start gap-3">
-                            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary dark:bg-primary-container dark:text-on-primary-container">
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary dark:bg-[#32302e] dark:text-[#918d88]">
                                 <Icon name="calendar_month" className="text-[20px]" />
                             </span>
                             <h2 id={`${dialogId}-title`} className="pt-1 text-[18px] leading-6 font-semibold text-on-surface dark:text-inverse-on-surface">
@@ -133,7 +133,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                             aria-label={t.academicYears.cancel}
                             disabled={saving}
                             onClick={onClose}
-                            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container dark:bg-[#182620] dark:text-[#9bb2a8] dark:hover:bg-[#2c3d36]"
+                            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container dark:bg-[#1c1b1a] dark:text-[#918d88] dark:hover:bg-[#32302e]"
                         >
                             <Icon name="close" className="text-[18px]" />
                         </button>
@@ -185,7 +185,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-3.5 dark:border-[#384d43] dark:bg-[#182620]">
+                        <div className="flex flex-col gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-3.5 dark:border-[#3a3835] dark:bg-[#1c1b1a]">
                             <label className="flex min-h-11 items-center gap-3 text-[13px] leading-5 text-on-surface dark:text-inverse-on-surface">
                                 <input
                                     name="is_active"
@@ -210,22 +210,22 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                             </label>
                         </div>
 
-                        {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
+                        {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
                     </div>
 
-                    <footer className="flex flex-col gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:flex-row">
+                    <footer className="flex flex-col gap-3 border-t border-outline-variant pt-4 dark:border-[#3a3835] sm:flex-row">
                         <button
                             type="button"
                             disabled={saving}
                             onClick={onClose}
-                            className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
+                            className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#32302e] dark:text-[#e7e3de] dark:hover:bg-[#32302e]"
                         >
                             {t.academicYears.cancel}
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3] dark:hover:bg-[#3e7b67]"
+                            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white dark:hover:bg-[#37955a]"
                         >
                             <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                             {saving ? t.academicYears.saving : t.academicYears.save}
@@ -235,7 +235,7 @@ export default function AcademicYearFormModal({ open, year = null, onClose, onSa
                         <div
                             role="status"
                             aria-label={t.academicYears.saving}
-                            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl bg-surface-container-lowest/90 text-on-surface-variant dark:bg-[#202f29]/90 dark:text-tertiary-fixed-dim"
+                            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl bg-surface-container-lowest/90 text-on-surface-variant dark:bg-[#232221]/90 dark:text-tertiary-fixed-dim"
                         >
                             <Icon name="progress_activity" className="animate-spin text-[32px] text-primary" />
                             <span className="text-center text-[13px] leading-5">{t.academicYears.saving}</span>

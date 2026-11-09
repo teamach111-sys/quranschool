@@ -36,7 +36,7 @@ export default function ConfirmDeleteModal({
 
     return (
         <div
-            className="fixed inset-0 z-[90] flex items-center justify-center bg-on-background/50 p-3 sm:p-5"
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-[#131e18]/55 p-3 sm:p-5 dark:bg-[#0f0e0d]/75"
             onMouseDown={(event) => {
                 if (!isLoading && event.target === event.currentTarget) onClose();
             }}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Icon from './Icon';
 import { useLanguage } from '../hooks/useLanguage';
 import { apiFetch } from '../lib/api';
@@ -69,7 +69,7 @@ export default function PastYearBanner({ visible }) {
         <aside
             role="status"
             dir={isRTL ? 'rtl' : 'ltr'}
-            className="mb-3 flex w-full flex-col gap-3 rounded-lg border border-secondary/30 bg-secondary-container px-3 py-3 text-on-secondary-container dark:border-secondary-fixed-dim/30 dark:bg-[#3b321e] dark:text-[#ffdeaa] sm:flex-row sm:items-center sm:justify-between"
+            className="mb-3 flex w-full flex-col gap-3 rounded-lg border border-secondary/30 bg-secondary-container px-3 py-3 text-on-secondary-container dark:border-secondary-fixed-dim/30 dark:bg-[#2a2928] dark:text-[#c6c2bd] sm:flex-row sm:items-center sm:justify-between"
         >
             <div className="flex items-start gap-2">
                 <Icon name="lock" className="mt-0.5 shrink-0 text-[18px]" />
@@ -81,7 +81,7 @@ export default function PastYearBanner({ visible }) {
                 <button
                     type="button"
                     onClick={() => selectAcademicYear(currentYear)}
-                    className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-primary-container dark:text-on-primary"
+                    className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-[#2f7d4f] dark:text-white"
                 >
                     <Icon name={isRTL ? 'arrow_forward' : 'arrow_back'} className="text-[17px]" />
                     {t.yearSelector.returnToCurrent}

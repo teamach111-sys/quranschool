@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import MonthInput from '../../../components/MonthInput';
@@ -190,7 +190,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
         <button
             type="button"
             onClick={handleClose}
-            className="min-h-11 flex-1 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-primary-container dark:text-on-primary"
+            className="min-h-11 flex-1 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
         >
             {t.payments.done}
         </button>
@@ -211,7 +211,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                 type="button"
                 onClick={step === 'review' ? handleGenerate : handlePreview}
                 disabled={saving || (step === 'review' ? preview?.create_count === 0 : !canPreview)}
-                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-container dark:text-on-primary"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white"
             >
                 {saving && <Icon name="progress_activity" className="animate-spin text-[17px]" />}
                 {saving
@@ -238,7 +238,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                     {t.payments.generationOptionsLoading}
                 </p>
             ) : error && !options ? (
-                <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>
+                <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{error}</p>
             ) : step === 'complete' ? (
                 <div className="flex flex-col gap-4">
                     <p role="status" className="text-[14px] font-semibold text-primary dark:text-primary-fixed-dim">
@@ -261,7 +261,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                             </div>
                         ))}
                     </div>
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant px-3 py-3 dark:border-outline-variant">
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant px-3 py-3 dark:border-[#3a3835]">
                         <span className="text-[13px] font-semibold text-on-surface dark:text-inverse-on-surface">{t.payments.totalToCreate}</span>
                         <span className="text-[15px] font-bold text-on-surface dark:text-inverse-on-surface">
                             {formatAmount(preview.total_amount, preview.currency, locale)}
@@ -276,7 +276,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                         <h3 className="text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">{t.payments.studentPeriods}</h3>
                         <ul className="flex max-h-60 flex-col gap-2 overflow-y-auto rounded-lg bg-surface-container-low p-3 dark:bg-inverse-surface">
                             {preview.students.map((student) => (
-                                <li key={student.id} className="flex flex-col gap-1 border-b border-outline-variant pb-2 last:border-b-0 last:pb-0 dark:border-[#384d43]">
+                                <li key={student.id} className="flex flex-col gap-1 border-b border-outline-variant pb-2 last:border-b-0 last:pb-0 dark:border-[#3a3835]">
                                     <span className="text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface">{student.name}</span>
                                     <span className="text-[11px] leading-4 text-on-surface-variant dark:text-tertiary-fixed-dim">
                                         {t.payments.toCreate}: {student.create_count} · {t.payments.alreadyExists}: {student.existing_count} · {t.payments.overlapSkipped}: {student.overlap_count} · {t.payments.beforeEnrollment}: {student.not_enrolled_count}
@@ -285,7 +285,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                             ))}
                         </ul>
                     </div>
-                    {error && <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>}
+                    {error && <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{error}</p>}
                 </div>
             ) : (
                 <div className="flex flex-col gap-4">
@@ -293,7 +293,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                         {t.payments.generationDescription}
                     </p>
                     {options.monthly_fee === null && (
-                        <p role="alert" className="rounded-lg bg-error-container px-3 py-2 text-[12px] text-on-error-container">
+                        <p role="alert" className="rounded-lg bg-error-container px-3 py-2 text-[12px] text-on-error-container dark:bg-[#3a2624] dark:text-[#e59a92]">
                             {t.payments.monthlyFeeMissing}
                         </p>
                     )}
@@ -383,7 +383,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                         </button>
                     </div>
                     {visibleStudents.length > 0 ? (
-                        <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto rounded-lg border border-outline-variant p-2 dark:border-outline-variant">
+                        <ul className="flex max-h-60 flex-col gap-1 overflow-y-auto rounded-lg border border-outline-variant p-2 dark:border-[#3a3835]">
                             {visibleStudents.map((student) => {
                                 const id = String(student.id);
                                 return (
@@ -410,7 +410,7 @@ export default function PaymentPeriodGeneratorModal({ yearId, onClose, onGenerat
                     ) : (
                         <p role="status" className="text-[13px] text-on-surface-variant dark:text-tertiary-fixed-dim">{t.students.empty}</p>
                     )}
-                    {error && <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>}
+                    {error && <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{error}</p>}
                 </div>
             )}
         </Modal>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Icon from '../components/Icon';
 import Logo from '../components/Logo';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -77,27 +77,27 @@ export default function Dashboard({ user }) {
     const dateGreg = t.dateGreg;
 
     return (
-        <div className={`bg-surface dark:bg-[#182620] ${fontClass} text-on-surface dark:text-[#ecf3ef] antialiased transition-colors duration-200`}>
+        <div className={`bg-surface dark:bg-[#1c1b1a] ${fontClass} text-on-surface dark:text-[#e7e3de] antialiased transition-colors duration-200`}>
             {/* ==================== DESKTOP LAYOUT (>1085px) ==================== */}
             {isDesktop && (
             <div className="block">
                 {/* Sidebar */}
-                <aside className={`fixed ${sidebarSide} top-0 bottom-0 w-64 bg-surface-container-low dark:bg-[#202f29] border-outline-variant dark:border-[#2f4239] z-50 flex flex-col justify-between select-none transition-colors duration-200`}>
+                <aside className={`fixed ${sidebarSide} top-0 bottom-0 w-64 bg-surface-container-low dark:bg-[#232221] border-outline-variant dark:border-[#3a3835] z-50 flex flex-col justify-between select-none transition-colors duration-200`}>
                     <div className="flex flex-col flex-1 min-h-0">
                         {/* Logo */}
-                        <div className="h-16 px-4 flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#202f29] transition-colors duration-200">
+                        <div className="h-16 px-4 flex items-center justify-between border-b border-outline-variant dark:border-[#3a3835] bg-surface-container-low dark:bg-[#232221] transition-colors duration-200">
                             <Logo className="h-9" />
                         </div>
                         {/* Nav label */}
-                        <div className="px-3 py-2 border-b border-outline-variant dark:border-[#2f4239] bg-surface-container dark:bg-[#182620]/60 transition-colors duration-200">
-                            <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium uppercase text-on-surface-variant dark:text-[#9bb2a8] tracking-wider">{t.navModule}</span>
+                        <div className="px-3 py-2 border-b border-outline-variant dark:border-[#3a3835] bg-surface-container dark:bg-[#1c1b1a]/60 transition-colors duration-200">
+                            <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium uppercase text-on-surface-variant dark:text-[#918d88] tracking-wider">{t.navModule}</span>
                         </div>
                         {/* Nav items */}
                         <PageNav activeKey={allowedPage?.key} onNavigate={handlePageChange} role={role} />
                     </div>
                     {/* Logout */}
-                    <div className="p-2 border-t border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] transition-colors duration-200">
-                        <button type="button" onClick={handleLogout} className="flex items-center justify-between px-3 py-2 rounded text-error dark:text-[#f87171] hover:bg-error-container dark:hover:bg-[#4a2626]/40 hover:text-on-error-container dark:hover:text-[#fca5a5] transition-colors w-full">
+                    <div className="p-2 border-t border-outline-variant dark:border-[#3a3835] bg-surface-container-lowest dark:bg-[#232221] transition-colors duration-200">
+                        <button type="button" onClick={handleLogout} className="flex items-center justify-between px-3 py-2 rounded text-error dark:text-[#d96055] hover:bg-error-container dark:hover:bg-[#3a2624]/40 hover:text-on-error-container dark:hover:text-[#e59a92] transition-colors w-full">
                             <div className="flex items-center gap-3">
                                 <Icon name="power_settings_new" className={`text-[18px] ${isRTL ? 'rotate-180' : ''}`} />
                                 <span className="text-[13px] leading-[18px] font-medium">{t.logout}</span>
@@ -110,15 +110,15 @@ export default function Dashboard({ user }) {
                 {/* Main */}
                 <div className={`${contentPad} flex flex-col min-h-screen`}>
                     {/* Header */}
-                    <header className={`fixed top-0 ${headerPos} h-16 bg-surface-container-lowest/90 dark:bg-[#202f29]/90 backdrop-blur border-b border-outline-variant dark:border-[#2f4239] z-40 px-4 flex items-center justify-between transition-colors duration-200`}>
+                    <header className={`fixed top-0 ${headerPos} h-16 bg-surface-container-lowest/90 dark:bg-[#232221]/90 backdrop-blur border-b border-outline-variant dark:border-[#3a3835] z-40 px-4 flex items-center justify-between transition-colors duration-200`}>
                         <div className="flex items-center gap-3">
                             <YearSelector />
-                            <div className="h-4 w-px bg-outline-variant dark:bg-[#2f4239]" />
-                            <div className="flex items-center gap-1 text-on-surface-variant dark:text-[#9bb2a8] bg-surface-container-low dark:bg-[#182620] px-3 rounded border border-outline-variant dark:border-[#2f4239] h-8 transition-colors duration-200">
-                                <Icon name="schedule" className="text-[16px] text-outline dark:text-[#9bb2a8]" />
-                                <span className="text-[12px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8]">{dateGreg}</span>
-                                <span className="text-outline dark:text-[#707974] font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium">•</span>
-                                <span className="text-[12px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8]">{t.dateHijri}</span>
+                            <div className="h-4 w-px bg-outline-variant dark:bg-[#3a3835]" />
+                            <div className="flex items-center gap-1 text-on-surface-variant dark:text-[#918d88] bg-surface-container-low dark:bg-[#1c1b1a] px-3 rounded border border-outline-variant dark:border-[#3a3835] h-8 transition-colors duration-200">
+                                <Icon name="schedule" className="text-[16px] text-outline dark:text-[#918d88]" />
+                                <span className="text-[12px] leading-[18px] text-on-surface-variant dark:text-[#918d88]">{dateGreg}</span>
+                                <span className="text-outline dark:text-[#6f6b66] font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium">•</span>
+                                <span className="text-[12px] leading-[18px] text-on-surface-variant dark:text-[#918d88]">{t.dateHijri}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -130,21 +130,21 @@ export default function Dashboard({ user }) {
 
                     {/* Page title + content */}
                     <div className="pt-16 flex-1 flex flex-col">
-                        <section className="bg-surface-container-lowest dark:bg-[#202f29] border-b border-outline-variant dark:border-[#2f4239] px-4 py-3 transition-colors duration-200">
-                            <h1 className="text-[22px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#ecf3ef] tracking-tight">{pageInfo.title}</h1>
-                            <p className="text-[13px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8] mt-1 max-w-4xl">{pageInfo.subtitle}</p>
+                        <section className="bg-surface-container-lowest dark:bg-[#232221] border-b border-outline-variant dark:border-[#3a3835] px-4 py-3 transition-colors duration-200">
+                            <h1 className="text-[22px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#e7e3de] tracking-tight">{pageInfo.title}</h1>
+                            <p className="text-[13px] leading-[18px] text-on-surface-variant dark:text-[#918d88] mt-1 max-w-4xl">{pageInfo.subtitle}</p>
                         </section>
-                        <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200" style={{ padding: '10px' }}>
+                        <main className="flex-1 bg-surface dark:bg-[#1c1b1a] transition-colors duration-200" style={{ padding: '10px' }}>
                             <div className="flex flex-col w-full gap-3">
-                                <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-outline-variant dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center select-none'}`}>
+                                <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#232221] border border-solid border-outline-variant dark:border-[#3a3835] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center select-none'}`}>
                                     <PastYearBanner visible={showPastYearBanner} />
                                     {ActivePageComponent ? <ActivePageComponent routeParams={routeParams} /> : (
                                         <div className="flex flex-col items-center justify-center">
-                                            <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
+                                            <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#c6c2bd]">
                                                 <Icon name="dashboard_customize" className="text-[24px]" />
                                                 <span className="text-[18px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider">{t.componentsHere}</span>
                                             </div>
-                                            <span className="text-[12px] leading-[18px] text-outline dark:text-[#9bb2a8] mt-2">{t.spacingLabel}</span>
+                                            <span className="text-[12px] leading-[18px] text-outline dark:text-[#918d88] mt-2">{t.spacingLabel}</span>
                                         </div>
                                     )}
                                 </div>
@@ -157,10 +157,10 @@ export default function Dashboard({ user }) {
 
             {/* ==================== MOBILE/TABLET LAYOUT (≤1085px) ==================== */}
             {!isDesktop && (
-            <div className="flex flex-col min-h-screen bg-surface dark:bg-[#182620]">
-                <header className="sticky top-0 z-40 bg-surface-container-lowest/90 dark:bg-[#202f29]/90 backdrop-blur border-b border-outline-variant dark:border-[#2f4239] select-none transition-colors duration-200">
+            <div className="flex flex-col min-h-screen bg-surface dark:bg-[#1c1b1a]">
+                <header className="sticky top-0 z-40 bg-surface-container-lowest/90 dark:bg-[#232221]/90 backdrop-blur border-b border-outline-variant dark:border-[#3a3835] select-none transition-colors duration-200">
                     {/* Primary Mobile App Bar */}
-                    <div className="h-14 px-[10px] flex items-center justify-between border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-lowest dark:bg-[#202f29] transition-colors duration-200">
+                    <div className="h-14 px-[10px] flex items-center justify-between border-b border-outline-variant dark:border-[#3a3835] bg-surface-container-lowest dark:bg-[#232221] transition-colors duration-200">
                         <div className="flex items-center gap-2">
                             <Logo className="h-7" />
                         </div>
@@ -171,36 +171,36 @@ export default function Dashboard({ user }) {
                         </div>
                     </div>
                     {/* Subheader: Date & Academic Year pill row */}
-                    <div className="py-1.5 dark:bg-[#182620] flex items-center justify-between gap-1.5 border-b border-outline-variant dark:border-[#2f4239] text-[11px] w-full overflow-visible select-none px-[10px] transition-colors duration-200 bg-surface-container-lowest">
+                    <div className="py-1.5 dark:bg-[#1c1b1a] flex items-center justify-between gap-1.5 border-b border-outline-variant dark:border-[#3a3835] text-[11px] w-full overflow-visible select-none px-[10px] transition-colors duration-200 bg-surface-container-lowest">
                         <div className="flex flex-row items-center gap-1.5 flex-nowrap w-full min-w-0">
                             <YearSelector compact />
-                            <div className="flex items-center justify-center gap-1.5 text-on-surface-variant dark:text-[#9bb2a8] bg-surface-container-low dark:bg-[#182620] px-2 py-0.5 rounded border border-outline-variant dark:border-[#2f4239] h-6 sm:h-8 min-w-0 flex-1 overflow-hidden truncate text-center transition-colors duration-200">
-                                <Icon name="schedule" className="text-[13px] text-outline dark:text-[#9bb2a8] shrink-0" />
-                                <span className="font-mono text-[10px] sm:text-[11px] truncate shrink-0 font-medium text-on-surface-variant dark:text-[#9bb2a8]">{isRTL ? t.dateGregMobile : t.dateGreg}</span>
-                                <span className="text-outline dark:text-[#707974] font-mono text-[10px] shrink-0 font-medium">•</span>
-                                <span className="font-mono text-[10px] sm:text-[11px] truncate min-w-0 font-medium text-on-surface-variant dark:text-[#9bb2a8]">{t.dateHijri}</span>
+                            <div className="flex items-center justify-center gap-1.5 text-on-surface-variant dark:text-[#918d88] bg-surface-container-low dark:bg-[#1c1b1a] px-2 py-0.5 rounded border border-outline-variant dark:border-[#3a3835] h-6 sm:h-8 min-w-0 flex-1 overflow-hidden truncate text-center transition-colors duration-200">
+                                <Icon name="schedule" className="text-[13px] text-outline dark:text-[#918d88] shrink-0" />
+                                <span className="font-mono text-[10px] sm:text-[11px] truncate shrink-0 font-medium text-on-surface-variant dark:text-[#918d88]">{isRTL ? t.dateGregMobile : t.dateGreg}</span>
+                                <span className="text-outline dark:text-[#6f6b66] font-mono text-[10px] shrink-0 font-medium">•</span>
+                                <span className="font-mono text-[10px] sm:text-[11px] truncate min-w-0 font-medium text-on-surface-variant dark:text-[#918d88]">{t.dateHijri}</span>
                             </div>
                         </div>
                     </div>
                 </header>
 
                 {/* Collapsible Navigation Drawer */}
-                <div className="border-b border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#202f29] select-none transition-colors duration-200">
-                    <button aria-expanded={drawerOpen} className={`w-full flex items-center justify-between py-2 cursor-pointer bg-surface-container dark:bg-[#182620]/60 hover:bg-surface-container-high dark:hover:bg-[#2c3d36] transition-colors px-[10px] ${drawerTextAlign}`} type="button" onClick={() => setDrawerOpen(o => !o)}>
+                <div className="border-b border-outline-variant dark:border-[#3a3835] bg-surface-container-low dark:bg-[#232221] select-none transition-colors duration-200">
+                    <button aria-expanded={drawerOpen} className={`w-full flex items-center justify-between py-2 cursor-pointer bg-surface-container dark:bg-[#1c1b1a]/60 hover:bg-surface-container-high dark:hover:bg-[#32302e] transition-colors px-[10px] ${drawerTextAlign}`} type="button" onClick={() => setDrawerOpen(o => !o)}>
                         <div className="flex items-center gap-2">
-                            <span className="font-mono text-[11px] leading-[14px] tracking-[0.02em] font-medium uppercase tracking-wider text-on-surface-variant dark:text-[#9bb2a8] font-semibold">{t.navModule}</span>
+                            <span className="font-mono text-[11px] leading-[14px] tracking-[0.02em] font-medium uppercase tracking-wider text-on-surface-variant dark:text-[#918d88] font-semibold">{t.navModule}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium text-outline dark:text-[#9bb2a8] uppercase">{drawerOpen ? t.drawerClose : t.drawerOpen}</span>
-                            <Icon name="expand_more" className={`text-[18px] text-outline dark:text-[#9bb2a8] transition-transform duration-300 ${drawerOpen ? 'rotate-180' : ''}`} />
+                            <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium text-outline dark:text-[#918d88] uppercase">{drawerOpen ? t.drawerClose : t.drawerOpen}</span>
+                            <Icon name="expand_more" className={`text-[18px] text-outline dark:text-[#918d88] transition-transform duration-300 ${drawerOpen ? 'rotate-180' : ''}`} />
                         </div>
                     </button>
                     {drawerOpen && (
-                        <div className="flex flex-col gap-1 bg-surface-container-low dark:bg-[#202f29]">
+                        <div className="flex flex-col gap-1 bg-surface-container-low dark:bg-[#232221]">
                             <PageNav activeKey={allowedPage?.key} onNavigate={handlePageChange} role={role} compact />
                             <div className="px-[10px] pb-[10px]">
-                                <div className="pt-1 mt-1 border-t border-outline-variant dark:border-[#2f4239]">
-                                    <button type="button" onClick={handleLogout} className="flex items-center justify-between px-3 py-2 rounded text-error dark:text-[#f87171] hover:bg-error-container dark:hover:bg-[#4a2626]/40 hover:text-on-error-container dark:hover:text-[#fca5a5] transition-colors w-full">
+                                <div className="pt-1 mt-1 border-t border-outline-variant dark:border-[#3a3835]">
+                                    <button type="button" onClick={handleLogout} className="flex items-center justify-between px-3 py-2 rounded text-error dark:text-[#d96055] hover:bg-error-container dark:hover:bg-[#3a2624]/40 hover:text-on-error-container dark:hover:text-[#e59a92] transition-colors w-full">
                                         <div className="flex items-center gap-2">
                                             <Icon name="power_settings_new" className="text-[18px]" />
                                             <span className="text-[13px] leading-[18px] font-medium">{t.logout}</span>
@@ -214,25 +214,25 @@ export default function Dashboard({ user }) {
                 </div>
 
                 {/* Page Title Section */}
-                <section className="bg-surface-container-lowest dark:bg-[#202f29] border-b border-outline-variant dark:border-[#2f4239] py-3 px-[10px] transition-colors duration-200">
+                <section className="bg-surface-container-lowest dark:bg-[#232221] border-b border-outline-variant dark:border-[#3a3835] py-3 px-[10px] transition-colors duration-200">
                     <div>
-                        <h1 className="text-[20px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#ecf3ef] tracking-tight">{pageInfo.title}</h1>
-                        <p className="text-[12px] sm:text-[13px] leading-[18px] text-on-surface-variant dark:text-[#9bb2a8] mt-0.5 max-w-4xl">{pageInfo.subtitle}</p>
+                        <h1 className="text-[20px] leading-[28px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#e7e3de] tracking-tight">{pageInfo.title}</h1>
+                        <p className="text-[12px] sm:text-[13px] leading-[18px] text-on-surface-variant dark:text-[#918d88] mt-0.5 max-w-4xl">{pageInfo.subtitle}</p>
                     </div>
                 </section>
 
                 {/* Main Content Area */}
-                <main className="flex-1 bg-surface dark:bg-[#182620] transition-colors duration-200 p-[10px]">
+                <main className="flex-1 bg-surface dark:bg-[#1c1b1a] transition-colors duration-200 p-[10px]">
                     <div className="flex flex-col w-full h-full min-h-[70vh]">
-                        <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#202f29] border border-solid border-[#c0ccc2] dark:border-[#384d43] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center text-center select-none'}`}>
+                        <div className={`w-full flex-1 min-h-[70vh] bg-surface-container-low dark:bg-[#232221] border border-solid border-[#c0ccc2] dark:border-[#3a3835] rounded flex flex-col p-[10px] transition-colors duration-200 ${ActivePageComponent ? '' : 'items-center justify-center text-center select-none'}`}>
                             <PastYearBanner visible={showPastYearBanner} />
                             {ActivePageComponent ? <ActivePageComponent routeParams={routeParams} /> : (
                                 <div className="flex flex-col items-center justify-center">
-                                    <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#cad7d0]">
+                                    <div className="flex items-center gap-2 text-on-surface-variant dark:text-[#c6c2bd]">
                                         <Icon name="dashboard_customize" className="text-[24px]" />
                                         <span className="text-[18px] leading-[24px] tracking-[-0.01em] font-semibold uppercase tracking-wider">{t.componentsHere}</span>
                                     </div>
-                                    <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium text-outline dark:text-[#9bb2a8] mt-2 uppercase tracking-wide">{t.spacingLabel}</span>
+                                    <span className="font-mono text-[10px] leading-[14px] tracking-[0.02em] font-medium text-outline dark:text-[#918d88] mt-2 uppercase tracking-wide">{t.spacingLabel}</span>
                                 </div>
                             )}
                         </div>

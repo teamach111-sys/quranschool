@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
+﻿import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import Icon from './Icon';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -35,8 +35,8 @@ function ToastItem({ toast, onDismiss, dismissLabel, isRTL }) {
             dir={isRTL ? 'rtl' : 'ltr'}
             className={`flex items-start gap-3 rounded-xl border p-3 shadow-lg transition duration-200 ${
                 isError
-                    ? 'border-error/30 bg-error-container text-on-error-container'
-                    : 'border-primary/20 bg-primary-fixed text-on-primary-fixed-variant'
+                    ? 'border-error/30 bg-error-container text-on-error-container dark:border-[#d96055]/30 dark:bg-[#3a2624] dark:text-[#e59a92]'
+                    : 'border-primary/20 bg-primary-fixed text-on-primary-fixed-variant dark:border-[#918d88]/25 dark:bg-[#2a2928] dark:text-[#c6c2bd]'
             }`}
         >
             <Icon
@@ -59,7 +59,7 @@ function ToastItem({ toast, onDismiss, dismissLabel, isRTL }) {
                 onClick={() => onDismiss(toast.id)}
                 aria-label={dismissLabel}
                 title={dismissLabel}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
                 <Icon name="close" className="text-[17px]" />
             </button>

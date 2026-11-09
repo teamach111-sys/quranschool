@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import SelectInput from '../../components/SelectInput';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
 
-const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-tertiary-container dark:bg-inverse-surface';
+const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#3a3835] dark:bg-inverse-surface';
 const labelClass = 'flex flex-col gap-1.5 text-[13px] leading-5 font-medium text-on-surface dark:text-inverse-on-surface';
-const inputClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-tertiary-container dark:bg-inverse-surface dark:text-inverse-on-surface';
-const buttonClass = 'min-h-11 w-full rounded-md bg-primary px-4 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-container dark:text-on-primary-container sm:w-auto';
+const inputClass = 'min-h-11 w-full rounded-md border border-outline-variant bg-surface-container-lowest px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
+const buttonClass = 'min-h-11 w-full rounded-md bg-primary px-4 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white sm:w-auto';
 
 function firstErrorMessage(responseData) {
     const errors = responseData?.errors;
@@ -174,7 +174,7 @@ export default function MonProfil() {
     }
 
     if (loadError || !profile) {
-        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.profileForm.loadError}</p>;
+        return <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.profileForm.loadError}</p>;
     }
 
     return (
@@ -197,14 +197,14 @@ export default function MonProfil() {
                     )}
                 </div>
                 {recoveryKey && (
-                    <div className="flex flex-col gap-2 rounded-md border border-outline-variant bg-surface-container-low p-3 dark:border-tertiary-container dark:bg-inverse-surface">
+                    <div className="flex flex-col gap-2 rounded-md border border-outline-variant bg-surface-container-low p-3 dark:border-[#3a3835] dark:bg-inverse-surface">
                         <p className="text-[13px] leading-5 text-on-surface dark:text-inverse-on-surface">
                             {t.profileForm.recoveryKeyOneTimeWarning}
                         </p>
                         <code dir="ltr" className="break-all font-mono text-[13px] text-on-surface dark:text-inverse-on-surface">{recoveryKey}</code>
                     </div>
                 )}
-                {recoveryKeyError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{recoveryKeyError}</p>}
+                {recoveryKeyError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{recoveryKeyError}</p>}
             </section>
 
             <section className={`${cardClass} flex flex-col gap-4`}>
@@ -259,7 +259,7 @@ export default function MonProfil() {
                             <option value="ar">{t.profileForm.arabic}</option>
                         </SelectInput>
                     </label>
-                    {profileError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{profileError}</p>}
+                    {profileError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{profileError}</p>}
                     {profileMessage && <p role="status" className="text-[13px] leading-5 text-primary dark:text-primary-fixed-dim">{profileMessage}</p>}
                     <button className={buttonClass} disabled={profileSaving} type="submit">
                         {profileSaving ? t.profileForm.saving : t.profileForm.saveProfile}
@@ -313,7 +313,7 @@ export default function MonProfil() {
                             value={password.password_confirmation}
                         />
                     </label>
-                    {passwordError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{passwordError}</p>}
+                    {passwordError && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{passwordError}</p>}
                     {passwordMessage && <p role="status" className="text-[13px] leading-5 text-primary dark:text-primary-fixed-dim">{passwordMessage}</p>}
                     <button className={buttonClass} disabled={passwordSaving} type="submit">
                         {passwordSaving ? t.profileForm.saving : t.profileForm.savePassword}

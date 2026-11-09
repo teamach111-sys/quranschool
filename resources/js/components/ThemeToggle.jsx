@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Icon from './Icon';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -103,21 +103,21 @@ export default function ThemeToggle({ theme, onToggle, compact = false }) {
     }, [theme, isRTL, compact]);
 
     const lightClasses = theme === 'light'
-        ? 'text-on-surface dark:text-[#707974]'
-        : 'text-on-surface-variant dark:text-[#707974] hover:text-on-surface dark:hover:text-[#ecf3ef]';
+        ? 'text-on-surface dark:text-[#6f6b66]'
+        : 'text-on-surface-variant dark:text-[#6f6b66] hover:text-on-surface dark:hover:text-[#e7e3de]';
 
     const darkClasses = theme === 'dark'
-        ? 'dark:text-[#f5bd58]'
-        : 'text-on-surface-variant dark:text-[#707974] hover:text-on-surface dark:hover:text-[#ecf3ef]';
+        ? 'dark:text-[#918d88]'
+        : 'text-on-surface-variant dark:text-[#6f6b66] hover:text-on-surface dark:hover:text-[#e7e3de]';
 
     return (
         <div
             ref={containerRef}
-            className={`relative flex items-center border border-outline-variant dark:border-[#2f4239] bg-surface-container-low dark:bg-[#182620] rounded-full p-0.5 ${containerHeight} transition-colors duration-200`}
+            className={`relative flex items-center border border-outline-variant dark:border-[#3a3835] bg-surface-container-low dark:bg-[#1c1b1a] rounded-full p-0.5 ${containerHeight} transition-colors duration-200`}
             role="group" aria-label="Theme Switcher"
         >
             <div
-                className={`absolute top-0.5 bottom-0.5 ${indicatorSize} rounded-full bg-surface-container-lowest dark:bg-[#202f29] border border-outline-variant dark:border-[#475b52] shadow-sm ${animate ? 'transition-all duration-200' : ''} ${ready ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute top-0.5 bottom-0.5 ${indicatorSize} rounded-full bg-surface-container-lowest dark:bg-[#232221] border border-outline-variant dark:border-[#3a3835] shadow-sm ${animate ? 'transition-all duration-200' : ''} ${ready ? 'opacity-100' : 'opacity-0'}`}
                 style={indicatorStyle}
             />
             <button ref={lightRef} type="button" onClick={() => theme !== 'light' && onToggle()} title={t.themeLight}

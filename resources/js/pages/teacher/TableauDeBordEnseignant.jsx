@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Icon from '../../components/Icon';
 import StatCard from '../../components/StatCard';
+import { BarsChart, useChartColors } from '../../components/DashboardCharts';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
 import {
@@ -8,14 +9,16 @@ import {
     getSelectedAcademicYearId,
 } from '../../persisters/yearselector';
 
-const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-tertiary-container dark:bg-inverse-surface';
+const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-container-lowest p-4 dark:border-[#3a3835] dark:bg-inverse-surface';
 const textClass = 'text-on-surface dark:text-inverse-on-surface';
 const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim';
 const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
+const DASHBOARD_CHART_GROUP_LIMIT = 8;
 const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export default function TableauDeBordEnseignant() {
     const { isRTL, lang, t } = useLanguage();
+    const colors = useChartColors();
     const [yearId, setYearId] = useState(getSelectedAcademicYearId);
     const [dashboard, setDashboard] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -88,25 +91,25 @@ export default function TableauDeBordEnseignant() {
             <div role="status" aria-label={t.teacherDashboard.loading} className="flex w-full flex-col gap-5">
                 <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {dayKeys.slice(0, 4).map((day) => (
-                        <div key={day} className={`${cardClass} h-24 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                        <div key={day} className={`${cardClass} h-24 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
                     ))}
                 </div>
                 <div className="flex flex-col gap-3">
-                    <div className="h-6 w-32 animate-pulse rounded bg-surface-container dark:bg-tertiary-container" />
+                    <div className="h-6 w-32 animate-pulse rounded bg-surface-container dark:bg-[#2a2928]" />
                     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         {dayKeys.slice(0, 3).map((day) => (
-                            <div key={day} className={`${cardClass} h-16 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                            <div key={day} className={`${cardClass} h-16 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
                         ))}
                     </div>
                 </div>
                 <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                     {dayKeys.slice(0, 2).map((day) => (
-                        <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                        <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
                     ))}
                 </div>
                 <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                     {dayKeys.slice(2, 4).map((day) => (
-                        <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-tertiary-container`} />
+                        <div key={day} className={`${cardClass} h-56 animate-pulse bg-surface-container dark:bg-[#2a2928]`} />
                     ))}
                 </div>
             </div>
@@ -115,15 +118,15 @@ export default function TableauDeBordEnseignant() {
 
     if (!dashboard) {
         return (
-            <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>
+            <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.teacherDashboard.loadError}</p>
         );
     }
 
     return (
         <div dir={isRTL ? 'rtl' : 'ltr'} className="flex w-full flex-col gap-5">
             {hasError && (
-                <div className="rounded-lg border border-error/40 bg-error-container/40 p-3">
-                    <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{t.teacherDashboard.loadError}</p>
+                <div className="rounded-lg border border-error/40 bg-error-container/40 p-3 dark:bg-[#3a2624]/40">
+                    <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.teacherDashboard.loadError}</p>
                 </div>
             )}
             <section aria-label={t.teacherDashboard.overview} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -141,25 +144,22 @@ export default function TableauDeBordEnseignant() {
                     </a>
                 </div>
                 {dashboard.groups.length > 0 ? (
-                    <ul className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        {dashboard.groups.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((group) => (
-                            <li key={group.id} className={cardClass}>
-                                <div className="flex items-center justify-between gap-3">
-                                    <div className="flex min-w-0 items-center gap-3">
-                                        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-fixed text-primary dark:bg-primary-container dark:text-on-primary-container">
-                                            <Icon name="school" className="text-[20px]" />
-                                        </span>
-                                        <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{group.name}</p>
-                                    </div>
-                                    <span className={`shrink-0 text-[12px] leading-5 ${secondaryTextClass}`}>
-                                        {t.teacherDashboard.activeStudents(numberFormat.format(group.active_student_count))}
-                                    </span>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                    <div className={cardClass}>
+                        <BarsChart
+                            horizontal
+                            colors={colors}
+                            data={dashboard.groups.slice(0, DASHBOARD_CHART_GROUP_LIMIT).map((group) => ({
+                                key: group.id,
+                                name: group.name,
+                                value: group.active_student_count,
+                                color: colors.blue,
+                            }))}
+                            height={Math.max(160, Math.min(dashboard.groups.length, DASHBOARD_CHART_GROUP_LIMIT) * 44)}
+                            valueFormatter={(value) => numberFormat.format(value)}
+                        />
+                    </div>
                 ) : (
-                    <p className={`rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-[13px] leading-5 dark:border-tertiary-container dark:bg-inverse-surface ${secondaryTextClass}`}>
+                    <p className={`rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-[13px] leading-5 dark:border-[#3a3835] dark:bg-inverse-surface ${secondaryTextClass}`}>
                         {t.teacherDashboard.noGroups}
                     </p>
                 )}
@@ -182,17 +182,17 @@ export default function TableauDeBordEnseignant() {
                                             <p className={`truncate text-[14px] leading-5 font-semibold ${textClass}`}>{lesson.label}</p>
                                             <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>{lesson.room_name}</p>
                                         </div>
-                                        <span className="shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container sm:hidden">
+                                        <span className="shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88] sm:hidden">
                                             {lesson.starts_at} – {lesson.ends_at}
                                         </span>
                                     </div>
-                                    <span className="hidden shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-primary-container dark:text-on-primary-container sm:inline-flex">
+                                    <span className="hidden shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88] sm:inline-flex">
                                         {lesson.starts_at} – {lesson.ends_at}
                                     </span>
                                     {(lesson.id === dashboard.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id)) && (
                                         <a
                                             href={`#/presences?room_id=${lesson.room_id}&attendance_date=${dashboard.today}`}
-                                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-primary-container dark:text-on-primary-container"
+                                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-[#2f7d4f] dark:text-white"
                                         >
                                             <Icon name="fact_check" className="text-[18px]" />
                                             {t.teacherDashboard.startTodayAttendance}
@@ -282,7 +282,7 @@ export default function TableauDeBordEnseignant() {
                                                 {formatDate(session.session_date)}
                                             </p>
                                         </div>
-                                        <span className="shrink-0 rounded-md bg-surface-container px-2 py-1 text-[11px] leading-4 font-medium text-on-surface-variant dark:bg-tertiary-container dark:text-on-tertiary-container">
+                                        <span className="shrink-0 rounded-md bg-surface-container px-2 py-1 text-[11px] leading-4 font-medium text-on-surface-variant dark:bg-[#2a2928] dark:text-[#c6c2bd]">
                                             {t.memorization.evaluations[session.evaluation]}
                                         </span>
                                     </div>

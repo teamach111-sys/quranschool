@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from 'react';
+﻿import React, { useEffect, useId, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -45,23 +45,23 @@ function formatCurrency(value, currency, language) {
 const attendanceStyles = {
     present: {
         icon: 'check',
-        className: 'border-primary/30 bg-primary-fixed text-primary dark:bg-primary-container dark:text-on-primary-container',
+        className: 'border-primary/30 bg-primary-fixed text-primary dark:bg-[#32302e] dark:text-[#918d88]',
     },
     absent: {
         icon: 'close',
-        className: 'border-error/30 bg-error-container text-on-error-container dark:bg-[#4a2626]/50 dark:text-[#ffdad6]',
+        className: 'border-error/30 bg-error-container text-on-error-container dark:bg-[#3a2624]/50 dark:text-[#e59a92]',
     },
     late: {
         icon: 'schedule',
-        className: 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]',
+        className: 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#3a3835]/40 dark:text-[#c6c2bd]',
     },
     excused: {
         icon: 'event_available',
-        className: 'border-outline-variant bg-surface-container text-on-surface-variant dark:border-[#384d43] dark:bg-[#2c3d36] dark:text-[#c2d1c8]',
+        className: 'border-outline-variant bg-surface-container text-on-surface-variant dark:border-[#3a3835] dark:bg-[#32302e] dark:text-[#c6c2bd]',
     },
     none: {
         icon: 'remove',
-        className: 'border-outline-variant bg-surface-container-low text-outline dark:border-[#384d43] dark:bg-[#182620] dark:text-[#9bb2a8]',
+        className: 'border-outline-variant bg-surface-container-low text-outline dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#918d88]',
     },
 };
 
@@ -331,7 +331,7 @@ export default function StudentFormModal({
     const title = readOnly
         ? t.students.form.profileTitle
         : isEditing ? t.students.form.editTitle : t.students.form.createTitle;
-    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70 dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:focus:border-primary-fixed-dim dark:focus:bg-[#202f29] dark:focus:ring-primary-fixed-dim';
+    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70 dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de] dark:focus:border-primary-fixed-dim dark:focus:bg-[#232221] dark:focus:ring-primary-fixed-dim';
     const labelClass = 'text-[12px] leading-4 font-semibold text-on-surface dark:text-inverse-on-surface';
 
     let content;
@@ -339,19 +339,19 @@ export default function StudentFormModal({
         content = (
             <div className="flex flex-col gap-4" aria-busy="true">
                 <span role="status" className="sr-only">{t.students.form.loading}</span>
-                <div className="h-24 animate-pulse rounded-lg bg-surface-container dark:bg-[#2c3d36]" />
-                <div className="h-36 animate-pulse rounded-lg bg-surface-container dark:bg-[#2c3d36]" />
-                <div className="h-48 animate-pulse rounded-lg bg-surface-container dark:bg-[#2c3d36]" />
+                <div className="h-24 animate-pulse rounded-lg bg-surface-container dark:bg-[#32302e]" />
+                <div className="h-36 animate-pulse rounded-lg bg-surface-container dark:bg-[#32302e]" />
+                <div className="h-48 animate-pulse rounded-lg bg-surface-container dark:bg-[#32302e]" />
             </div>
         );
     } else if (readOnly && error && !detail) {
         content = (
             <div className="flex flex-col gap-3">
-                <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>
+                <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{error}</p>
                 <button
                     type="button"
                     onClick={() => setRetryKey((current) => current + 1)}
-                    className="min-h-11 self-start rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
+                    className="min-h-11 self-start rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#32302e] dark:text-[#e7e3de] dark:hover:bg-[#32302e]"
                 >
                     {t.students.profile.retry}
                 </button>
@@ -380,7 +380,7 @@ export default function StudentFormModal({
         const profileField = (label, value) => (
             <div className="flex min-w-0 flex-col gap-1">
                 <dt className={labelClass}>{label}</dt>
-                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c6c2bd]">
                     {value || '—'}
                 </dd>
             </div>
@@ -403,7 +403,7 @@ export default function StudentFormModal({
 
         content = (
             <div className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:items-start">
-                <section className="order-1 rounded-lg border border-outline-variant bg-surface-container-low p-4 dark:border-[#384d43] dark:bg-[#182620]">
+                <section className="order-1 rounded-lg border border-outline-variant bg-surface-container-low p-4 dark:border-[#3a3835] dark:bg-[#1c1b1a]">
                     <h3 className="mb-3 text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
                         {t.students.profile.identity}
                     </h3>
@@ -421,10 +421,10 @@ export default function StudentFormModal({
                             t.students.columns.status,
                             <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-semibold ${
                                 profile?.status === 'active'
-                                    ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#1e4f40]/50 dark:text-[#baeed9]'
+                                    ? 'bg-primary-fixed/50 text-on-primary-fixed-variant dark:bg-[#32302e]/50 dark:text-[#918d88]'
                                     : profile?.status === 'paused'
-                                        ? 'bg-secondary-fixed/60 text-on-secondary-fixed-variant dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]'
-                                        : 'bg-error-container text-on-error-container dark:bg-[#4a2626]/50 dark:text-[#ffdad6]'
+                                        ? 'bg-secondary-fixed/60 text-on-secondary-fixed-variant dark:bg-[#3a3835]/40 dark:text-[#c6c2bd]'
+                                        : 'bg-error-container text-on-error-container dark:bg-[#3a2624]/50 dark:text-[#e59a92]'
                             }`}>
                                 <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
                                 {t.students.statuses[profile?.status] ?? profile?.status}
@@ -432,11 +432,11 @@ export default function StudentFormModal({
                         )}
                     </dl>
                     {!teachingProfile && (
-                        <dl className="mt-4 grid grid-cols-1 gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:grid-cols-2">
+                        <dl className="mt-4 grid grid-cols-1 gap-3 border-t border-outline-variant pt-4 dark:border-[#3a3835] sm:grid-cols-2">
                             {profileField(t.students.form.guardianName, profile?.guardian_name)}
                             <div className="flex min-w-0 flex-col gap-1">
                                 <dt className={labelClass}>{t.students.form.guardianPhone}</dt>
-                                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c6c2bd]">
                                     {guardianPhone
                                         ? <a className="min-h-11 inline-flex items-center text-primary underline-offset-2 hover:underline dark:text-primary-fixed-dim" href={`tel:${guardianPhone.replace(/[^\d+]/g, '')}`}>{guardianPhone}</a>
                                         : '—'}
@@ -444,7 +444,7 @@ export default function StudentFormModal({
                             </div>
                             <div className="flex min-w-0 flex-col gap-1 sm:col-span-2">
                                 <dt className={labelClass}>{t.students.form.guardianEmail}</dt>
-                                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                                <dd className="break-words text-[13px] leading-5 text-on-surface-variant dark:text-[#c6c2bd]">
                                     {guardianEmail
                                         ? <a className="min-h-11 inline-flex items-center text-primary underline-offset-2 hover:underline dark:text-primary-fixed-dim" href={`mailto:${guardianEmail}`}>{guardianEmail}</a>
                                         : '—'}
@@ -452,21 +452,21 @@ export default function StudentFormModal({
                             </div>
                         </dl>
                     )}
-                    <div className="mt-4 border-t border-outline-variant pt-4 dark:border-[#384d43]">
+                    <div className="mt-4 border-t border-outline-variant pt-4 dark:border-[#3a3835]">
                         <span className={labelClass}>{t.students.form.notes}</span>
-                        <p className="mt-1 whitespace-pre-wrap text-[13px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                        <p className="mt-1 whitespace-pre-wrap text-[13px] leading-5 text-on-surface-variant dark:text-[#c6c2bd]">
                             {profile?.notes || '—'}
                         </p>
                     </div>
                 </section>
 
                 <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-5">
-                    <section className="order-2 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                    <section className="order-2 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#3a3835]">
                         <div>
                             <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
                                 {t.students.profile.attendance}
                             </h3>
-                            <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                            <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#918d88]">
                                 {t.students.profile.last30Days}
                             </p>
                         </div>
@@ -487,7 +487,7 @@ export default function StudentFormModal({
                                 );
                             })}
                         </div>
-                        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c2d1c8]">
+                        <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c6c2bd]">
                             {Object.entries(t.students.profile.attendanceStatuses).map(([status, label]) => (
                                 <li key={status} className="inline-flex items-center gap-1.5">
                                     <span className={`flex size-5 items-center justify-center rounded-full border ${attendanceStyles[status].className}`}>
@@ -505,22 +505,22 @@ export default function StudentFormModal({
                         </ul>
                     </section>
                     {!teachingProfile && (
-                        <section className="order-4 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43]">
+                        <section className="order-4 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#3a3835]">
                             <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
                                 {t.students.profile.payments}
                             </h3>
                             {profile?.payment_summary?.length
                                 ? profile.payment_summary.map((summary) => (
-                                    <div key={summary.currency} className="flex flex-col gap-2 rounded-md bg-surface-container-low p-3 dark:bg-[#182620] sm:flex-row sm:items-center sm:justify-between">
+                                    <div key={summary.currency} className="flex flex-col gap-2 rounded-md bg-surface-container-low p-3 dark:bg-[#1c1b1a] sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <p className="text-[12px] text-on-surface-variant dark:text-[#9bb2a8]">
+                                            <p className="text-[12px] text-on-surface-variant dark:text-[#918d88]">
                                                 {t.students.profile.outstanding}
                                             </p>
                                             <p className="text-[20px] leading-7 font-semibold text-on-surface dark:text-inverse-on-surface">
                                                 {formatCurrency(summary.outstanding_amount, summary.currency, lang)}
                                             </p>
                                         </div>
-                                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c2d1c8]">
+                                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#c6c2bd]">
                                             {t.students.profile.paymentBreakdown(
                                                 formatCurrency(summary.due_amount, summary.currency, lang),
                                                 formatNumber(summary.due_count, lang),
@@ -532,17 +532,17 @@ export default function StudentFormModal({
                                         </p>
                                     </div>
                                 ))
-                                : <p className="text-[13px] text-on-surface-variant dark:text-[#c2d1c8]">{t.students.profile.noPayments}</p>}
+                                : <p className="text-[13px] text-on-surface-variant dark:text-[#c6c2bd]">{t.students.profile.noPayments}</p>}
                         </section>
                     )}
                 </div>
 
-                <section className="order-3 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#384d43] lg:order-none lg:col-span-2 lg:row-start-2">
+                <section className="order-3 flex flex-col gap-3 rounded-lg border border-outline-variant p-4 dark:border-[#3a3835] lg:order-none lg:col-span-2 lg:row-start-2">
                     <div>
                         <h3 className="text-[14px] font-semibold text-on-surface dark:text-inverse-on-surface">
                             {t.students.profile.memorization}
                         </h3>
-                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#918d88]">
                             {progress.hasCoverage
                                 ? t.students.profile.progressSummary(
                                     formatNumber(progress.coveredAyahs, lang),
@@ -552,7 +552,7 @@ export default function StudentFormModal({
                                 : t.students.profile.noMemorization}
                             {selectedJuz && ` · ${t.students.profile.currentJuz(selectedJuz)}`}
                         </p>
-                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#9bb2a8]">
+                        <p className="text-[12px] leading-5 text-on-surface-variant dark:text-[#918d88]">
                             {t.students.profile.surahCounts(
                                 formatNumber(progress.completeSurahCount, lang),
                                 formatNumber(progress.inProgressSurahs.length, lang),
@@ -570,10 +570,10 @@ export default function StudentFormModal({
                                 stateLabel,
                             );
                             const cellClass = surahProgress.isComplete
-                                ? 'border-primary/30 bg-primary-container text-on-primary-container dark:bg-[#2e5e4e] dark:text-[#f0fcf3]'
+                                ? 'border-primary/30 bg-primary-container text-on-primary-container dark:bg-[#32302e] dark:text-[#f0ece7]'
                                 : surahProgress.coveredAyahs > 0
-                                    ? 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]'
-                                    : 'border-outline-variant bg-surface-container-low text-on-surface-variant dark:border-[#384d43] dark:bg-[#182620] dark:text-[#c2d1c8]';
+                                    ? 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#3a3835]/40 dark:text-[#c6c2bd]'
+                                    : 'border-outline-variant bg-surface-container-low text-on-surface-variant dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#c6c2bd]';
 
                             return (
                                 <button
@@ -593,7 +593,7 @@ export default function StudentFormModal({
                             );
                         })}
                     </div>
-                    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c2d1c8]">
+                    <ul className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] text-on-surface-variant dark:text-[#c6c2bd]">
                         {[
                             ['complete', t.students.profile.surahStates.complete],
                             ['inProgress', t.students.profile.surahStates.inProgress],
@@ -602,10 +602,10 @@ export default function StudentFormModal({
                             <li key={state} className="inline-flex items-center gap-1.5">
                                 <span className={`flex size-5 items-center justify-center rounded-full border ${
                                     state === 'complete'
-                                        ? 'border-primary/30 bg-primary-container text-on-primary-container dark:bg-[#2e5e4e] dark:text-[#f0fcf3]'
+                                        ? 'border-primary/30 bg-primary-container text-on-primary-container dark:bg-[#32302e] dark:text-[#f0ece7]'
                                         : state === 'inProgress'
-                                            ? 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#5f4100]/40 dark:text-[#ffdeaa]'
-                                            : 'border-outline-variant bg-surface-container-low text-outline dark:border-[#384d43] dark:bg-[#182620] dark:text-[#9bb2a8]'
+                                            ? 'border-secondary/30 bg-secondary-container text-on-secondary-container dark:bg-[#3a3835]/40 dark:text-[#c6c2bd]'
+                                            : 'border-outline-variant bg-surface-container-low text-outline dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#918d88]'
                                 }`}>
                                     <Icon
                                         name={state === 'complete' ? 'check' : state === 'inProgress' ? 'schedule' : 'remove'}
@@ -617,7 +617,7 @@ export default function StudentFormModal({
                         ))}
                     </ul>
                     {selectedSurah && (
-                        <p role="status" className="rounded-md bg-surface-container-low px-3 py-2 text-[12px] leading-5 text-on-surface-variant dark:bg-[#182620] dark:text-[#c2d1c8]">
+                        <p role="status" className="rounded-md bg-surface-container-low px-3 py-2 text-[12px] leading-5 text-on-surface-variant dark:bg-[#1c1b1a] dark:text-[#c6c2bd]">
                             {surahDisplayName(selectedSurah.surah, lang)} — {surahStateLabel(selectedSurah)} · {t.students.profile.surahCoverage(
                                 formatNumber(selectedSurah.coveredAyahs, lang),
                                 formatNumber(selectedSurah.surah.ayah_count, lang),
@@ -629,9 +629,9 @@ export default function StudentFormModal({
             </div>
         );
     } else if (error && !loading) {
-        content = <p role="alert" className="text-[13px] text-error dark:text-error-container">{error}</p>;
+        content = <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{error}</p>;
     } else if (!canEditYear && !loading) {
-        content = <p role="alert" className="text-[13px] text-error dark:text-error-container">{t.students.form.closedYearError}</p>;
+        content = <p role="alert" className="text-[13px] text-error dark:text-[#e59a92]">{t.students.form.closedYearError}</p>;
     } else {
         content = (
             <form id={`${formId}-form`} className="flex flex-col gap-4" onSubmit={handleSubmit} aria-busy={loading}>
@@ -700,7 +700,7 @@ export default function StudentFormModal({
                         <textarea id={`${formId}-notes`} name="notes" rows={3} value={form.notes} onChange={handleChange} className={`${inputClass} resize-y`} />
                     </div>
                 </div>
-                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
+                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
             </form>
         );
     }
@@ -712,22 +712,22 @@ export default function StudentFormModal({
                     type="button"
                     disabled={loading || exportingProgress || !student?.id}
                     onClick={exportProgress}
-                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#384d43] dark:text-[#ecf3ef]"
+                    className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:hover:bg-[#32302e] disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#3a3835] dark:text-[#e7e3de]"
                 >
                     <Icon name={exportingProgress ? 'progress_activity' : 'download'} className={`text-[18px] ${exportingProgress ? 'animate-spin' : ''}`} />
                     {exportingProgress ? t.students.profile.exportingProgress : t.students.profile.exportProgress}
                 </button>
-                <button type="button" onClick={onClose} className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]">
+                <button type="button" onClick={onClose} className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high dark:bg-[#32302e] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">
                     {t.students.form.close}
                 </button>
             </>
         )
         : (
             <>
-                <button type="button" disabled={saving} onClick={onClose} className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]">
+                <button type="button" disabled={saving} onClick={onClose} className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#32302e] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">
                     {t.students.form.cancel}
                 </button>
-                <button type="submit" form={`${formId}-form`} disabled={saving || loading || !canEditYear} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]">
+                <button type="submit" form={`${formId}-form`} disabled={saving || loading || !canEditYear} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white">
                     <Icon name={saving ? 'progress_activity' : 'save'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                     {saving ? t.students.form.saving : t.students.form.save}
                 </button>

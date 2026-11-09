@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useState } from 'react';
+﻿import React, { useCallback, useEffect, useId, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -92,7 +92,7 @@ export default function RoomTeacherAssignmentModal({
         }
     };
 
-    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#384d43] dark:bg-[#182620] dark:text-[#ecf3ef] dark:focus:border-primary-fixed-dim dark:focus:bg-[#202f29] dark:focus:ring-primary-fixed-dim';
+    const inputClass = 'w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-[14px] leading-5 text-on-surface outline-none transition-colors focus:border-primary focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de] dark:focus:border-primary-fixed-dim dark:focus:bg-[#232221] dark:focus:ring-primary-fixed-dim';
     const labelClass = 'text-[12px] leading-4 font-semibold text-on-surface dark:text-inverse-on-surface';
 
     return (
@@ -108,7 +108,7 @@ export default function RoomTeacherAssignmentModal({
         >
             <form id={`${formId}-form`} onSubmit={handleSubmit} className="flex flex-col gap-5">
                 {room && (
-                    <p className="rounded-lg bg-surface-container-low px-3 py-2.5 text-[13px] text-on-surface-variant dark:bg-[#182620] dark:text-[#c2d1c8]">
+                    <p className="rounded-lg bg-surface-container-low px-3 py-2.5 text-[13px] text-on-surface-variant dark:bg-[#1c1b1a] dark:text-[#c6c2bd]">
                         {t.rooms.assignToRoom(room.name)}
                     </p>
                 )}
@@ -170,30 +170,30 @@ export default function RoomTeacherAssignmentModal({
                         </div>
                     </div>
                     {teachers.length === 0 && (
-                        <p role="status" className="text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                        <p role="status" className="text-[12px] text-on-surface-variant dark:text-[#c6c2bd]">
                             {t.rooms.noAvailableTeachers}
                         </p>
                     )}
                     {activeRooms.length === 0 && (
-                        <p role="status" className="text-[12px] text-on-surface-variant dark:text-[#c2d1c8]">
+                        <p role="status" className="text-[12px] text-on-surface-variant dark:text-[#c6c2bd]">
                             {t.rooms.noAvailableRooms}
                         </p>
                     )}
                 </div>
-                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-error-container">{error}</p>}
-                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#384d43] sm:flex-row">
+                {error && <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{error}</p>}
+                <footer className="flex flex-col-reverse gap-3 border-t border-outline-variant pt-4 dark:border-[#3a3835] sm:flex-row">
                     <button
                         type="button"
                         disabled={saving}
                         onClick={handleClose}
-                        className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#2c3d36] dark:text-[#ecf3ef] dark:hover:bg-[#344a41]"
+                        className="min-h-11 flex-1 rounded-lg bg-surface-container px-4 py-2 text-[13px] font-semibold text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60 dark:bg-[#32302e] dark:text-[#e7e3de] dark:hover:bg-[#32302e]"
                     >
                         {t.rooms.cancel}
                     </button>
                     <button
                         type="submit"
                         disabled={saving || teachers.length === 0 || activeRooms.length === 0}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2e5e4e] dark:text-[#f0fcf3]"
+                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#2f7d4f] dark:text-white"
                     >
                         <Icon name={saving ? 'progress_activity' : 'assignment_ind'} className={`text-[18px] ${saving ? 'animate-spin' : ''}`} />
                         {saving ? t.rooms.saving : t.rooms.assignTeacher}

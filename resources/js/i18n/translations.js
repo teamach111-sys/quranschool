@@ -80,6 +80,11 @@ export const translations = {
                 late: 'En retard',
                 waived: 'Exonérés',
             },
+            charts: {
+                attendanceHint: 'Répartition des appels par statut',
+                paymentsHint: 'Montants par statut de paiement',
+                total: 'Total',
+            },
             alerts: {
                 title: 'Alertes importantes',
                 empty: 'Aucune alerte.',
@@ -182,6 +187,9 @@ export const translations = {
                 due: 'À régler',
                 late: 'En retard',
                 waived: 'Exonéré',
+            },
+            charts: {
+                paymentBalancesHint: 'Montants à régler, en retard et exonérés',
             },
             alerts: {
                 late_payments: (count) => `${count} paiement(s) en retard`,
@@ -1303,6 +1311,11 @@ export const translations = {
                 late: 'متأخرة',
                 waived: 'معفاة',
             },
+            charts: {
+                attendanceHint: 'توزيع تسجيلات الحضور حسب الحالة',
+                paymentsHint: 'المبالغ حسب حالة الدفع',
+                total: 'الإجمالي',
+            },
             alerts: {
                 title: 'تنبيهات مهمة',
                 empty: 'لا توجد تنبيهات.',
@@ -1405,6 +1418,9 @@ export const translations = {
                 due: 'مستحق',
                 late: 'متأخر',
                 waived: 'معفى',
+            },
+            charts: {
+                paymentBalancesHint: 'المبالغ المستحقة والمتأخرة والمعفاة',
             },
             alerts: {
                 late_payments: (count) => `${count} مدفوعات متأخرة`,
