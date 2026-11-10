@@ -121,16 +121,6 @@ export default function TableauDeBordEnseignant() {
                     <p role="alert" className="text-[13px] leading-5 text-error dark:text-[#e59a92]">{t.teacherDashboard.loadError}</p>
                 </div>
             )}
-            <StatStrip
-                ariaLabel={t.teacherDashboard.overview}
-                className="sm:grid-cols-3"
-                items={[
-                    { label: t.teacherDashboard.groups, value: numberFormat.format(dashboard.groups.length), icon: 'groups' },
-                    { label: t.teacherDashboard.todayLessons, value: numberFormat.format(dashboard.today_lessons.length), icon: 'event' },
-                    { label: t.teacherDashboard.pendingAttendance, value: numberFormat.format(dashboard.attendance_tasks.count), icon: 'fact_check' },
-                ]}
-            />
-
             <section
                 aria-label={t.teacherDashboard.quickLinksTitle}
                 className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4"
@@ -148,6 +138,16 @@ export default function TableauDeBordEnseignant() {
                     </a>
                 ))}
             </section>
+
+            <StatStrip
+                ariaLabel={t.teacherDashboard.overview}
+                className="sm:grid-cols-3"
+                items={[
+                    { label: t.teacherDashboard.groups, value: numberFormat.format(dashboard.groups.length), icon: 'groups' },
+                    { label: t.teacherDashboard.todayLessons, value: numberFormat.format(dashboard.today_lessons.length), icon: 'event' },
+                    { label: t.teacherDashboard.pendingAttendance, value: numberFormat.format(dashboard.attendance_tasks.count), icon: 'fact_check' },
+                ]}
+            />
 
             <StudentProgressCharts progress={dashboard.student_progress} />
 
