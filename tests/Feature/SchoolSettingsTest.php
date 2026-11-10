@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Auth\GenericUser;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -47,6 +48,8 @@ class SchoolSettingsTest extends TestCase
             $table->char('currency', 3)->default('MAD');
             $table->decimal('monthly_fee', 10, 2)->nullable();
             $table->json('payment_methods')->nullable();
+            $table->string('student_number_prefix', 20)->nullable();
+            $table->boolean('student_number_use_dash')->default(true);
             $table->timestamps();
         });
 
@@ -261,5 +264,236 @@ class SchoolSettingsTest extends TestCase
             'currency' => 'MAD',
             'payment_methods' => [],
         ])->assertUnprocessable()->assertJsonValidationErrors('payment_methods');
+    }
+
+    public function test_admin_can_save_and_read_student_number_prefix(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/admin/school-settings', [
+            'name_fr' => 'École 1',
+            'name_ar' => 'مدرسة ١',
+            'currency' => 'MAD',
+            'student_number_prefix' => 'N',
+        ])
+            ->assertOk()
+            ->assertJsonPath('school.student_number_prefix', 'N');
+
+        $this->assertDatabaseHas('schools', [
+            'id' => 1,
+            'student_number_prefix' => 'N',
+        ]);
+    }
+
+    public function test_empty_student_number_prefix_is_stored_as_null(): void
+    {
+        DB::table('schools')->where('id', 1)->update(['student_number_prefix' => 'N']);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->putJson('/admin/school-settings', [
+            'name_fr' => 'École 1',
+            'name_ar' => 'مدرسة ١',
+            'currency' => 'MAD',
+            'student_number_prefix' => '',
+        ])
+            ->assertOk()
+            ->assertJsonPath('school.student_number_prefix', null);
+
+        $this->assertDatabaseHas('schools', [
+            'id' => 1,
+            'student_number_prefix' => null,
+        ]);
+    }
+
+    public function test_admin_can_disable_the_student_number_dash_separator(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->getJson('/admin/school-settings')
+            ->assertOk()
+            ->assertJsonPath('school.student_number_use_dash', true);
+
+        $this->putJson('/admin/school-settings', [
+            'name_fr' => 'École 1',
+            'name_ar' => 'مدرسة ١',
+            'currency' => 'MAD',
+            'student_number_prefix' => 'N',
+            'student_number_use_dash' => false,
+        ])
+            ->assertOk()
+            ->assertJsonPath('school.student_number_use_dash', false);
+
+        $this->assertDatabaseHas('schools', [
+            'id' => 1,
+            'student_number_use_dash' => 0,
+        ]);
+    }
+
+    public function test_non_admin_cannot_export_data(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->getJson('/admin/school-settings/export')->assertForbidden();
+    }
+
+    public function test_admin_can_export_all_school_data_as_json(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $response = $this->get('/admin/school-settings/export');
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/json; charset=utf-8');
+
+        $decoded = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame(1, $decoded['version']);
+        $this->assertSame(1, $decoded['school_id']);
+        $this->assertArrayHasKey('schools', $decoded['data']);
+        $this->assertArrayHasKey('audit_events', $decoded['data']);
+        $this->assertCount(1, $decoded['data']['schools']);
+        $this->assertSame('École 1', $decoded['data']['schools'][0]['name_fr']);
+    }
+
+    public function test_admin_can_import_data_from_a_valid_backup_file(): void
+    {
+        DB::table('schools')->where('id', 1)->update(['address' => 'Original address']);
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $backup = json_encode([
+            'version' => 1,
+            'exported_at' => now()->toIso8601String(),
+            'school_id' => 1,
+            'data' => [
+                'schools' => [
+                    ['id' => 1, 'name_fr' => 'Restored School', 'name_ar' => 'مدرسة مستعادة', 'address' => 'Restored address', 'phone' => null, 'email' => null, 'currency' => 'MAD', 'monthly_fee' => null, 'payment_methods' => null, 'student_number_prefix' => 'N', 'created_at' => now(), 'updated_at' => now()],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $response = $this->post('/admin/school-settings/import', [
+            'backup_file' => UploadedFile::fake()->createWithContent('backup.json', $backup),
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('imported.schools', 1);
+
+        $this->assertDatabaseHas('schools', [
+            'id' => 1,
+            'name_fr' => 'Restored School',
+            'address' => 'Restored address',
+            'student_number_prefix' => 'N',
+        ]);
+    }
+
+    public function test_import_skips_generated_columns_and_tables_without_school_id(): void
+    {
+        Schema::create('academic_years', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('school_id');
+            $table->string('year_label', 20);
+            $table->boolean('is_current')->default(false);
+            $table->unsignedBigInteger('current_school_id')->nullable()->storedAs('case when is_current = 1 then school_id else null end');
+            $table->timestamps();
+        });
+
+        Schema::create('password_recovery_keys', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id')->primary();
+            $table->string('key_hash');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $backup = json_encode([
+            'version' => 1,
+            'exported_at' => now()->toIso8601String(),
+            'school_id' => 1,
+            'data' => [
+                'schools' => [
+                    ['id' => 1, 'name_fr' => 'École 1', 'name_ar' => 'مدرسة ١', 'currency' => 'MAD', 'student_number_prefix' => null, 'student_number_use_dash' => 1, 'created_at' => now(), 'updated_at' => now()],
+                ],
+                'academic_years' => [
+                    ['id' => 5, 'school_id' => 1, 'year_label' => '2026-2027', 'is_current' => 1, 'current_school_id' => 1, 'created_at' => now(), 'updated_at' => now()],
+                ],
+                'password_recovery_keys' => [
+                    ['user_id' => 10, 'key_hash' => 'hash-10', 'created_at' => now()],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $this->post('/admin/school-settings/import', [
+            'backup_file' => UploadedFile::fake()->createWithContent('backup.json', $backup),
+        ])
+            ->assertOk()
+            ->assertJsonPath('imported.academic_years', 1)
+            ->assertJsonPath('imported.password_recovery_keys', 1);
+
+        $this->assertDatabaseHas('academic_years', [
+            'id' => 5,
+            'current_school_id' => 1,
+        ]);
+        $this->assertDatabaseHas('password_recovery_keys', [
+            'user_id' => 10,
+            'key_hash' => 'hash-10',
+        ]);
+    }
+
+    public function test_import_rejects_backup_from_a_different_school(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $backup = json_encode([
+            'version' => 1,
+            'exported_at' => now()->toIso8601String(),
+            'school_id' => 999,
+            'data' => ['schools' => []],
+        ], JSON_THROW_ON_ERROR);
+
+        $this->post('/admin/school-settings/import', [
+            'backup_file' => UploadedFile::fake()->createWithContent('backup.json', $backup),
+        ])->assertUnprocessable();
+    }
+
+    public function test_non_admin_cannot_import_data(): void
+    {
+        $this->actingAs(new GenericUser([
+            'id' => 20,
+            'school_id' => 1,
+            'role' => 'teacher',
+        ]));
+
+        $this->postJson('/admin/school-settings/import', [])->assertForbidden();
     }
 }

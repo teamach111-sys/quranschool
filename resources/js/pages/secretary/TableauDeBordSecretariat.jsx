@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { StatStrip } from '../../components/StatCard';
-import { BarsChart, ChartCard, useChartColors } from '../../components/DashboardCharts';
+import { ChartCard, DonutChart, useChartColors } from '../../components/DashboardCharts';
 import { Panel, SectionHeader } from '../../components/DashboardPanels';
+import Icon from '../../components/Icon';
 import { useLanguage } from '../../hooks/useLanguage';
 import { apiFetch } from '../../lib/api';
 import {
@@ -12,6 +13,7 @@ import {
 const textClass = 'text-on-surface dark:text-inverse-on-surface';
 const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim';
 const linkClass = 'shrink-0 text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim';
+const quickActionClass = 'group flex items-center gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-3 transition-colors duration-200 hover:border-primary hover:bg-primary-fixed/40 dark:border-[#3a3835] dark:bg-inverse-surface dark:hover:border-primary/70 dark:hover:bg-[#32302e]';
 const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
 
 export default function TableauDeBordSecretariat() {
@@ -68,6 +70,10 @@ export default function TableauDeBordSecretariat() {
         style: 'currency',
         currency: dashboard?.currency ?? 'MAD',
     });
+    const compactNumberFormat = new Intl.NumberFormat(locale, {
+        maximumFractionDigits: 1,
+    });
+    const currencyCode = dashboard?.currency ?? 'MAD';
     const formatDate = (date) => dateFormat.format(new Date(`${date}T00:00:00Z`));
 
     if (hasError) {
@@ -80,6 +86,10 @@ export default function TableauDeBordSecretariat() {
 
     if (!dashboard) return null;
 
+    const quickActions = [
+        { key: 'enroll', icon: 'person_add', label: t.secretaryDashboard.quickActions.enroll, href: '#/eleves' },
+        { key: 'payment', icon: 'payments', label: t.secretaryDashboard.quickActions.payment, href: '#/paiements-finances' },
+    ];
     const overviewCards = [
         { label: t.secretaryDashboard.activeStudents, value: numberFormat.format(dashboard.stats.active_students), icon: 'group' },
         { label: t.secretaryDashboard.newStudents, value: numberFormat.format(dashboard.stats.new_students), icon: 'person_add' },
@@ -91,77 +101,83 @@ export default function TableauDeBordSecretariat() {
         { key: 'late', name: t.secretaryDashboard.lateBalance, value: dashboard.stats.payment_balances.late.amount, color: colors.amber },
         { key: 'waived', name: t.secretaryDashboard.waivedBalance, value: dashboard.stats.payment_balances.waived.amount, color: colors.gray },
     ];
-    const studentRecordGapChartData = [
-        { key: 'student_number', name: t.secretaryDashboard.recordGapLabels.studentNumber, value: dashboard.student_record_gaps.student_number, color: colors.amber },
-        { key: 'guardian_phone', name: t.secretaryDashboard.recordGapLabels.guardianPhone, value: dashboard.student_record_gaps.guardian_phone, color: colors.amber },
-        { key: 'guardian_email', name: t.secretaryDashboard.recordGapLabels.guardianEmail, value: dashboard.student_record_gaps.guardian_email, color: colors.amber },
-    ];
-    const studentStatusChartData = [
-        { key: 'active', name: t.students.statuses.active, value: dashboard.student_status_distribution.active, color: colors.green },
-        { key: 'paused', name: t.students.statuses.paused, value: dashboard.student_status_distribution.paused, color: colors.amber },
-        { key: 'withdrawn', name: t.students.statuses.withdrawn, value: dashboard.student_status_distribution.withdrawn, color: colors.gray },
-    ];
-    const hasIncompleteRecords = studentRecordGapChartData.some((item) => item.value > 0);
-    const hasEnrolledStudents = studentStatusChartData.some((item) => item.value > 0);
+    const paymentTotal = paymentChartData.reduce((sum, item) => sum + item.value, 0);
+    const paymentMagnitude = paymentTotal >= 1_000_000_000
+        ? { value: 1_000_000_000, suffix: 'B' }
+        : paymentTotal >= 1_000_000
+            ? { value: 1_000_000, suffix: 'M' }
+            : paymentTotal >= 1_000
+                ? { value: 1_000, suffix: 'K' }
+                : null;
+    const paymentCenterValue = paymentMagnitude
+        ? `${compactNumberFormat.format(paymentTotal / paymentMagnitude.value)}${paymentMagnitude.suffix} ${currencyCode}`
+        : currencyFormat.format(paymentTotal);
 
     return (
         <div className="flex w-full flex-col gap-5">
+            <section aria-label={t.secretaryDashboard.quickActionsTitle} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {quickActions.map((action) => (
+                    <a key={action.key} href={action.href} className={quickActionClass}>
+                        <Icon name={action.icon} className="text-[20px] text-primary" />
+                        <span className="min-w-0 flex-1 truncate text-[13px] leading-5 font-semibold text-on-surface dark:text-inverse-on-surface">{action.label}</span>
+                        <Icon name="arrow_forward" className="text-[16px] text-on-surface-variant transition-transform duration-200 group-hover:translate-x-0.5 dark:text-[#918d88]" />
+                    </a>
+                ))}
+            </section>
+
             <StatStrip
                 ariaLabel={t.secretaryDashboard.overview}
                 className="sm:grid-cols-2 xl:grid-cols-4"
                 items={overviewCards}
             />
 
-            <ChartCard
-                title={t.secretaryDashboard.paymentSummary}
-                subtitle={t.secretaryDashboard.charts.paymentBalancesHint}
-                className="w-full xl:mx-auto xl:max-w-4xl"
-            >
-                <BarsChart
-                    data={paymentChartData}
-                    colors={colors}
-                    height={150}
-                    valueFormatter={(value) => currencyFormat.format(value)}
-                />
-            </ChartCard>
-
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
                 <ChartCard
-                    title={t.secretaryDashboard.incompleteFilesTitle}
-                    subtitle={t.secretaryDashboard.incompleteFilesHint}
+                    title={t.secretaryDashboard.paymentSummary}
+                    subtitle={t.secretaryDashboard.charts.paymentBalancesHint}
                 >
-                    {hasIncompleteRecords ? (
-                        <BarsChart
-                            data={studentRecordGapChartData}
-                            colors={colors}
-                            height={180}
-                            axisFormatter={(value) => numberFormat.format(value)}
-                            valueFormatter={(value) => numberFormat.format(value)}
-                        />
-                    ) : (
-                        <p className={`flex items-center justify-center text-center text-[13px] leading-5 ${secondaryTextClass}`} style={{ height: 180 }}>
-                            {t.secretaryDashboard.incompleteFilesEmpty}
-                        </p>
-                    )}
+                    <DonutChart
+                        data={paymentChartData}
+                        centerValue={paymentCenterValue}
+                        centerValueTooltip={currencyFormat.format(paymentTotal)}
+                        centerLabel={t.secretaryDashboard.charts.total}
+                        valueFormatter={(value) => currencyFormat.format(value)}
+                        height={180}
+                    />
                 </ChartCard>
-                <ChartCard
-                    title={t.secretaryDashboard.studentStatusTitle}
-                    subtitle={t.secretaryDashboard.studentStatusHint}
-                >
-                    {hasEnrolledStudents ? (
-                        <BarsChart
-                            data={studentStatusChartData}
-                            colors={colors}
-                            height={180}
-                            axisFormatter={(value) => numberFormat.format(value)}
-                            valueFormatter={(value) => numberFormat.format(value)}
-                        />
+
+                <section className="flex min-w-0 flex-col gap-3">
+                    <SectionHeader
+                        title={t.secretaryDashboard.attendance}
+                        action={<a href="#/presences" className={linkClass}>{t.secretaryDashboard.viewAttendance}</a>}
+                    />
+                    {dashboard.repeated_absence_items.length > 0 ? (
+                        <Panel>
+                            <ul className="divide-y divide-outline-variant dark:divide-[#3a3835]">
+                                {dashboard.repeated_absence_items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((item) => (
+                                    <li key={item.student_id} className="flex items-center justify-between gap-3 p-4">
+                                        <div className="min-w-0">
+                                            <p className={`truncate text-[13px] leading-5 font-semibold ${textClass}`}>{item.student_name}</p>
+                                            <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>
+                                                {item.student_number ? `${item.student_number} · ` : ''}
+                                                {item.room_name ?? t.secretaryDashboard.noGroup}
+                                                {' · '}
+                                                {formatDate(item.latest_attendance_date)}
+                                            </p>
+                                        </div>
+                                        <span className="shrink-0 rounded-md bg-error-container px-2 py-1 text-[11px] leading-4 font-medium text-on-error-container dark:bg-error dark:text-on-error">
+                                            {t.secretaryDashboard.absenceCount(numberFormat.format(item.absence_count))}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Panel>
                     ) : (
-                        <p className={`flex items-center justify-center text-center text-[13px] leading-5 ${secondaryTextClass}`} style={{ height: 180 }}>
-                            {t.secretaryDashboard.studentStatusEmpty}
-                        </p>
+                        <Panel className="p-4">
+                            <p className={`text-[13px] leading-5 ${secondaryTextClass}`}>{t.secretaryDashboard.attendanceEmpty}</p>
+                        </Panel>
                     )}
-                </ChartCard>
+                </section>
             </div>
 
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
@@ -170,10 +186,10 @@ export default function TableauDeBordSecretariat() {
                         title={t.secretaryDashboard.students}
                         action={<a href="#/eleves" className={linkClass}>{t.secretaryDashboard.viewStudents}</a>}
                     />
-                    {dashboard.new_or_incomplete_students.length > 0 ? (
+                    {dashboard.students_to_complete.length > 0 ? (
                         <Panel>
                             <ul className="divide-y divide-outline-variant dark:divide-[#3a3835]">
-                                {dashboard.new_or_incomplete_students.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((student) => (
+                                {dashboard.students_to_complete.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((student) => (
                                     <li key={student.id} className="p-4">
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
@@ -217,25 +233,23 @@ export default function TableauDeBordSecretariat() {
 
                 <section className="flex min-w-0 flex-col gap-3">
                     <SectionHeader
-                        title={t.secretaryDashboard.attendance}
-                        action={<a href="#/presences" className={linkClass}>{t.secretaryDashboard.viewAttendance}</a>}
+                        title={t.secretaryDashboard.latePaymentsTitle}
+                        action={<a href="#/paiements-finances" className={linkClass}>{t.secretaryDashboard.viewPayments}</a>}
                     />
-                    {dashboard.repeated_absence_items.length > 0 ? (
+                    {dashboard.late_payment_students.length > 0 ? (
                         <Panel>
                             <ul className="divide-y divide-outline-variant dark:divide-[#3a3835]">
-                                {dashboard.repeated_absence_items.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((item) => (
+                                {dashboard.late_payment_students.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT).map((item) => (
                                     <li key={item.student_id} className="flex items-center justify-between gap-3 p-4">
                                         <div className="min-w-0">
                                             <p className={`truncate text-[13px] leading-5 font-semibold ${textClass}`}>{item.student_name}</p>
                                             <p className={`text-[12px] leading-5 ${secondaryTextClass}`}>
                                                 {item.student_number ? `${item.student_number} · ` : ''}
-                                                {item.room_name ?? t.secretaryDashboard.noGroup}
-                                                {' · '}
-                                                {formatDate(item.latest_attendance_date)}
+                                                {t.secretaryDashboard.latePaymentCount(numberFormat.format(item.late_count))}
                                             </p>
                                         </div>
                                         <span className="shrink-0 rounded-md bg-error-container px-2 py-1 text-[11px] leading-4 font-medium text-on-error-container dark:bg-error dark:text-on-error">
-                                            {t.secretaryDashboard.absenceCount(numberFormat.format(item.absence_count))}
+                                            {currencyFormat.format(item.total_amount)}
                                         </span>
                                     </li>
                                 ))}
@@ -243,7 +257,7 @@ export default function TableauDeBordSecretariat() {
                         </Panel>
                     ) : (
                         <Panel className="p-4">
-                            <p className={`text-[13px] leading-5 ${secondaryTextClass}`}>{t.secretaryDashboard.attendanceEmpty}</p>
+                            <p className={`text-[13px] leading-5 ${secondaryTextClass}`}>{t.secretaryDashboard.latePaymentsEmpty}</p>
                         </Panel>
                     )}
                 </section>

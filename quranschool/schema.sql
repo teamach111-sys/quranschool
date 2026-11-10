@@ -47,6 +47,8 @@ CREATE TABLE schools (
   currency CHAR(3) NOT NULL DEFAULT 'MAD',
   monthly_fee DECIMAL(10,2),
   payment_methods JSON,
+  student_number_prefix VARCHAR(20),
+  student_number_use_dash TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -601,6 +603,7 @@ WHERE r.school_id=@seed_school_id AND r.year_id=@seed_year_id;
 
 -- Attendance for every weekday from 2026-09-07 to 2026-11-06 (today is left
 -- unrecorded so the teacher "pending attendance" counter has something to show).
+-- S-001 is deliberately absent four times in November to demonstrate the secretary alert.
 INSERT INTO attendance (student_id, school_id, room_id, year_id, recorded_by, attendance_date, status)
 WITH RECURSIVE date_series (d) AS (
   SELECT DATE('2026-09-07')
@@ -618,6 +621,8 @@ SELECT
     LIMIT 1),
   ds.d,
   CASE
+    WHEN s.student_number='S-001'
+      AND ds.d BETWEEN DATE('2026-11-02') AND DATE('2026-11-05') THEN 'absent'
     WHEN MOD(s.id * 7 + TO_DAYS(ds.d) * 13, 100) < 78 THEN 'present'
     WHEN MOD(s.id * 7 + TO_DAYS(ds.d) * 13, 100) < 86 THEN 'late'
     WHEN MOD(s.id * 7 + TO_DAYS(ds.d) * 13, 100) < 91 THEN 'excused'

@@ -119,10 +119,11 @@ function DonutTooltip({ active, payload, valueFormatter }) {
  * @param {Array<{ key: string, name: string, value: number, color: string }>} props.data
  * @param {string} [props.centerLabel]
  * @param {string} [props.centerValue]
+ * @param {string} [props.centerValueTooltip]
  * @param {(value: number, item: object) => string} [props.valueFormatter]
  * @param {number} [props.height]
  */
-export function DonutChart({ data, centerLabel, centerValue, valueFormatter, height = 190 }) {
+export function DonutChart({ data, centerLabel, centerValue, centerValueTooltip, valueFormatter, height = 190 }) {
     const total = data.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
 
     if (total <= 0) {
@@ -131,7 +132,7 @@ export function DonutChart({ data, centerLabel, centerValue, valueFormatter, hei
 
     return (
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
-            <div className="relative shrink-0" style={{ width: height, height }}>
+            <div className="relative shrink-0 [container-type:inline-size]" style={{ width: height, height }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -153,7 +154,10 @@ export function DonutChart({ data, centerLabel, centerValue, valueFormatter, hei
                 </ResponsiveContainer>
                 {(centerValue !== undefined || centerLabel) && (
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-[20px] leading-6 font-semibold tabular-nums text-on-surface dark:text-inverse-on-surface">
+                        <span
+                            title={centerValueTooltip}
+                            className={`text-[clamp(0.75rem,8cqw,1.25rem)] leading-5 font-semibold tabular-nums tracking-tight text-on-surface dark:text-inverse-on-surface ${centerValueTooltip ? 'pointer-events-auto cursor-help' : ''}`}
+                        >
                             {centerValue}
                         </span>
                         {centerLabel && (

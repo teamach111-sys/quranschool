@@ -996,6 +996,32 @@ class StudentsController extends Controller
 
     private function nextStudentNumberForYear(int $schoolId, int $yearId): string
     {
+        $school = DB::table('schools')
+            ->where('id', $schoolId)
+            ->first(['student_number_prefix', 'student_number_use_dash']);
+        $prefix = trim((string) ($school->student_number_prefix ?? ''));
+        $separator = ($school->student_number_use_dash ?? true) ? '-' : '';
+
+        if ($prefix !== '') {
+            $highestSequence = DB::table('students')
+                ->where('school_id', $schoolId)
+                ->where('year_id', $yearId)
+                ->whereNotNull('student_number')
+                ->pluck('student_number')
+                ->reduce(function (?int $carry, mixed $value) use ($prefix, $separator): ?int {
+                    $number = trim((string) $value);
+                    $pattern = '/^'.preg_quote($prefix, '/').preg_quote($separator, '/').'(\d+)$/';
+
+                    if (preg_match($pattern, $number, $matches)) {
+                        return max((int) ($carry ?? 0), (int) $matches[1]);
+                    }
+
+                    return $carry;
+                }, 0);
+
+            return sprintf('%s%s%03d', $prefix, $separator, ($highestSequence ?? 0) + 1);
+        }
+
         $year = DB::table('academic_years')
             ->where('school_id', $schoolId)
             ->where('id', $yearId)

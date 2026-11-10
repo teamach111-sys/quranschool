@@ -346,4 +346,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/school-settings', [SchoolSettingsController::class, 'update'])
         ->middleware('can:access-admin')
         ->name('admin.school-settings.update');
+
+    Route::get('/admin/school-settings/export', [SchoolSettingsController::class, 'exportData'])
+        ->middleware('can:access-admin')
+        ->name('admin.school-settings.export');
+
+    Route::post('/admin/school-settings/import', [SchoolSettingsController::class, 'importData'])
+        ->middleware('can:access-admin')
+        ->name('admin.school-settings.import');
 });

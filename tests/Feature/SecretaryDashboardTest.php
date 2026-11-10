@@ -104,22 +104,21 @@ class SecretaryDashboardTest extends TestCase
             ->assertJsonPath('stats.payment_balances.late.amount', 125.5)
             ->assertJsonPath('stats.payment_balances.waived.count', 1)
             ->assertJsonPath('stats.payment_balances.waived.amount', 30)
-            ->assertJsonCount(4, 'new_or_incomplete_students')
-            ->assertJsonPath('new_or_incomplete_students.0.student_name', 'New Student')
-            ->assertJsonPath('new_or_incomplete_students.0.is_new', true)
-            ->assertJsonPath('new_or_incomplete_students.1.missing_fields.0', 'student_number')
-            ->assertJsonPath('new_or_incomplete_students.2.missing_fields.0', 'guardian_email')
-            ->assertJsonCount(5, 'recent_payments')
-            ->assertJsonPath('recent_payments.0.id', 3)
-            ->assertJsonPath('recent_payments.0.status', 'paid')
-            ->assertJsonPath('recent_payments.0.created_at', '2026-11-02 11:00:00')
-            ->assertJsonPath('alerts.late_payments', 1)
-            ->assertJsonPath('alerts.repeated_absences', 1)
+            ->assertJsonCount(3, 'students_to_complete')
+            ->assertJsonPath('students_to_complete.0.student_name', 'Paused Student')
+            ->assertJsonPath('students_to_complete.0.missing_fields.0', 'student_number')
+            ->assertJsonPath('students_to_complete.1.student_name', 'Email Missing Student')
+            ->assertJsonPath('students_to_complete.1.missing_fields.0', 'guardian_email')
+            ->assertJsonPath('students_to_complete.2.student_name', 'Mariam Ali')
+            ->assertJsonPath('students_to_complete.2.missing_fields.0', 'guardian_phone')
+            ->assertJsonCount(1, 'late_payment_students')
+            ->assertJsonPath('late_payment_students.0.student_id', 1)
+            ->assertJsonPath('late_payment_students.0.late_count', 1)
+            ->assertJsonPath('late_payment_students.0.total_amount', 125.5)
             ->assertJsonCount(1, 'repeated_absence_items')
             ->assertJsonPath('repeated_absence_items.0.student_id', 1)
             ->assertJsonPath('repeated_absence_items.0.absence_count', 4)
-            ->assertJsonPath('repeated_absence_items.0.latest_attendance_date', '2026-11-09')
-            ->assertJsonPath('alerts.incomplete_student_records', 3);
+            ->assertJsonPath('repeated_absence_items.0.latest_attendance_date', '2026-11-09');
     }
 
     public function test_secretary_dashboard_defaults_to_the_current_school_year(): void
@@ -143,9 +142,8 @@ class SecretaryDashboardTest extends TestCase
             ->assertJsonPath('student_record_gaps.student_number', 1)
             ->assertJsonPath('student_record_gaps.guardian_phone', 1)
             ->assertJsonPath('student_record_gaps.guardian_email', 1)
-            ->assertJsonPath('student_status_distribution.active', 2)
-            ->assertJsonPath('student_status_distribution.paused', 2)
-            ->assertJsonPath('student_status_distribution.withdrawn', 1);
+            ->assertJsonCount(3, 'students_to_complete')
+            ->assertJsonPath('students_to_complete.2.student_name', 'Mariam Ali');
     }
 
     public function test_secretary_cannot_select_another_school_or_non_current_year(): void

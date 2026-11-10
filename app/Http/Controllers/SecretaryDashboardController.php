@@ -48,29 +48,11 @@ class SecretaryDashboardController extends Controller
                 SUM(CASE WHEN guardian_email IS NULL OR TRIM(guardian_email) = '' THEN 1 ELSE 0 END) AS guardian_email
             ")
             ->first();
-        $studentStatusRows = DB::table('students')
-            ->where('school_id', $schoolId)
-            ->where('year_id', $yearId)
-            ->select('status')
-            ->selectRaw('COUNT(*) AS student_count')
-            ->groupBy('status')
-            ->pluck('student_count', 'status');
-        $studentStatusDistribution = [
-            'active' => (int) ($studentStatusRows['active'] ?? 0),
-            'paused' => (int) ($studentStatusRows['paused'] ?? 0),
-            'withdrawn' => (int) ($studentStatusRows['withdrawn'] ?? 0),
-        ];
         $newStudentCount = $this->studentRecordsQuery($schoolId, $yearId)
             ->where('created_at', '>=', $recentStudentCutoff)
             ->count();
 
-        $studentsToReview = $this->studentRecordsQuery($schoolId, $yearId)
-            ->where(function (Builder $query) use ($recentStudentCutoff) {
-                $query->where('created_at', '>=', $recentStudentCutoff)
-                    ->orWhere(function (Builder $incomplete) {
-                        $this->applyIncompleteStudentFilter($incomplete);
-                    });
-            })
+        $studentsToComplete = $this->incompleteStudentsQuery($schoolId, $yearId)
             ->orderByDesc('created_at')
             ->orderBy('full_name')
             ->limit(6)
@@ -104,7 +86,7 @@ class SecretaryDashboardController extends Controller
             })
             ->values();
 
-        $recentPayments = DB::table('payments')
+        $latePaymentStudents = DB::table('payments')
             ->join('students', function (JoinClause $join) {
                 $join->on('students.id', '=', 'payments.student_id')
                     ->on('students.school_id', '=', 'payments.school_id')
@@ -112,24 +94,18 @@ class SecretaryDashboardController extends Controller
             })
             ->where('payments.school_id', $schoolId)
             ->where('payments.year_id', $yearId)
-            ->orderByDesc('payments.created_at')
-            ->orderByDesc('payments.id')
-            ->limit(5)
-            ->get([
-                'payments.id',
-                'students.full_name as student_name',
-                'payments.created_at',
-                'payments.amount',
-                'payments.currency',
-                'payments.status',
-            ])
-            ->map(fn ($payment) => [
-                'id' => (int) $payment->id,
-                'student_name' => $payment->student_name,
-                'created_at' => $payment->created_at,
-                'amount' => (float) $payment->amount,
-                'currency' => $payment->currency,
-                'status' => $payment->status,
+            ->where('payments.status', 'late')
+            ->groupBy('students.id', 'students.full_name', 'students.student_number')
+            ->selectRaw('students.id AS student_id, students.full_name AS student_name, students.student_number AS student_number, COUNT(*) AS late_count, SUM(payments.amount) AS total_amount')
+            ->orderByDesc('total_amount')
+            ->limit(6)
+            ->get()
+            ->map(fn ($row) => [
+                'student_id' => (int) $row->student_id,
+                'student_name' => $row->student_name,
+                'student_number' => $row->student_number,
+                'late_count' => (int) $row->late_count,
+                'total_amount' => (float) $row->total_amount,
             ])
             ->values();
 
@@ -173,15 +149,9 @@ class SecretaryDashboardController extends Controller
                 'guardian_phone' => (int) ($studentRecordGaps->guardian_phone ?? 0),
                 'guardian_email' => (int) ($studentRecordGaps->guardian_email ?? 0),
             ],
-            'student_status_distribution' => $studentStatusDistribution,
-            'new_or_incomplete_students' => $studentsToReview,
-            'recent_payments' => $recentPayments,
+            'students_to_complete' => $studentsToComplete,
+            'late_payment_students' => $latePaymentStudents,
             'repeated_absence_items' => $repeatedAbsenceItems,
-            'alerts' => [
-                'late_payments' => $paymentBalances['late']['count'],
-                'repeated_absences' => $repeatedAbsenceItems->count(),
-                'incomplete_student_records' => $incompleteStudentCount,
-            ],
         ]);
     }
 

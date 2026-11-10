@@ -18,6 +18,8 @@ class StudentsTableTest extends TestCase
             $table->id();
             $table->string('name_fr');
             $table->string('name_ar');
+            $table->string('student_number_prefix', 20)->nullable();
+            $table->boolean('student_number_use_dash')->default(true);
             $table->timestamps();
         });
 
@@ -423,6 +425,32 @@ class StudentsTableTest extends TestCase
             'student_number' => 'QS-2026-104',
             'full_name' => 'New Student Two',
         ]);
+    }
+
+    public function test_generated_student_number_can_omit_the_dash_separator(): void
+    {
+        DB::table('schools')->where('id', 1)->update([
+            'student_number_prefix' => 'N',
+            'student_number_use_dash' => false,
+        ]);
+
+        $this->actingAs(new GenericUser([
+            'id' => 10,
+            'school_id' => 1,
+            'role' => 'admin',
+        ]));
+
+        $this->postJson('/students', [
+            'year_id' => 1,
+            'full_name' => 'No Dash Student',
+            'birth_date' => '2016-04-14',
+            'guardian_name' => 'Parent Dash',
+            'guardian_phone' => '0600000105',
+            'guardian_email' => 'nodash@example.com',
+            'room_id' => 1,
+            'enrollment_date' => '2026-09-12',
+            'status' => 'active',
+        ])->assertCreated()->assertJsonPath('student.student_number', 'N001');
     }
 
     public function test_secretary_can_update_student_details_and_room_in_the_same_year(): void
