@@ -52,6 +52,7 @@ export default function MonthInput({
             maxDate={parseMonth(max)}
             required={required}
             disabled={disabled}
+            autoComplete="off"
             aria-label={ariaLabel}
             className="date-input__field month-input__field"
             placeholderText={isRTL ? 'شهر/سنة' : 'mois/année'}

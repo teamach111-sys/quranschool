@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
@@ -31,6 +30,7 @@ class AuthController extends Controller
 
         if (! $user || ! $passwordHash || ! Hash::check($credentials['password'], $passwordHash)) {
             return response()->json([
+                'code' => 'invalid_credentials',
                 'success' => false,
                 'message' => 'The provided credentials do not match our records.',
             ], 422);
@@ -43,6 +43,7 @@ class AuthController extends Controller
 
         if (isset($user->is_active) && ! $user->is_active) {
             return response()->json([
+                'code' => 'inactive_account',
                 'success' => false,
                 'message' => 'This account is not active.',
             ], 403);
@@ -50,13 +51,13 @@ class AuthController extends Controller
 
         if (! in_array($role, ['admin', 'teacher', 'secretary'], true)) {
             return response()->json([
+                'code' => 'role_not_allowed',
                 'success' => false,
                 'message' => 'This account is not allowed to access the dashboard.',
             ], 403);
         }
 
-        $remember = $request->boolean('remember') && Schema::hasColumn('users', 'remember_token');
-        Auth::loginUsingId($user->id, $remember);
+        Auth::loginUsingId($user->id, $request->boolean('remember'));
         $request->session()->regenerate();
 
         // Relative URL so the browser stays on the host it used to log in

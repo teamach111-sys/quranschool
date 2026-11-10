@@ -46,6 +46,16 @@ export default function DateInput({
 }) {
     const { isRTL, lang } = useLanguage();
     const portalId = useId();
+    const firstYear = min ? parseDate(min)?.getFullYear() ?? 1900 : 1900;
+    const lastYear = max ? parseDate(max)?.getFullYear() ?? 2100 : 2100;
+    const yearOptions = Array.from(
+        { length: Math.max(0, lastYear - firstYear + 1) },
+        (_, index) => firstYear + index,
+    );
+    const monthNameFormat = new Intl.DateTimeFormat(
+        isRTL ? 'ar-MA-u-nu-latn' : 'fr-MA',
+        { month: 'long' },
+    );
 
     return (
         <DatePicker
@@ -58,6 +68,7 @@ export default function DateInput({
             required={required}
             readOnly={readOnly}
             disabled={disabled}
+            autoComplete="off"
             aria-label={ariaLabel}
             className={`date-input__field ${readOnly ? 'date-input__field--readonly' : ''}`}
             placeholderText={placeholder ?? (isRTL ? 'يوم/شهر/سنة' : 'jj/mm/aaaa')}
@@ -67,10 +78,60 @@ export default function DateInput({
             locale={lang}
             dateFormat={isRTL ? 'yyyy/MM/dd' : 'dd/MM/yyyy'}
             calendarStartDay={isRTL ? 6 : 1}
-            showYearDropdown
-            dropdownMode="select"
-            scrollableYearDropdown
-            yearDropdownItemNumber={100}
+            renderCustomHeader={({
+                monthDate,
+                changeMonth,
+                changeYear,
+                decreaseMonth,
+                increaseMonth,
+                prevMonthButtonDisabled,
+                nextMonthButtonDisabled,
+            }) => (
+                <div className="flex items-center justify-between gap-2 px-2 pb-2">
+                    <button
+                        type="button"
+                        aria-label={isRTL ? 'الشهر السابق' : 'Mois précédent'}
+                        onClick={decreaseMonth}
+                        disabled={prevMonthButtonDisabled}
+                        className="rounded p-1 text-on-surface-variant transition-[color,transform] duration-200 hover:text-primary active:translate-y-px disabled:opacity-40 dark:text-[#c6c2bd]"
+                    >
+                        <Icon name={isRTL ? 'chevron_right' : 'chevron_left'} className="text-[18px]" />
+                    </button>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                        <select
+                            aria-label={isRTL ? 'الشهر' : 'Mois'}
+                            className="react-datepicker__month-select"
+                            value={monthDate.getMonth()}
+                            onChange={(event) => changeMonth(Number(event.target.value))}
+                        >
+                            {Array.from({ length: 12 }, (_, monthIndex) => (
+                                <option key={monthIndex} value={monthIndex}>
+                                    {String(monthIndex + 1).padStart(2, '0')} - {monthNameFormat.format(new Date(monthDate.getFullYear(), monthIndex, 1))}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            aria-label={isRTL ? 'السنة' : 'Année'}
+                            className="react-datepicker__year-select"
+                            value={monthDate.getFullYear()}
+                            onChange={(event) => changeYear(Number(event.target.value))}
+                        >
+                            {yearOptions.map((year) => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <button
+                        type="button"
+                        aria-label={isRTL ? 'الشهر التالي' : 'Mois suivant'}
+                        onClick={increaseMonth}
+                        disabled={nextMonthButtonDisabled}
+                        className="rounded p-1 text-on-surface-variant transition-[color,transform] duration-200 hover:text-primary active:translate-y-px disabled:opacity-40 dark:text-[#c6c2bd]"
+                    >
+                        <Icon name={isRTL ? 'chevron_left' : 'chevron_right'} className="text-[18px]" />
+                    </button>
+                </div>
+            )}
             showIcon
             icon={<Icon name="calendar_month" />}
             calendarIconClassName="date-input__icon"

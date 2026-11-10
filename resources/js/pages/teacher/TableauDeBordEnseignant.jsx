@@ -14,6 +14,7 @@ const cardClass = 'min-w-0 rounded-lg border border-outline-variant bg-surface-c
 const textClass = 'text-on-surface dark:text-inverse-on-surface';
 const secondaryTextClass = 'text-on-surface-variant dark:text-tertiary-fixed-dim';
 const linkClass = 'shrink-0 text-[12px] leading-5 font-semibold text-primary hover:underline dark:text-primary-fixed-dim';
+const quickLinkClass = 'group flex min-w-0 items-center gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 text-on-surface transition-[color,transform,border-color] duration-200 hover:border-primary/40 hover:bg-surface-container-low active:translate-y-px dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface dark:hover:bg-[#2a2928]';
 const DASHBOARD_LIST_PREVIEW_LIMIT = 5;
 const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -83,6 +84,12 @@ export default function TableauDeBordEnseignant() {
     }
     const visibleAttendanceStudents = dashboard?.attendance_tasks?.students
         ?.slice(0, DASHBOARD_LIST_PREVIEW_LIMIT) ?? [];
+    const quickLinks = [
+        { key: 'groups', icon: 'groups', label: t.teacherDashboard.quickLinks.groups, href: '#/mes-groupes-eleves' },
+        { key: 'schedule', icon: 'event', label: t.teacherDashboard.quickLinks.schedule, href: '#/mon-emploi-du-temps' },
+        { key: 'attendance', icon: 'fact_check', label: t.teacherDashboard.quickLinks.attendance, href: '#/presences' },
+        { key: 'sessions', icon: 'menu_book', label: t.teacherDashboard.quickLinks.sessions, href: '#/seances-memorisation' },
+    ];
     if (loading && !dashboard) {
         return (
             <div role="status" aria-label={t.teacherDashboard.loading} className="flex w-full flex-col gap-5">
@@ -124,6 +131,24 @@ export default function TableauDeBordEnseignant() {
                 ]}
             />
 
+            <section
+                aria-label={t.teacherDashboard.quickLinksTitle}
+                className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4"
+            >
+                {quickLinks.map((link) => (
+                    <a key={link.key} href={link.href} className={quickLinkClass}>
+                        <Icon name={link.icon} className="shrink-0 text-[18px] text-primary" />
+                        <span className="min-w-0 flex-1 truncate text-[12px] leading-4 font-semibold">
+                            {link.label}
+                        </span>
+                        <Icon
+                            name={isRTL ? 'arrow_back' : 'arrow_forward'}
+                            className="shrink-0 text-[14px] text-on-surface-variant dark:text-[#918d88]"
+                        />
+                    </a>
+                ))}
+            </section>
+
             <StudentProgressCharts progress={dashboard.student_progress} />
 
             <div className="grid w-full grid-cols-1 gap-5 xl:grid-cols-2">
@@ -149,7 +174,9 @@ export default function TableauDeBordEnseignant() {
                                         <span className="hidden shrink-0 rounded-md bg-primary-fixed px-2 py-1 text-[12px] leading-5 font-medium text-on-primary-fixed-variant dark:bg-[#32302e] dark:text-[#918d88] sm:inline-flex">
                                             {lesson.starts_at} – {lesson.ends_at}
                                         </span>
-                                        {(lesson.id === dashboard.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id)) && (
+                                        {lesson.students.some((student) => student.status === null && student.can_edit)
+                                            && (lesson.id === dashboard.today_focus_lesson_id || pendingAttendanceSlotIds.has(lesson.id))
+                                            && (
                                             <a
                                                 href={`#/presences?room_id=${lesson.room_id}&attendance_date=${dashboard.today}`}
                                                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-[13px] font-semibold text-on-primary transition-colors hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto dark:bg-[#2f7d4f] dark:text-white"

@@ -97,6 +97,7 @@ CREATE TABLE users (
   full_name VARCHAR(120) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
+  remember_token VARCHAR(100) NULL,
   phone VARCHAR(30),
   language ENUM('fr','ar') NOT NULL DEFAULT 'fr' COMMENT 'persistent UI language',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,

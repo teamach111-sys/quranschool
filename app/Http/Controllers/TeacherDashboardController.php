@@ -183,15 +183,16 @@ class TeacherDashboardController extends Controller
             ->values();
 
         $currentTime = $now->format('H:i');
-        $attendanceFocusLesson = $todayLessons->first(
-            fn (array $lesson) => $lesson['starts_at'] <= $currentTime && $lesson['ends_at'] > $currentTime,
-        ) ?? $todayLessons->first(
-            fn (array $lesson) => $lesson['starts_at'] > $currentTime,
-        ) ?? $todayLessons->first(
-            fn (array $lesson) => collect($lesson['students'])->contains(
-                fn (array $student) => $student['status'] === null && $student['can_edit'],
-            ),
+        $hasPendingAttendance = fn (array $lesson): bool => collect($lesson['students'])->contains(
+            fn (array $student): bool => $student['status'] === null && $student['can_edit'],
         );
+        $attendanceFocusLesson = $todayLessons->first(
+            fn (array $lesson) => $lesson['starts_at'] <= $currentTime
+                && $lesson['ends_at'] > $currentTime
+                && $hasPendingAttendance($lesson),
+        ) ?? $todayLessons->first(
+            fn (array $lesson) => $lesson['starts_at'] > $currentTime && $hasPendingAttendance($lesson),
+        ) ?? $todayLessons->first($hasPendingAttendance);
 
         $upcomingStart = $now->copy()->addDay();
         $upcomingEnd = $now->copy()->addDays(7);

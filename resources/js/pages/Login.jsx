@@ -1,11 +1,12 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import Icon from '../components/Icon';
 import Logo from '../components/Logo';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useLanguage } from '../hooks/useLanguage';
 
 export default function Login() {
-    const { t } = useLanguage();
+    const { isRTL, t } = useLanguage();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [remember, setRemember] = useState(true);
@@ -41,13 +42,24 @@ export default function Login() {
                 return;
             }
 
+            const loginErrorMessages = {
+                invalid_credentials: t.login.invalidCredentials,
+                inactive_account: t.login.inactiveAccount,
+                role_not_allowed: t.login.accessDenied,
+            };
+
             if (data?.success) {
                 window.location.href = data.redirect || '/dashboard';
                 return;
             }
 
+            if (data?.code && loginErrorMessages[data.code]) {
+                setError(loginErrorMessages[data.code]);
+                return;
+            }
+
             if (data?.errors) {
-                setError(Object.values(data.errors).flat().join(' '));
+                setError(t.login.validationError);
                 return;
             }
 
@@ -57,24 +69,26 @@ export default function Login() {
             }
 
             if (!res.ok) {
-                setError(`Connexion impossible (erreur ${res.status}). Veuillez réessayer.`);
+                setError(t.login.requestError(res.status));
                 return;
             }
 
             // A 200 with a non-JSON body means the session is already valid.
             window.location.href = '/dashboard';
-        } catch (err) {
-            console.error('Login request failed:', err);
-            setError('Impossible de contacter le serveur. Vérifiez votre connexion puis réessayez.');
+        } catch {
+            setError(t.login.networkError);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="bg-background dark:bg-[#1c1b1a] font-sans text-on-surface dark:text-[#e7e3de] antialiased min-h-screen flex items-center justify-center p-4 sm:p-5 transition-colors duration-200">
+        <div dir={isRTL ? 'rtl' : 'ltr'} className="bg-background dark:bg-[#1c1b1a] font-sans text-on-surface dark:text-[#e7e3de] antialiased min-h-screen flex items-center justify-center p-4 sm:p-5 transition-colors duration-200">
             <main className="w-full max-w-[440px] flex flex-col items-center justify-center">
                 <div className="flex flex-col w-full items-center justify-center py-6 sm:py-10">
+                    <div className="mb-4 flex w-full justify-end">
+                        <LanguageSwitcher compact />
+                    </div>
                     {/* Brand Logo */}
                     <div className="flex items-center justify-center mb-6 w-full">
                         <Logo className="h-12 sm:h-14" />
@@ -83,8 +97,8 @@ export default function Login() {
                     <div className="w-full bg-surface-container-lowest dark:bg-[#232221] rounded-xl shadow-md p-6 sm:p-10 flex flex-col transition-colors duration-200">
                         {/* Header Titles */}
                         <div className="mb-6 text-center">
-                            <h1 className="text-[22px] sm:text-[28px] leading-[30px] sm:leading-[36px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#e7e3de]">Connexion</h1>
-                            <p className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-on-surface-variant dark:text-[#918d88] mt-2">Veuillez entrer vos identifiants pour continuer</p>
+                            <h1 className="text-[22px] sm:text-[28px] leading-[30px] sm:leading-[36px] tracking-[-0.015em] font-semibold text-on-surface dark:text-[#e7e3de]">{t.login.title}</h1>
+                            <p className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-on-surface-variant dark:text-[#918d88] mt-2">{t.login.description}</p>
                         </div>
                         {/* Error */}
                         {error && (
@@ -97,35 +111,35 @@ export default function Login() {
                         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                             {/* Input Field: Identifier / Email */}
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] tracking-[0.02em] font-medium text-on-surface dark:text-[#e7e3de]" htmlFor="identifier">Identifiant ou Email</label>
+                                <label className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] tracking-[0.02em] font-medium text-on-surface dark:text-[#e7e3de]" htmlFor="identifier">{t.login.identifier}</label>
                                 <div className="relative flex items-center">
-                                    <Icon name="person" className="absolute left-3.5 text-outline dark:text-[#918d88] text-[20px] pointer-events-none select-none" />
+                                    <Icon name="person" className={`absolute ${isRTL ? 'right-3.5' : 'left-3.5'} text-outline dark:text-[#918d88] text-[20px] pointer-events-none select-none`} />
                                     <input
                                         id="identifier" name="identifier" type="text" required autoFocus
-                                        autoComplete="username" value={identifier}
+                                        autoComplete="username" dir="ltr" value={identifier}
                                         onChange={(e) => setIdentifier(e.target.value)}
-                                        placeholder="nom@exemple.com"
-                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] focus:bg-surface-container-lowest text-on-surface dark:text-[#e7e3de] placeholder:text-outline dark:placeholder:text-[#6f6b66] rounded-lg pl-11 pr-3 py-2.5 font-sans text-[14px] leading-[22px] transition-all outline-none focus:shadow-sm"
+                                        placeholder={t.login.identifierPlaceholder}
+                                        className={`w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] focus:bg-surface-container-lowest text-on-surface dark:text-[#e7e3de] placeholder:text-outline dark:placeholder:text-[#6f6b66] rounded-lg py-2.5 font-sans text-[14px] leading-[22px] transition-all outline-none focus:shadow-sm ${isRTL ? 'pr-11 pl-3' : 'pl-11 pr-3'}`}
                                     />
                                 </div>
                             </div>
                             {/* Input Field: Password */}
                             <div className="flex flex-col gap-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] tracking-[0.02em] font-medium text-on-surface dark:text-[#e7e3de]" htmlFor="password">Mot de passe</label>
+                                    <label className="text-[12px] sm:text-[14px] leading-[18px] sm:leading-[20px] tracking-[0.02em] font-medium text-on-surface dark:text-[#e7e3de]" htmlFor="password">{t.login.password}</label>
                                     <a className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px] tracking-[0.03em] font-semibold text-primary dark:text-[#918d88] hover:text-primary-container transition-colors py-1 inline-flex items-center min-h-[44px]" href="/forgot-password">{t.passwordRecovery.forgotLink}</a>
                                 </div>
                                 <div className="relative flex items-center">
-                                    <Icon name="lock" className="absolute left-3.5 text-outline dark:text-[#918d88] text-[20px] pointer-events-none select-none" />
+                                    <Icon name="lock" className={`absolute ${isRTL ? 'right-3.5' : 'left-3.5'} text-outline dark:text-[#918d88] text-[20px] pointer-events-none select-none`} />
                                     <input
                                         id="password" name="password" type={showPassword ? 'text' : 'password'} required
-                                        autoComplete="current-password" value={password}
+                                        autoComplete="current-password" dir="ltr" value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••"
-                                        className="w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] focus:bg-surface-container-lowest text-on-surface dark:text-[#e7e3de] placeholder:text-outline dark:placeholder:text-[#6f6b66] rounded-lg pl-11 pr-12 py-2.5 font-sans text-[14px] leading-[22px] transition-all outline-none focus:shadow-sm"
+                                        className={`w-full min-h-[44px] bg-surface-container-low dark:bg-[#1c1b1a] focus:bg-surface-container-lowest text-on-surface dark:text-[#e7e3de] placeholder:text-outline dark:placeholder:text-[#6f6b66] rounded-lg py-2.5 font-sans text-[14px] leading-[22px] transition-all outline-none focus:shadow-sm ${isRTL ? 'pr-11 pl-12' : 'pl-11 pr-12'}`}
                                     />
-                                    <button type="button" aria-label="Afficher le mot de passe" onClick={() => setShowPassword(s => !s)}
-                                        className="absolute right-1 text-outline dark:text-[#918d88] hover:text-on-surface dark:hover:text-[#e7e3de] flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded cursor-pointer transition-colors">
+                                    <button type="button" aria-label={showPassword ? t.login.hidePassword : t.login.showPassword} onClick={() => setShowPassword((current) => !current)}
+                                        className={`absolute ${isRTL ? 'left-1' : 'right-1'} text-outline dark:text-[#918d88] hover:text-on-surface dark:hover:text-[#e7e3de] flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded cursor-pointer transition-colors`}>
                                         <Icon name={showPassword ? 'visibility' : 'visibility_off'} className="text-[20px]" />
                                     </button>
                                 </div>
@@ -140,19 +154,19 @@ export default function Login() {
                                         </svg>
                                     </div>
                                 </label>
-                                <label className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-on-surface dark:text-[#e7e3de] cursor-pointer select-none py-2" htmlFor="remember">Se souvenir de moi</label>
+                                <label className="text-[13px] sm:text-[14px] leading-[20px] sm:leading-[22px] text-on-surface dark:text-[#e7e3de] cursor-pointer select-none py-2" htmlFor="remember">{t.login.remember}</label>
                             </div>
                             {/* Submit Button */}
                             <button type="submit" disabled={loading}
                                 className="w-full min-h-[48px] mt-1 bg-primary-container dark:bg-[#2f7d4f] hover:bg-primary dark:hover:bg-[#37955a] text-on-primary dark:text-white font-semibold text-[14px] sm:text-[16px] leading-[20px] tracking-[0.01em] py-3 px-4 rounded-lg shadow-sm transition-all duration-150 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                                <span>{loading ? 'Connexion…' : 'Se connecter'}</span>
-                                <Icon name="arrow_forward" className="text-[18px]" />
+                                <span>{loading ? t.login.submitting : t.login.submit}</span>
+                                <Icon name={isRTL ? 'arrow_back' : 'arrow_forward'} className="text-[18px]" />
                             </button>
                         </form>
                         <div className="mt-4 flex justify-center gap-2">
-                            <button type="button" onClick={() => { setIdentifier('admin@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#2a2928] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">Admin</button>
-                            <button type="button" onClick={() => { setIdentifier('teacher@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#2a2928] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">Teacher</button>
-                            <button type="button" onClick={() => { setIdentifier('secretary@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#2a2928] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">Secretary</button>
+                            <button type="button" onClick={() => { setIdentifier('admin@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#2a2928] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">{t.login.quickFill.admin}</button>
+                            <button type="button" onClick={() => { setIdentifier('teacher@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#2a2928] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">{t.login.quickFill.teacher}</button>
+                            <button type="button" onClick={() => { setIdentifier('secretary@example.com'); setPassword('password'); }} className="rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#2a2928] dark:text-[#e7e3de] dark:hover:bg-[#32302e]">{t.login.quickFill.secretary}</button>
                         </div>
                     </div>
                 </div>

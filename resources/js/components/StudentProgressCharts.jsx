@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarsChart, ChartCard, useChartColors } from './DashboardCharts';
+import { BarsChart, ChartCard, DonutChart, useChartColors } from './DashboardCharts';
 import { useLanguage } from '../hooks/useLanguage';
 
 const PROGRESS_BUCKET_KEYS = [
@@ -27,11 +27,19 @@ export default function StudentProgressCharts({ progress }) {
     const { lang, t } = useLanguage();
     const colors = useChartColors();
     const numberFormat = new Intl.NumberFormat(lang === 'ar' ? 'ar-MA-u-nu-latn' : 'fr-MA');
-    const distributionData = PROGRESS_BUCKET_KEYS.map((key) => ({
+    const progressionPalette = [
+        colors.gray,
+        '#b9d9c5',
+        '#95cba8',
+        '#72b78a',
+        '#4f9f6e',
+        colors.green,
+    ];
+    const distributionData = PROGRESS_BUCKET_KEYS.map((key, index) => ({
         key,
         name: t.dashboardStats.charts.progressBuckets[key],
         value: progress.distribution[key],
-        color: colors.green,
+        color: progressionPalette[index],
     }));
     const topStudentData = progress.top_students.map((student, index) => ({
         key: student.student_id,
@@ -49,11 +57,12 @@ export default function StudentProgressCharts({ progress }) {
                 subtitle={t.dashboardStats.charts.studentProgressHint}
             >
                 {enrolledStudentCount > 0 ? (
-                    <BarsChart
+                    <DonutChart
                         data={distributionData}
-                        colors={colors}
-                        height={200}
+                        centerValue={numberFormat.format(enrolledStudentCount)}
+                        centerLabel={t.dashboardStats.charts.total}
                         valueFormatter={(value) => numberFormat.format(value)}
+                        height={200}
                     />
                 ) : (
                     <p

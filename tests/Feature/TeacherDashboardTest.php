@@ -278,6 +278,31 @@ class TeacherDashboardTest extends TestCase
         $this->assertDatabaseCount('attendance', 1);
     }
 
+    public function test_completed_current_lesson_has_no_attendance_focus_or_pending_tasks(): void
+    {
+        $this->seedDashboardData();
+        DB::table('attendance')->insert([
+            'id' => 2,
+            'student_id' => 2,
+            'school_id' => 1,
+            'room_id' => 1,
+            'year_id' => 1,
+            'recorded_by' => 20,
+            'attendance_date' => '2026-11-02',
+            'status' => 'present',
+            'note' => null,
+        ]);
+        $this->travelTo('2026-11-02 16:30:00');
+        $this->actingAs($this->teacher());
+
+        $this->getJson('/teacher/dashboard-summary?year_id=1')
+            ->assertOk()
+            ->assertJsonPath('today_focus_lesson_id', null)
+            ->assertJsonPath('attendance_tasks.count', 0)
+            ->assertJsonCount(0, 'attendance_tasks.students')
+            ->assertJsonCount(0, 'attendance_tasks.slots');
+    }
+
     public function test_dashboard_does_not_suggest_late_before_a_lesson_ends(): void
     {
         $this->seedDashboardData();
