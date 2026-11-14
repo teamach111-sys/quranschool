@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import DateInput from '../../../components/DateInput';
@@ -307,6 +307,18 @@ export default function AttendanceTable({ routeParams = {} }) {
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de]';
     const toolbar = (
         <div className="flex flex-col gap-3">
+            {canMark && yearIsCurrent && (
+                <button
+                    type="button"
+                    onClick={() => {
+                        setRosterOpen(true);
+                    }}
+                    className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white sm:w-auto"
+                >
+                    <Icon name="add" className="text-[17px]" />
+                    {t.attendance.mark}
+                </button>
+            )}
             <div className="flex flex-wrap justify-end gap-2">
                 <div className="w-full sm:w-auto sm:min-w-52">
                     <SelectInput
@@ -326,18 +338,6 @@ export default function AttendanceTable({ routeParams = {} }) {
                         ))}
                     </SelectInput>
                 </div>
-                {canMark && yearIsCurrent && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setRosterOpen(true);
-                        }}
-                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
-                    >
-                        <Icon name="add" className="text-[17px]" />
-                        {t.attendance.mark}
-                    </button>
-                )}
             </div>
             <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
                 <div className="min-w-0 xl:flex-1">

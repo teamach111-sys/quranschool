@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
@@ -509,12 +509,12 @@ export default function PaymentsTable({ routeParams = {} }) {
                 </div>
             )}
             {(canManage || canGenerate || canExportPayments) && (
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                     {canGenerate && (
                         <button
                             type="button"
                             onClick={() => setIsGeneratorOpen(true)}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
+                            className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white sm:w-auto"
                         >
                             <Icon name="autorenew" className="text-[17px]" />
                             {t.payments.generate}
@@ -524,14 +524,14 @@ export default function PaymentsTable({ routeParams = {} }) {
                         <button
                             type="button"
                             onClick={() => setEntry({ payment: null })}
-                            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
+                            className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white sm:w-auto"
                         >
                             <Icon name="add" className="text-[17px]" />
                             {t.payments.create}
                         </button>
                     )}
                     {canExportPayments && (
-                        <div className="order-first w-full sm:w-auto sm:min-w-52">
+                        <div className="w-full sm:w-auto sm:min-w-52">
                             <SelectInput
                                 value={exportingFormat}
                                 aria-label={t.exportSelect}

@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import SearchInput from '../../../components/SearchInput';
@@ -274,44 +274,46 @@ export default function UsersTable({ routeParams = {} }) {
     const inputClass = 'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none focus:border-primary dark:border-[#3a3835] dark:bg-inverse-surface dark:text-inverse-on-surface';
     const labelClass = 'flex flex-col gap-1.5 text-[12px] font-semibold text-on-surface dark:text-inverse-on-surface';
     const toolbar = (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 flex-1 sm:max-w-sm">
-                <SearchInput
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    isRTL={isRTL}
-                    placeholder={t.users.search}
-                    ariaLabel={t.users.search}
-                />
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-                <SelectInput
-                    value={roleFilter}
-                    onChange={(event) => setRoleFilter(event.target.value)}
-                    aria-label={t.users.roleFilter}
-                    className={inputClass}
-                >
-                    <option value="">{t.users.allRoles}</option>
-                    {roles.map((role) => <option key={role.id} value={role.id}>{roleLabel(role)}</option>)}
-                </SelectInput>
-                <SelectInput
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                    aria-label={t.users.statusFilter}
-                    className={inputClass}
-                >
-                    <option value="">{t.users.allStatuses}</option>
-                    <option value="active">{t.users.active}</option>
-                    <option value="inactive">{t.users.inactive}</option>
-                </SelectInput>
-                <button
-                    type="button"
-                    onClick={() => openUserForm()}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
-                >
-                    <Icon name="add" className="text-[17px]" />
-                    {t.users.create}
-                </button>
+        <div className="flex flex-col gap-2">
+            <button
+                type="button"
+                onClick={() => openUserForm()}
+                className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white sm:w-auto"
+            >
+                <Icon name="add" className="text-[17px]" />
+                {t.users.create}
+            </button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1 sm:max-w-sm">
+                    <SearchInput
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        isRTL={isRTL}
+                        placeholder={t.users.search}
+                        ariaLabel={t.users.search}
+                    />
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                    <SelectInput
+                        value={roleFilter}
+                        onChange={(event) => setRoleFilter(event.target.value)}
+                        aria-label={t.users.roleFilter}
+                        className={inputClass}
+                    >
+                        <option value="">{t.users.allRoles}</option>
+                        {roles.map((role) => <option key={role.id} value={role.id}>{roleLabel(role)}</option>)}
+                    </SelectInput>
+                    <SelectInput
+                        value={statusFilter}
+                        onChange={(event) => setStatusFilter(event.target.value)}
+                        aria-label={t.users.statusFilter}
+                        className={inputClass}
+                    >
+                        <option value="">{t.users.allStatuses}</option>
+                        <option value="active">{t.users.active}</option>
+                        <option value="inactive">{t.users.inactive}</option>
+                    </SelectInput>
+                </div>
             </div>
         </div>
     );

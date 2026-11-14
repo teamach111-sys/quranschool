@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../components/SelectInput';
 import Icon from '../../components/Icon';
 import SearchInput from '../../components/SearchInput';
@@ -326,6 +326,16 @@ export default function Eleves({ routeParams = {} }) {
     ];
     const toolbar = (
         <div className="flex flex-col gap-3">
+            {canManage && yearIsWritable && (
+                <button
+                    type="button"
+                    onClick={() => openForm()}
+                    className="inline-flex w-full min-h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white sm:w-auto"
+                >
+                    <Icon name="add" className="text-[17px]" />
+                    {t.students.form.createTitle}
+                </button>
+            )}
             <div className="flex flex-wrap items-center justify-end gap-2">
                 <div className="w-full sm:w-auto sm:min-w-52">
                     <SelectInput
@@ -343,16 +353,6 @@ export default function Eleves({ routeParams = {} }) {
                         <option value="xlsx">{exportingFormat === 'xlsx' ? t.students.exportingXlsx : t.students.exportXlsx}</option>
                     </SelectInput>
                 </div>
-                {canManage && yearIsWritable && (
-                    <button
-                        type="button"
-                        onClick={() => openForm()}
-                        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary-container px-3 py-2 text-[12px] font-semibold text-on-primary shadow-sm transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
-                    >
-                        <Icon name="add" className="text-[17px]" />
-                        {t.students.form.createTitle}
-                    </button>
-                )}
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <label className="relative min-w-0">

@@ -255,61 +255,57 @@ export default function SchedulesTable() {
 
     const toolbar = (
         <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-end gap-2">
-                <div className="w-full sm:w-auto sm:min-w-52">
-                    <SelectInput
-                        value={exportingFormat ?? ''}
-                        aria-label={t.exportSelect}
-                        onChange={(event) => {
-                            if (event.target.value === 'student-pdf') {
-                                exportSchedules('pdf', true);
-                            } else if (event.target.value) {
-                                exportSchedules(event.target.value);
-                            }
-                        }}
-                        disabled={exportingFormat !== null || loading || visibleSchedules.length === 0}
-                        className="w-full"
-                    >
-                        <option value="">{t.exportSelect}</option>
-                        {['csv', 'pdf', 'xlsx'].map((format) => (
-                            <option key={format} value={format}>
-                                {exportingFormat === format ? t.schedules.exporting[format] : t.schedules.exportFormats[format]}
-                            </option>
-                        ))}
-                        {selectedRoom && (
-                            <option value="student-pdf">
-                                {exportingFormat === 'student-pdf' ? t.schedules.exportingStudentPdf : t.schedules.exportStudentPdf}
-                            </option>
-                        )}
-                    </SelectInput>
-                </div>
-                    {canManage && yearIsWritable && (
-                    <button
-                        type="button"
-                        onClick={openCreateForm}
-                        className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
-                    >
-                        <Icon name="add" className="text-[17px]" />
-                        {t.schedules.create}
-                    </button>
-                )}
+            {canManage && yearIsWritable && (
+                <button
+                    type="button"
+                    onClick={openCreateForm}
+                    className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white sm:w-auto"
+                >
+                    <Icon name="add" className="text-[17px]" />
+                    {t.schedules.create}
+                </button>
+            )}
+            <div className="w-full sm:min-w-52">
+                <SelectInput
+                    value={exportingFormat ?? ''}
+                    aria-label={t.exportSelect}
+                    onChange={(event) => {
+                        if (event.target.value === 'student-pdf') {
+                            exportSchedules('pdf', true);
+                        } else if (event.target.value) {
+                            exportSchedules(event.target.value);
+                        }
+                    }}
+                    disabled={exportingFormat !== null || loading || visibleSchedules.length === 0}
+                    className="w-full"
+                >
+                    <option value="">{t.exportSelect}</option>
+                    {['csv', 'pdf', 'xlsx'].map((format) => (
+                        <option key={format} value={format}>
+                            {exportingFormat === format ? t.schedules.exporting[format] : t.schedules.exportFormats[format]}
+                        </option>
+                    ))}
+                    {selectedRoom && (
+                        <option value="student-pdf">
+                            {exportingFormat === 'student-pdf' ? t.schedules.exportingStudentPdf : t.schedules.exportStudentPdf}
+                        </option>
+                    )}
+                </SelectInput>
             </div>
             {canManage && rooms.length > 0 && (
-                <div className="flex w-full justify-end">
-                    <div className="w-full max-w-sm">
-                        <SelectInput
-                            name="room_id"
-                            aria-label={t.schedules.groupFilter}
-                            value={selectedRoomId}
-                            onChange={(event) => setSelectedRoomId(event.target.value)}
-                            className="w-full"
-                        >
-                            <option value="">{t.schedules.allGroups}</option>
-                            {rooms.map((room) => (
-                                <option key={room.id} value={room.id}>{room.name}</option>
-                            ))}
-                        </SelectInput>
-                    </div>
+                <div className="w-full">
+                    <SelectInput
+                        name="room_id"
+                        aria-label={t.schedules.groupFilter}
+                        value={selectedRoomId}
+                        onChange={(event) => setSelectedRoomId(event.target.value)}
+                        className="w-full"
+                    >
+                        <option value="">{t.schedules.allGroups}</option>
+                        {rooms.map((room) => (
+                            <option key={room.id} value={room.id}>{room.name}</option>
+                        ))}
+                    </SelectInput>
                 </div>
             )}
         </div>

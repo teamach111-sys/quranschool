@@ -22,7 +22,7 @@ export default function SearchInput({
                 placeholder={placeholder}
                 aria-label={ariaLabel}
                 maxLength={maxLength}
-                className={`min-h-11 w-full rounded-lg border border-transparent bg-surface-container-low px-3 text-[13px] text-on-surface outline-none placeholder:text-outline focus:border-primary dark:bg-[#232221] dark:text-[#f0ece7] dark:placeholder:text-[#918d88]/40 dark:focus:border-[#918d88] ${isRTL ? 'pr-10' : 'pl-10'}`}
+                className={`min-h-11 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 text-[13px] text-on-surface outline-none placeholder:text-outline focus:border-primary dark:border-[#3a3835] dark:bg-[#232221] dark:text-[#f0ece7] dark:placeholder:text-[#918d88]/40 dark:focus:border-[#918d88] ${isRTL ? 'pr-10' : 'pl-10'}`}
             />
         </span>
     );

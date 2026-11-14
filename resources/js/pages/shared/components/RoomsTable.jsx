@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SelectInput from '../../../components/SelectInput';
 import Icon from '../../../components/Icon';
 import { useToast } from '../../../components/ToastProvider';
@@ -484,12 +484,11 @@ export default function RoomsTable({ routeParams = {} }) {
 
     const toolbar = (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            {exportActions}
             {canManage && yearIsWritable && (
                 <button
                     type="button"
                     onClick={() => setAssignmentRoom(true)}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de]"
+                    className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de] sm:w-auto"
                 >
                     <Icon name="assignment_ind" className="text-[17px]" />
                     {t.rooms.assignTeacher}
@@ -504,7 +503,7 @@ export default function RoomsTable({ routeParams = {} }) {
                         setShowOtherAgeStudents(false);
                         setPlacementOpen(true);
                     }}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de]"
+                    className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-[12px] font-semibold text-on-surface transition-colors hover:bg-surface-container dark:border-[#3a3835] dark:bg-[#1c1b1a] dark:text-[#e7e3de] sm:w-auto"
                 >
                     <Icon name="person_add" className="text-[17px]" />
                     {t.rooms.placeStudent}
@@ -514,12 +513,13 @@ export default function RoomsTable({ routeParams = {} }) {
                 <button
                     type="button"
                     onClick={() => openRoomEditor()}
-                    className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white"
+                    className="inline-flex w-full min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-container px-3.5 py-2 text-[12px] font-semibold text-on-primary transition-colors hover:opacity-90 dark:bg-[#2f7d4f] dark:text-white sm:w-auto"
                 >
                     <Icon name="add" className="text-[17px]" />
                     {t.rooms.create}
                 </button>
             )}
+            {exportActions}
         </div>
     );
 
